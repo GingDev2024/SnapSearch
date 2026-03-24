@@ -8,11 +8,20 @@
 
   <ItemGroup>
     <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Mocks\" />
     <Folder Include="Categories\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SnapSearch.Application\SnapSearch.Application.csproj" />
+    <ProjectReference Include="..\SnapSearch.Domain\SnapSearch.Domain.csproj" />
+    <ProjectReference Include="..\SnapSearch.Infrastructure\SnapSearch.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

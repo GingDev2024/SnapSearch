@@ -1,6 +1,9 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SnapSearch.Application.Contracts.Infrastructure;
 using SnapSearch.Infrastructure.Data;
+using SnapSearch.Infrastructure.Repositories;
+using SnapSearch.Infrastructure.Services;
 
 namespace SnapSearch.Infrastructure
 {
@@ -16,6 +19,15 @@ namespace SnapSearch.Infrastructure
                     var configuration = sp.GetRequiredService<IConfiguration>();
                     return new AppDbContext(configuration);
                 });
+
+            // Repositories
+            services.AddTransient<IUserRepository, UserRepository>();
+            services.AddTransient<IAccessLogRepository, AccessLogRepository>();
+            services.AddTransient<IAppSettingRepository, AppSettingRepository>();
+            services.AddTransient<ISearchHistoryRepository, SearchHistoryRepository>();
+
+            // Services
+            services.AddTransient<IFileSearchService, FileSearchService>();
 
             services.AddTransient<UnitOfWork>();
             return services;
