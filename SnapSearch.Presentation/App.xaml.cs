@@ -2,7 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using SnapSearch.Application;
 using SnapSearch.Infrastructure;
-using System.IO;
+using SnapSearch.Presentation.Views;
 using System.Windows;
 
 namespace SnapSearch.Presentation
@@ -41,7 +41,7 @@ namespace SnapSearch.Presentation
             var environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Development";
 
             var configuration = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
+                .SetBasePath(AppContext.BaseDirectory)
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true)
                 .Build();

@@ -1,7 +1,8 @@
 ﻿using Microsoft.Data.SqlClient;
 using SnapSearch.Application.Contracts.Infrastructure;
+using SnapSearch.Infrastructure.Data;
 
-namespace SnapSearch.Infrastructure.Data
+namespace SnapSearch.Infrastructure.Repositories
 {
     public sealed class UnitOfWork : IUnitOfWork
     {
