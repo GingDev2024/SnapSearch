@@ -6,27 +6,22 @@ namespace SnapSearch.Infrastructure.Data
 {
     public sealed class AppDbContext : IDisposable
     {
-        #region Properties
-
-        public SqlConnection Connection { get; }
-
-        #endregion Properties
-
         #region Public Constructors
 
-        public AppDbContext()
+        public AppDbContext(IConfiguration configuration)
         {
-            var configuration = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .Build();
-
             string connectionString = configuration.GetConnectionString("DefaultConnection")!;
             Connection = new SqlConnection(connectionString);
             Connection.Open();
         }
 
         #endregion Public Constructors
+
+        #region Properties
+
+        public SqlConnection Connection { get; }
+
+        #endregion Properties
 
         #region Public Methods
 
