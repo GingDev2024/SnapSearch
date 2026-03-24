@@ -1,26 +1,14 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-using System.Data;
 
 namespace SnapSearch.Infrastructure.Data
 {
-    public sealed class AppDbContext : IDisposable
+    public sealed class AppDbContext : IAsyncDisposable
     {
-        #region Properties
-
-        public SqlConnection Connection { get; }
-
-        #endregion Properties
-
         #region Public Constructors
 
-        public AppDbContext()
+        public AppDbContext(IConfiguration configuration)
         {
-            var configuration = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .Build();
-
             string connectionString = configuration.GetConnectionString("DefaultConnection")!;
             Connection = new SqlConnection(connectionString);
             Connection.Open();
@@ -28,13 +16,25 @@ namespace SnapSearch.Infrastructure.Data
 
         #endregion Public Constructors
 
+        #region Properties
+
+        public SqlConnection Connection { get; }
+
+        #endregion Properties
+
         #region Public Methods
+
+        public async ValueTask DisposeAsync()
+        {
+            if (Connection != null)
+            {
+                await Connection.DisposeAsync();
+            }
+        }
 
         public void Dispose()
         {
-            if (Connection.State != ConnectionState.Closed)
-                Connection.Close();
-            Connection.Dispose();
+            Connection?.Dispose();
         }
 
         #endregion Public Methods

@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using SnapSearch.Infrastructure.Data;
 
 namespace SnapSearch.Infrastructure
 {
@@ -8,6 +10,14 @@ namespace SnapSearch.Infrastructure
 
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
+            services
+                .AddTransient<AppDbContext>(sp =>
+                {
+                    var configuration = sp.GetRequiredService<IConfiguration>();
+                    return new AppDbContext(configuration);
+                });
+
+            services.AddTransient<UnitOfWork>();
             return services;
         }
 

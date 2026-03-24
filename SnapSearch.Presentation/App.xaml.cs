@@ -1,6 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using SnapSearch.Application;
 using SnapSearch.Infrastructure;
+using System.IO;
 using System.Windows;
 
 namespace SnapSearch.Presentation
@@ -36,6 +38,16 @@ namespace SnapSearch.Presentation
 
         private void ConfigureServices(IServiceCollection services)
         {
+            var environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Development";
+
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true)
+                .Build();
+
+            services.AddSingleton(configuration);
+
             services.AddApplication();
             services.AddInfrastructure();
 

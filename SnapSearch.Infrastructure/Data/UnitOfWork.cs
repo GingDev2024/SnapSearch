@@ -1,8 +1,9 @@
 ﻿using Microsoft.Data.SqlClient;
+using SnapSearch.Application.Contracts.Infrastructure;
 
 namespace SnapSearch.Infrastructure.Data
 {
-    public sealed class UnitOfWork : IDisposable
+    public sealed class UnitOfWork : IUnitOfWork
     {
         #region Fields
 
@@ -31,38 +32,47 @@ namespace SnapSearch.Infrastructure.Data
 
         #region Public Methods
 
-        public void Commit()
+        public async Task CommitAsync(CancellationToken cancellationToken = default)
         {
-            _transaction?.Commit();
-            DisposeTransaction();
+            if (_transaction != null)
+            {
+                await _transaction.CommitAsync(cancellationToken);
+                await DisposeTransactionAsync();
+            }
         }
 
-        public void Rollback()
+        public async Task RollbackAsync(CancellationToken cancellationToken = default)
         {
-            _transaction?.Rollback();
-            DisposeTransaction();
+            if (_transaction != null)
+            {
+                await _transaction.RollbackAsync(cancellationToken);
+                await DisposeTransactionAsync();
+            }
         }
 
-        public void Dispose()
+        public async ValueTask DisposeAsync()
         {
             if (!_disposed)
             {
-                _transaction?.Dispose();
-                _db?.Dispose();
+                if (_transaction != null)
+                    await _transaction.DisposeAsync();
+
+                if (_db != null)
+                    await _db.DisposeAsync();
+
                 _disposed = true;
             }
         }
 
-        #endregion Public Methods
-
-        #region Private Methods
-
-        private void DisposeTransaction()
+        private async Task DisposeTransactionAsync()
         {
-            _transaction?.Dispose();
-            _transaction = null;
+            if (_transaction != null)
+            {
+                await _transaction.DisposeAsync();
+                _transaction = null;
+            }
         }
 
-        #endregion Private Methods
+        #endregion Public Methods
     }
 }
