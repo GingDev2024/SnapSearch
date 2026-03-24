@@ -1,10 +1,9 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-using System.Data;
 
 namespace SnapSearch.Infrastructure.Data
 {
-    public sealed class AppDbContext : IDisposable
+    public sealed class AppDbContext : IAsyncDisposable
     {
         #region Public Constructors
 
@@ -25,11 +24,17 @@ namespace SnapSearch.Infrastructure.Data
 
         #region Public Methods
 
+        public async ValueTask DisposeAsync()
+        {
+            if (Connection != null)
+            {
+                await Connection.DisposeAsync();
+            }
+        }
+
         public void Dispose()
         {
-            if (Connection.State != ConnectionState.Closed)
-                Connection.Close();
-            Connection.Dispose();
+            Connection?.Dispose();
         }
 
         #endregion Public Methods
