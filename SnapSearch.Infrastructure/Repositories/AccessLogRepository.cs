@@ -26,7 +26,7 @@ namespace SnapSearch.Infrastructure.Repositories
         public async Task<int> CreateAsync(AccessLog log, CancellationToken cancellationToken = default)
         {
             var cmd = new CommandDefinition(
-                "EXEC sp_CreateAccessLog @UserId, @Username, @Action, @FilePath, @SearchKeyword, @IpAddress, @MacAddress, @AccessedAt, @Details",
+                "EXEC dbo.sp_CreateAccessLog @UserId, @Username, @Action, @FilePath, @SearchKeyword, @IpAddress, @MacAddress, @AccessedAt, @Details",
                 new
                 {
                     log.UserId,
@@ -47,7 +47,7 @@ namespace SnapSearch.Infrastructure.Repositories
         public async Task<IEnumerable<AccessLog>> GetAllAsync(CancellationToken cancellationToken = default)
         {
             var cmd = new CommandDefinition(
-                "EXEC sp_GetAllAccessLogs",
+                "EXEC dbo.sp_GetAllAccessLogs",
                 transaction: _uow.Transaction,
                 cancellationToken: cancellationToken);
             return await _uow.Connection.QueryAsync<AccessLog>(cmd);
@@ -56,7 +56,7 @@ namespace SnapSearch.Infrastructure.Repositories
         public async Task<IEnumerable<AccessLog>> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default)
         {
             var cmd = new CommandDefinition(
-                "EXEC sp_GetAccessLogsByUserId @UserId",
+                "EXEC dbo.sp_GetAccessLogsByUserId @UserId",
                 new { UserId = userId },
                 _uow.Transaction,
                 cancellationToken: cancellationToken);
@@ -66,7 +66,7 @@ namespace SnapSearch.Infrastructure.Repositories
         public async Task<IEnumerable<AccessLog>> GetByDateRangeAsync(DateTime from, DateTime to, CancellationToken cancellationToken = default)
         {
             var cmd = new CommandDefinition(
-                "EXEC sp_GetAccessLogsByDateRange @From, @To",
+                "EXEC dbo.sp_GetAccessLogsByDateRange @From, @To",
                 new { From = from, To = to },
                 _uow.Transaction,
                 cancellationToken: cancellationToken);

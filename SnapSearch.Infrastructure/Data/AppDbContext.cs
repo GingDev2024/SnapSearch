@@ -14,6 +14,11 @@ namespace SnapSearch.Infrastructure.Data
             Connection.Open();
         }
 
+        public AppDbContext(SqlConnection connection)
+        {
+            Connection = connection;
+        }
+
         #endregion Public Constructors
 
         #region Properties

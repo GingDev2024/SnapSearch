@@ -73,7 +73,7 @@ namespace SnapSearch.Presentation
                 () => sp.GetRequiredService<SettingsViewModel>()
             ));
 
-            // Transient: each navigation creates a fresh VM
+            // Transient: each navigation creates a new VM
             services.AddTransient<SearchViewModel>();
             services.AddTransient<FilePreviewViewModel>();
             services.AddTransient<UserManagementViewModel>();
