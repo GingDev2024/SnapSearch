@@ -1,0 +1,82 @@
+
+## Ignore Visual Studio files
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+
+## Build outputs
+bin/
+obj/
+out/
+Generated_Code/
+
+
+## ASP.NET Core specific
+appsettings.json
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+*.db
+*.sqlite
+*.mdf
+*.ldf
+
+## Publish artifacts
+*.Publish.xml
+*.pubxml
+*.pfx
+*.key
+
+
+## Logs and debug
+*.log
+Logs/
+logs/
+TestResults/
+*.coverage
+*.coveragexml
+
+
+## Entity Framework
+Migrations/
+
+## NuGet
+*.nupkg
+*.snupkg
+*.nuspec
+>>>>>>> 2e0a76e5d812f642bbe3ea77b0f48c5d1630d6ec
+packages/
+project.lock.json
+project.fragment.lock.json
+
+## OS-generated files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+## Rider/Resharper (if ever used)
+.idea/
+_ReSharper*/
+*.DotSettings.user
+
+## IIS Express
+*.vspscc
+*.vssscc
+*.dbmdl
+
+## Temporary
+*.tmp
+*.bak
+*.old
+*.swp
+
+## Others
+node_modules/
+/DPCStudentOrganizationsElectionPlatform.Persistence/appsettings.json
+/DPCStudentOrganizationsElectionPlatform.Api/appsettings.Development.json
+/DPCStudentOrganizationsElectionPlatform.Api/appsettings.json
