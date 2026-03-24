@@ -26,7 +26,7 @@ namespace SnapSearch.Infrastructure.Repositories
         public async Task<AppSetting?> GetByKeyAsync(string key, CancellationToken cancellationToken = default)
         {
             var cmd = new CommandDefinition(
-                "EXEC sp_GetSettingByKey @Key",
+                "EXEC dbo.sp_GetSettingByKey @Key",
                 new { Key = key },
                 _uow.Transaction,
                 cancellationToken: cancellationToken);
@@ -36,7 +36,7 @@ namespace SnapSearch.Infrastructure.Repositories
         public async Task<IEnumerable<AppSetting>> GetAllAsync(CancellationToken cancellationToken = default)
         {
             var cmd = new CommandDefinition(
-                "EXEC sp_GetAllSettings",
+                "EXEC dbo.sp_GetAllSettings",
                 transaction: _uow.Transaction,
                 cancellationToken: cancellationToken);
             return await _uow.Connection.QueryAsync<AppSetting>(cmd);
@@ -45,7 +45,7 @@ namespace SnapSearch.Infrastructure.Repositories
         public async Task<bool> UpsertAsync(AppSetting setting, CancellationToken cancellationToken = default)
         {
             var cmd = new CommandDefinition(
-                "EXEC sp_UpsertSetting @Key, @Value, @Description, @UpdatedAt",
+                "EXEC dbo.sp_UpsertSetting @Key, @Value, @Description, @UpdatedAt",
                 new
                 {
                     setting.Key,
@@ -62,7 +62,7 @@ namespace SnapSearch.Infrastructure.Repositories
         public async Task<bool> DeleteAsync(string key, CancellationToken cancellationToken = default)
         {
             var cmd = new CommandDefinition(
-                "EXEC sp_DeleteSetting @Key",
+                "EXEC dbo.sp_DeleteSetting @Key",
                 new { Key = key },
                 _uow.Transaction,
                 cancellationToken: cancellationToken);

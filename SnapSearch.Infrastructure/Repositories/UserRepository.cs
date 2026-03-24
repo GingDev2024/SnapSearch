@@ -26,7 +26,7 @@ namespace SnapSearch.Infrastructure.Repositories
         public async Task<User?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
             var cmd = new CommandDefinition(
-                "EXEC sp_GetUserById @Id",
+                "EXEC dbo.sp_GetUserById @Id",
                 new { Id = id },
                 _uow.Transaction,
                 cancellationToken: cancellationToken);
@@ -36,7 +36,7 @@ namespace SnapSearch.Infrastructure.Repositories
         public async Task<User?> GetByUsernameAsync(string username, CancellationToken cancellationToken = default)
         {
             var cmd = new CommandDefinition(
-                "EXEC sp_GetUserByUsername @Username",
+                "EXEC dbo.sp_GetUserByUsername @Username",
                 new { Username = username },
                 _uow.Transaction,
                 cancellationToken: cancellationToken);
@@ -46,7 +46,7 @@ namespace SnapSearch.Infrastructure.Repositories
         public async Task<IEnumerable<User>> GetAllAsync(CancellationToken cancellationToken = default)
         {
             var cmd = new CommandDefinition(
-                "EXEC sp_GetAllUsers",
+                "EXEC dbo.sp_GetAllUsers",
                 transaction: _uow.Transaction,
                 cancellationToken: cancellationToken);
             return await _uow.Connection.QueryAsync<User>(cmd);
@@ -55,7 +55,7 @@ namespace SnapSearch.Infrastructure.Repositories
         public async Task<int> CreateAsync(User user, CancellationToken cancellationToken = default)
         {
             var cmd = new CommandDefinition(
-                "EXEC sp_CreateUser @Username, @PasswordHash, @Role, @IsActive, @CreatedAt",
+                "EXEC dbo.sp_CreateUser @Username, @PasswordHash, @Role, @IsActive, @CreatedAt",
                 new
                 {
                     user.Username,
@@ -72,7 +72,7 @@ namespace SnapSearch.Infrastructure.Repositories
         public async Task<bool> UpdateAsync(User user, CancellationToken cancellationToken = default)
         {
             var cmd = new CommandDefinition(
-                "EXEC sp_UpdateUser @Id, @Username, @PasswordHash, @Role, @IsActive, @UpdatedAt",
+                "EXEC dbo.sp_UpdateUser @Id, @Username, @PasswordHash, @Role, @IsActive, @UpdatedAt",
                 new
                 {
                     user.Id,
@@ -91,7 +91,7 @@ namespace SnapSearch.Infrastructure.Repositories
         public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
         {
             var cmd = new CommandDefinition(
-                "EXEC sp_DeleteUser @Id",
+                "EXEC dbo.sp_DeleteUser @Id",
                 new { Id = id },
                 _uow.Transaction,
                 cancellationToken: cancellationToken);
@@ -102,7 +102,7 @@ namespace SnapSearch.Infrastructure.Repositories
         public async Task<User?> AuthenticateAsync(string username, string passwordHash, CancellationToken cancellationToken = default)
         {
             var cmd = new CommandDefinition(
-                "EXEC sp_AuthenticateUser @Username, @PasswordHash",
+                "EXEC dbo.sp_AuthenticateUser @Username, @PasswordHash",
                 new { Username = username, PasswordHash = passwordHash },
                 _uow.Transaction,
                 cancellationToken: cancellationToken);

@@ -26,7 +26,23 @@ namespace SnapSearch.Infrastructure.Repositories
         public async Task<int> CreateAsync(SearchHistory history, CancellationToken cancellationToken = default)
         {
             var cmd = new CommandDefinition(
-                "EXEC sp_CreateSearchHistory @UserId, @Keyword, @SearchDirectory, @FileExtensionFilter, @ResultCount, @SearchedAt",
+                @"INSERT INTO dbo.SearchHistory(
+                    UserId,
+                    Keyword,
+                    SearchDirectory,
+                    FileExtensionFilter,
+                    ResultCount,
+                    SearchedAt)
+
+                VALUES(
+                    @UserId,
+                    @Keyword,
+                    @SearchDirectory,
+                    @FileExtensionFilter,
+                    @ResultCount,
+                    @SearchedAt);
+
+                SELECT CAST(SCOPE_IDENTITY() AS INT);",
                 new
                 {
                     history.UserId,
@@ -38,25 +54,33 @@ namespace SnapSearch.Infrastructure.Repositories
                 },
                 _uow.Transaction,
                 cancellationToken: cancellationToken);
+
             return await _uow.Connection.ExecuteScalarAsync<int>(cmd);
         }
 
         public async Task<IEnumerable<SearchHistory>> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default)
         {
             var cmd = new CommandDefinition(
-                "EXEC sp_GetSearchHistoryByUserId @UserId",
+                @"SELECT Id, UserId, Keyword, SearchDirectory, FileExtensionFilter, ResultCount, SearchedAt
+                FROM dbo.SearchHistory
+                WHERE UserId = @UserId
+                ORDER BY SearchedAt DESC;",
                 new { UserId = userId },
                 _uow.Transaction,
                 cancellationToken: cancellationToken);
+
             return await _uow.Connection.QueryAsync<SearchHistory>(cmd);
         }
 
         public async Task<IEnumerable<SearchHistory>> GetAllAsync(CancellationToken cancellationToken = default)
         {
             var cmd = new CommandDefinition(
-                "EXEC sp_GetAllSearchHistory",
+                @"SELECT Id, UserId, Keyword, SearchDirectory, FileExtensionFilter, ResultCount, SearchedAt
+                FROM dbo.SearchHistory
+                ORDER BY SearchedAt DESC;",
                 transaction: _uow.Transaction,
                 cancellationToken: cancellationToken);
+
             return await _uow.Connection.QueryAsync<SearchHistory>(cmd);
         }
 
