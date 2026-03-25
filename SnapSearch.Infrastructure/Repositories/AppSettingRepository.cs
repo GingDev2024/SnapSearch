@@ -8,16 +8,13 @@ namespace SnapSearch.Infrastructure.Repositories
     {
         #region Fields
 
-        private readonly UnitOfWork _uow;
+        private readonly IUnitOfWork _uow;
 
         #endregion Fields
 
         #region Public Constructors
 
-        public AppSettingRepository(UnitOfWork uow)
-        {
-            _uow = uow;
-        }
+        public AppSettingRepository(IUnitOfWork uow) => _uow = uow;
 
         #endregion Public Constructors
 
@@ -25,48 +22,43 @@ namespace SnapSearch.Infrastructure.Repositories
 
         public async Task<AppSetting?> GetByKeyAsync(string key, CancellationToken cancellationToken = default)
         {
-            var cmd = new CommandDefinition(
-                "EXEC dbo.sp_GetSettingByKey @Key",
-                new { Key = key },
-                _uow.Transaction,
-                cancellationToken: cancellationToken);
-            return await _uow.Connection.QueryFirstOrDefaultAsync<AppSetting>(cmd);
+            var sql = "SELECT * FROM AppSettings WHERE [Key] = @Key";
+            return await _uow.Connection.QueryFirstOrDefaultAsync<AppSetting>(
+                new CommandDefinition(sql, new { Key = key }, _uow.Transaction, cancellationToken: cancellationToken));
         }
 
         public async Task<IEnumerable<AppSetting>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            var cmd = new CommandDefinition(
-                "EXEC dbo.sp_GetAllSettings",
-                transaction: _uow.Transaction,
-                cancellationToken: cancellationToken);
-            return await _uow.Connection.QueryAsync<AppSetting>(cmd);
+            var sql = "SELECT * FROM AppSettings ORDER BY [Key]";
+            return await _uow.Connection.QueryAsync<AppSetting>(
+                new CommandDefinition(sql, transaction: _uow.Transaction, cancellationToken: cancellationToken));
         }
 
         public async Task<bool> UpsertAsync(AppSetting setting, CancellationToken cancellationToken = default)
         {
-            var cmd = new CommandDefinition(
-                "EXEC dbo.sp_UpsertSetting @Key, @Value, @Description, @UpdatedAt",
-                new
-                {
-                    setting.Key,
-                    setting.Value,
-                    setting.Description,
-                    UpdatedAt = DateTime.UtcNow
-                },
-                _uow.Transaction,
-                cancellationToken: cancellationToken);
-            var rows = await _uow.Connection.ExecuteAsync(cmd);
+            var sql = @"
+                IF EXISTS (SELECT 1 FROM AppSettings WHERE [Key] = @Key)
+                    UPDATE AppSettings
+                    SET [Value] = @Value,
+                        [Description] = @Description,
+                        UpdatedAt = @UpdatedAt
+                    WHERE [Key] = @Key
+                ELSE
+                    INSERT INTO AppSettings ([Key], [Value], [Description], UpdatedAt)
+                    VALUES (@Key, @Value, @Description, @UpdatedAt);";
+
+            var rows = await _uow.Connection.ExecuteAsync(
+                new CommandDefinition(sql, new { setting.Key, setting.Value, setting.Description, UpdatedAt = DateTime.UtcNow },
+                _uow.Transaction, cancellationToken: cancellationToken));
+
             return rows > 0;
         }
 
         public async Task<bool> DeleteAsync(string key, CancellationToken cancellationToken = default)
         {
-            var cmd = new CommandDefinition(
-                "EXEC dbo.sp_DeleteSetting @Key",
-                new { Key = key },
-                _uow.Transaction,
-                cancellationToken: cancellationToken);
-            var rows = await _uow.Connection.ExecuteAsync(cmd);
+            var sql = "DELETE FROM AppSettings WHERE [Key] = @Key";
+            var rows = await _uow.Connection.ExecuteAsync(
+                new CommandDefinition(sql, new { Key = key }, _uow.Transaction, cancellationToken: cancellationToken));
             return rows > 0;
         }
 

@@ -68,7 +68,6 @@ namespace SnapSearch.Presentation.ViewModels
         private async Task LoadLogsAsync(object? _)
         {
             IsBusy = true;
-            StatusMessage = "Loading logs...";
             try
             {
                 _allLogs.Clear();

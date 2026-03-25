@@ -76,14 +76,15 @@
         </Border>
 
         <!-- Status Bar -->
-        <Border Grid.Row="3" Padding="0,10,0,0">
+        <Border Grid.Row="3" Height="17" Padding="0,2,0,0">
             <Grid>
                 <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusText}" />
-                <ProgressBar HorizontalAlignment="Right" Width="200" Height="3"
+                <ProgressBar HorizontalAlignment="Center" Width="1003"
                              IsIndeterminate="True"
+                             Height="10"
                              Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"
                              Background="Transparent"
-                             Foreground="{StaticResource AccentBrush}" />
+                             Foreground="{StaticResource SuccessBrush}" Margin="0,-7,0,3" />
             </Grid>
         </Border>
     </Grid>

@@ -8,16 +8,13 @@ namespace SnapSearch.Infrastructure.Repositories
     {
         #region Fields
 
-        private readonly UnitOfWork _uow;
+        private readonly IUnitOfWork _uow;
 
         #endregion Fields
 
         #region Public Constructors
 
-        public AccessLogRepository(UnitOfWork uow)
-        {
-            _uow = uow;
-        }
+        public AccessLogRepository(IUnitOfWork uow) => _uow = uow;
 
         #endregion Public Constructors
 
@@ -25,52 +22,34 @@ namespace SnapSearch.Infrastructure.Repositories
 
         public async Task<int> CreateAsync(AccessLog log, CancellationToken cancellationToken = default)
         {
-            var cmd = new CommandDefinition(
-                "EXEC dbo.sp_CreateAccessLog @UserId, @Username, @Action, @FilePath, @SearchKeyword, @IpAddress, @MacAddress, @AccessedAt, @Details",
-                new
-                {
-                    log.UserId,
-                    log.Username,
-                    log.Action,
-                    log.FilePath,
-                    log.SearchKeyword,
-                    log.IpAddress,
-                    log.MacAddress,
-                    log.AccessedAt,
-                    log.Details
-                },
-                _uow.Transaction,
-                cancellationToken: cancellationToken);
-            return await _uow.Connection.ExecuteScalarAsync<int>(cmd);
+            var sql = @"
+                INSERT INTO AccessLogs (UserId, Username, Action, FilePath, SearchKeyword, IpAddress, MacAddress, AccessedAt, Details)
+                VALUES (@UserId, @Username, @Action, @FilePath, @SearchKeyword, @IpAddress, @MacAddress, @AccessedAt, @Details);
+                SELECT CAST(SCOPE_IDENTITY() AS INT);";
+
+            return await _uow.Connection.ExecuteScalarAsync<int>(
+                new CommandDefinition(sql, log, _uow.Transaction, cancellationToken: cancellationToken));
         }
 
         public async Task<IEnumerable<AccessLog>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            var cmd = new CommandDefinition(
-                "EXEC dbo.sp_GetAllAccessLogs",
-                transaction: _uow.Transaction,
-                cancellationToken: cancellationToken);
-            return await _uow.Connection.QueryAsync<AccessLog>(cmd);
+            var sql = "SELECT * FROM AccessLogs ORDER BY AccessedAt DESC";
+            return await _uow.Connection.QueryAsync<AccessLog>(
+                new CommandDefinition(sql, transaction: _uow.Transaction, cancellationToken: cancellationToken));
         }
 
         public async Task<IEnumerable<AccessLog>> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default)
         {
-            var cmd = new CommandDefinition(
-                "EXEC dbo.sp_GetAccessLogsByUserId @UserId",
-                new { UserId = userId },
-                _uow.Transaction,
-                cancellationToken: cancellationToken);
-            return await _uow.Connection.QueryAsync<AccessLog>(cmd);
+            var sql = "SELECT * FROM AccessLogs WHERE UserId = @UserId ORDER BY AccessedAt DESC";
+            return await _uow.Connection.QueryAsync<AccessLog>(
+                new CommandDefinition(sql, new { UserId = userId }, _uow.Transaction, cancellationToken: cancellationToken));
         }
 
         public async Task<IEnumerable<AccessLog>> GetByDateRangeAsync(DateTime from, DateTime to, CancellationToken cancellationToken = default)
         {
-            var cmd = new CommandDefinition(
-                "EXEC dbo.sp_GetAccessLogsByDateRange @From, @To",
-                new { From = from, To = to },
-                _uow.Transaction,
-                cancellationToken: cancellationToken);
-            return await _uow.Connection.QueryAsync<AccessLog>(cmd);
+            var sql = "SELECT * FROM AccessLogs WHERE AccessedAt BETWEEN @From AND @To ORDER BY AccessedAt DESC";
+            return await _uow.Connection.QueryAsync<AccessLog>(
+                new CommandDefinition(sql, new { From = from, To = to }, _uow.Transaction, cancellationToken: cancellationToken));
         }
 
         #endregion Public Methods
