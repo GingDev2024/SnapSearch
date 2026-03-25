@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using SnapSearch.Application;
 using SnapSearch.Application.Contracts;
 using SnapSearch.Infrastructure;
@@ -73,7 +74,7 @@ namespace SnapSearch.Presentation
                 () => sp.GetRequiredService<SettingsViewModel>()
             ));
 
-            // Transient: each navigation creates a new VM
+            // Transient: each navigation creates a fresh VM
             services.AddTransient<SearchViewModel>();
             services.AddTransient<FilePreviewViewModel>();
             services.AddTransient<UserManagementViewModel>();
@@ -81,9 +82,16 @@ namespace SnapSearch.Presentation
             services.AddTransient<SettingsViewModel>();
 
             // --- Windows ---
-            services.AddSingleton<LoginWindow>();
-            services.AddSingleton<MainShellWindow>();
+            services.AddTransient<LoginWindow>();
+            services.AddTransient<MainShellWindow>();
             services.AddTransient<FilePreviewWindow>();
+
+            // --- Services ---
+            services.AddLogging(builder =>
+            {
+                builder.AddDebug();
+                builder.AddConsole();
+            });
         }
 
         #endregion Private Methods
