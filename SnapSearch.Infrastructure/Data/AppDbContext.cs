@@ -9,14 +9,7 @@ namespace SnapSearch.Infrastructure.Data
 
         public AppDbContext(IConfiguration configuration)
         {
-            string connectionString = configuration.GetConnectionString("DefaultConnection")!;
-            Connection = new SqlConnection(connectionString);
-            Connection.Open();
-        }
-
-        public AppDbContext(SqlConnection connection)
-        {
-            Connection = connection;
+            Connection = new SqlConnection(configuration.GetConnectionString("DefaultConnection")!);
         }
 
         #endregion Public Constructors
@@ -29,17 +22,16 @@ namespace SnapSearch.Infrastructure.Data
 
         #region Public Methods
 
+        public async Task OpenAsync()
+        {
+            if (Connection.State != System.Data.ConnectionState.Open)
+                await Connection.OpenAsync();
+        }
+
         public async ValueTask DisposeAsync()
         {
             if (Connection != null)
-            {
                 await Connection.DisposeAsync();
-            }
-        }
-
-        public void Dispose()
-        {
-            Connection?.Dispose();
         }
 
         #endregion Public Methods

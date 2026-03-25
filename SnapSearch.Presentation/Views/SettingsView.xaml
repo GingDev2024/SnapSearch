@@ -97,9 +97,9 @@
                                VerticalAlignment="Center" Margin="16,0,0,0" FontSize="12" />
                 </StackPanel>
 
-                <ProgressBar Height="3" Margin="0,12,0,0"
+                <ProgressBar Height="10" Margin="0,12,0,5"
                              IsIndeterminate="True" Background="Transparent"
-                             Foreground="{StaticResource AccentBrush}"
+                             Foreground="{StaticResource SuccessBrush}"
                              Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}" />
             </StackPanel>
         </ScrollViewer>

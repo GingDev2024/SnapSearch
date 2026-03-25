@@ -13,7 +13,7 @@
     <!-- Text -->
     <Color x:Key="TextPrimaryColor">#E8ECF5</Color>
     <Color x:Key="TextSecondaryColor">White</Color>
-    <Color x:Key="TextMutedColor">red</Color>
+    <Color x:Key="TextMutedColor">Gray</Color>
 
     <!-- Status -->
     <Color x:Key="SuccessColor">#2ECC71</Color>

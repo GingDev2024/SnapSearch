@@ -4,7 +4,7 @@ using SnapSearch.Infrastructure.Data;
 
 namespace SnapSearch.Infrastructure.Repositories
 {
-    public sealed class UnitOfWork : IUnitOfWork
+    public sealed class UnitOfWork : IUnitOfWork, IAsyncDisposable
     {
         #region Fields
 
@@ -19,7 +19,6 @@ namespace SnapSearch.Infrastructure.Repositories
         public UnitOfWork(AppDbContext db)
         {
             _db = db;
-            _transaction = _db.Connection.BeginTransaction();
         }
 
         #endregion Public Constructors
@@ -32,6 +31,12 @@ namespace SnapSearch.Infrastructure.Repositories
         #endregion Properties
 
         #region Public Methods
+
+        public async Task InitializeAsync()
+        {
+            await _db.OpenAsync();
+            _transaction = _db.Connection.BeginTransaction();
+        }
 
         public async Task CommitAsync(CancellationToken cancellationToken = default)
         {
@@ -65,6 +70,10 @@ namespace SnapSearch.Infrastructure.Repositories
             }
         }
 
+        #endregion Public Methods
+
+        #region Private Methods
+
         private async Task DisposeTransactionAsync()
         {
             if (_transaction != null)
@@ -74,6 +83,6 @@ namespace SnapSearch.Infrastructure.Repositories
             }
         }
 
-        #endregion Public Methods
+        #endregion Private Methods
     }
 }

@@ -44,7 +44,7 @@
                     <TextBlock Text="Keyword" Style="{StaticResource FormLabel}" Margin="0,7,0,4" />
                     <TextBox Style="{StaticResource SearchTextBox}"
                              Text="{Binding Keyword, UpdateSourceTrigger=PropertyChanged}"
-                             x:Name="KeywordBox" Height="30" />
+                             x:Name="KeywordBox" />
 
                     <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusText}"
                              VerticalAlignment="Center" Margin="0,5,0,0" Grid.Column="0" />
@@ -58,7 +58,7 @@
                         </Grid.ColumnDefinitions>
                         <TextBox Grid.Column="0" Style="{StaticResource SearchTextBox}"
                                  Text="{Binding SearchDirectory, UpdateSourceTrigger=PropertyChanged}"
-                                 Margin="0,0,6,0"  Height="30" />
+                                 Margin="0,0,6,0" />
                         <Button Grid.Column="1" Content="📁" Style="{StaticResource SecondaryButton}"
                                 Command="{Binding BrowseDirectoryCommand}" Padding="10,8" />
                     </Grid>
@@ -66,7 +66,6 @@
                     <!-- Extension Filter -->
                     <TextBlock Text="Extension (e.g. .pdf)" Style="{StaticResource FormLabel}" Margin="0,12,0,4" />
                     <TextBox Style="{StaticResource SearchTextBox}"
-                              Height="30"
                              Text="{Binding ExtensionFilter, UpdateSourceTrigger=PropertyChanged}" />
 
                     <!-- Date Range -->
@@ -145,12 +144,12 @@
                 <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusText}"
                    VerticalAlignment="Center" Grid.Column="0" />
 
-                <ProgressBar Width="200" Height="4"
+                <ProgressBar Height="10"
                      IsIndeterminate="True"
                      Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"
                      Background="Transparent"
-                     Foreground="{StaticResource AccentBrush}"
-                     VerticalAlignment="Center" Grid.Column="1" />
+                     Foreground="{StaticResource SuccessBrush}"
+                     VerticalAlignment="Top" Margin="21,-23,162,0" />
             </Grid>
         </Border>
     </Grid>
