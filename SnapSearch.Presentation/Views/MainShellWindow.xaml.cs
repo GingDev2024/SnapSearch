@@ -1,27 +1,57 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using SnapSearch.Presentation.ViewModels;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace SnapSearch.Presentation.Views
 {
-    /// <summary>
-    /// Interaction logic for MainShellWindow.xaml
-    /// </summary>
     public partial class MainShellWindow : Window
     {
-        public MainShellWindow()
+        #region Fields
+
+        private readonly MainShellViewModel _vm;
+
+        #endregion Fields
+
+        #region Public Constructors
+
+        public MainShellWindow(MainShellViewModel vm)
         {
             InitializeComponent();
+            _vm = vm;
+            DataContext = _vm;
+            _vm.LogoutRequested += OnLogoutRequested;
         }
+
+        #endregion Public Constructors
+
+        #region Public Methods
+
+        public void Initialize() => _vm.Initialize();
+
+        #endregion Public Methods
+
+        #region Private Methods
+
+        private void OnLogoutRequested()
+        {
+            var login = App.GetService<LoginWindow>();
+            System.Windows.Application.Current.MainWindow = login;
+            login.Show();
+            Close();
+        }
+
+        private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed)
+                DragMove();
+        }
+
+        private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+            => WindowState = WindowState.Minimized;
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+            => Close();
+
+        #endregion Private Methods
     }
 }
