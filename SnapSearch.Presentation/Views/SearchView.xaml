@@ -12,7 +12,6 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Header -->
         <Border Grid.Row="0" Padding="28,20,28,0">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -35,22 +34,16 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!-- LEFT: Filters Panel -->
             <Border Grid.Column="0" Style="{StaticResource Card}" VerticalAlignment="Top">
                 <StackPanel>
                     <TextBlock Text="FILTERS" Style="{StaticResource FormLabel}" />
 
-                    <!-- Keyword -->
                     <TextBlock Text="Keyword" Style="{StaticResource FormLabel}" Margin="0,7,0,4" />
                     <TextBox Style="{StaticResource SearchTextBox}"
                              Text="{Binding Keyword, UpdateSourceTrigger=PropertyChanged}"
-                             x:Name="KeywordBox" Height="30" />
+                             x:Name="KeywordBox" />
 
-                    <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusText}"
-                             VerticalAlignment="Center" Margin="0,5,0,0" Grid.Column="0" />
-
-                    <!-- Directory -->
-                    <TextBlock Text="Directory" Style="{StaticResource FormLabel}" Margin="0,4,0,4" />
+                    <TextBlock Text="Directory" Style="{StaticResource FormLabel}" Margin="0,12,0,4" />
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -58,29 +51,23 @@
                         </Grid.ColumnDefinitions>
                         <TextBox Grid.Column="0" Style="{StaticResource SearchTextBox}"
                                  Text="{Binding SearchDirectory, UpdateSourceTrigger=PropertyChanged}"
-                                 Margin="0,0,6,0"  Height="30" />
-                        <Button Grid.Column="1" Content="📁" Style="{StaticResource SecondaryButton}"
+                                 Margin="0,0,6,0" />
+                        <Button Grid.Column="1" Content="..." Style="{StaticResource SecondaryButton}"
                                 Command="{Binding BrowseDirectoryCommand}" Padding="10,8" />
                     </Grid>
 
-                    <!-- Extension Filter -->
                     <TextBlock Text="Extension (e.g. .pdf)" Style="{StaticResource FormLabel}" Margin="0,12,0,4" />
                     <TextBox Style="{StaticResource SearchTextBox}"
-                              Height="30"
                              Text="{Binding ExtensionFilter, UpdateSourceTrigger=PropertyChanged}" />
 
-                    <!-- Date Range -->
-                    <TextBlock Text="Date Modified — From" Style="{StaticResource FormLabel}" Margin="0,12,0,4" />
+                    <TextBlock Text="Date Modified From" Style="{StaticResource FormLabel}" Margin="0,12,0,4" />
                     <DatePicker Background="{StaticResource SurfaceLightBrush}"
-                                Foreground="Black"
-                                SelectedDate="{Binding DateMin}" />
+                                Foreground="Black" SelectedDate="{Binding DateMin}" />
 
-                    <TextBlock Text="Date Modified — To" Style="{StaticResource FormLabel}" Margin="0,8,0,4" />
+                    <TextBlock Text="Date Modified To" Style="{StaticResource FormLabel}" Margin="0,8,0,4" />
                     <DatePicker Background="{StaticResource SurfaceLightBrush}"
-                                Foreground="Black"
-                                SelectedDate="{Binding DateMax}" />
+                                Foreground="Black" SelectedDate="{Binding DateMax}" />
 
-                    <!-- Options -->
                     <TextBlock Text="Options" Style="{StaticResource FormLabel}" Margin="0,16,0,8" />
                     <CheckBox Content="Allow Partial Match" Style="{StaticResource StyledCheckBox}"
                               IsChecked="{Binding AllowPartialMatch}" Margin="0,0,0,6" />
@@ -89,17 +76,13 @@
                     <CheckBox Content="Include Subdirectories" Style="{StaticResource StyledCheckBox}"
                               IsChecked="{Binding SearchSubDirectories}" />
 
-                    <!-- Actions -->
                     <Button Content="Search" Style="{StaticResource PrimaryButton}"
-                            Command="{Binding SearchCommand}"
-                             Height="34" Margin="0,20,0,0" />
+                            Command="{Binding SearchCommand}" Height="36" Margin="0,20,0,0" />
                     <Button Content="Clear" Style="{StaticResource SecondaryButton}"
-                            Command="{Binding ClearCommand}"
-                             Height="32" Margin="0,8,0,0" />
+                            Command="{Binding ClearCommand}" Height="32" Margin="0,8,0,0" />
                 </StackPanel>
             </Border>
 
-            <!-- RIGHT: Results -->
             <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
@@ -113,19 +96,17 @@
                               SelectedItem="{Binding SelectedFile}"
                               MouseDoubleClick="DataGrid_MouseDoubleClick">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="File Name" Binding="{Binding FileName}" Width="200" />
-                            <DataGridTextColumn Header="Extension" Binding="{Binding Extension}" Width="80" />
-                            <DataGridTextColumn Header="Size" Binding="{Binding SizeDisplay}" Width="80" />
+                            <DataGridTextColumn Header="File Name"    Binding="{Binding FileName}"    Width="200" />
+                            <DataGridTextColumn Header="Extension"    Binding="{Binding Extension}"   Width="80" />
+                            <DataGridTextColumn Header="Size"         Binding="{Binding SizeDisplay}" Width="80" />
                             <DataGridTextColumn Header="Last Modified" Binding="{Binding LastModified, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" Width="140" />
-                            <DataGridTextColumn Header="Matches" Binding="{Binding ContentMatchCount}" Width="70" />
-                            <DataGridTextColumn Header="Path" Binding="{Binding Directory}" Width="*" />
+                            <DataGridTextColumn Header="Matches"      Binding="{Binding ContentMatchCount}" Width="70" />
+                            <DataGridTextColumn Header="Path"         Binding="{Binding Directory}"   Width="*" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </Border>
 
-                <!-- Preview / Action Row -->
-                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,8,0,0"
-                            HorizontalAlignment="Right">
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,8,0,0" HorizontalAlignment="Right">
                     <Button Content="Open Preview" Style="{StaticResource PrimaryButton}"
                             Command="{Binding OpenFilePreviewCommand}" Margin="0,0,8,0"
                             Visibility="{Binding CanViewFile, Converter={StaticResource BoolToVis}}" />
@@ -133,24 +114,14 @@
             </Grid>
         </Grid>
 
-        <!-- Status Bar -->
         <Border Grid.Row="2" Padding="28,8" BorderThickness="0,1,0,0"
-        BorderBrush="{StaticResource BorderBrush}">
+                BorderBrush="{StaticResource BorderBrush}">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusText}"
-                   VerticalAlignment="Center" Grid.Column="0" />
-
-                <ProgressBar Width="200" Height="4"
-                     IsIndeterminate="True"
-                     Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"
-                     Background="Transparent"
-                     Foreground="{StaticResource AccentBrush}"
-                     VerticalAlignment="Center" Grid.Column="1" />
+                <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusText}" />
+                <ProgressBar HorizontalAlignment="Right" Width="200" Height="4"
+                             IsIndeterminate="True"
+                             Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"
+                             Background="Transparent" Foreground="{StaticResource AccentBrush}" />
             </Grid>
         </Border>
     </Grid>

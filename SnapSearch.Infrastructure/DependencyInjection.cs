@@ -25,11 +25,13 @@ namespace SnapSearch.Infrastructure
             services.AddTransient<IAccessLogRepository, AccessLogRepository>();
             services.AddTransient<IAppSettingRepository, AppSettingRepository>();
             services.AddTransient<ISearchHistoryRepository, SearchHistoryRepository>();
+            services.AddTransient<IUnitOfWork, UnitOfWork>();
 
             // Services
             services.AddTransient<IFileSearchService, FileSearchService>();
 
-            services.AddTransient<UnitOfWork>();
+            // DbContext
+            services.AddTransient<AppDbContext>();
             return services;
         }
 

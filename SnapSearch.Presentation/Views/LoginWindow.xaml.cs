@@ -1,4 +1,5 @@
-﻿using SnapSearch.Presentation.ViewModels;
+﻿using SnapSearch.Application.Common.Helpers;
+using SnapSearch.Presentation.ViewModels;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -58,6 +59,7 @@ namespace SnapSearch.Presentation.Views
 
         private void LoginButton_Click(object sender, RoutedEventArgs e)
         {
+            System.Windows.MessageBox.Show($"{PasswordHelper.Hash}");
             TriggerLogin();
         }
 
@@ -67,6 +69,6 @@ namespace SnapSearch.Presentation.Views
                 _vm.LoginCommand.Execute(PasswordBox.Password);
         }
 
-        #endregion Private Methods
+        #endregion Private Methods      
     }
 }

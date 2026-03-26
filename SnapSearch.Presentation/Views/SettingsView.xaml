@@ -16,13 +16,11 @@
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel MaxWidth="600" HorizontalAlignment="Left">
 
-                <!-- Default Directory -->
                 <Border Style="{StaticResource Card}" Margin="0,0,0,16">
                     <StackPanel>
                         <TextBlock Text="DEFAULT SEARCH DIRECTORY" Style="{StaticResource FormLabel}" />
                         <TextBlock Text="The folder SnapSearch opens by default when searching."
-                                   Foreground="AliceBlue" FontSize="11"
-                                   Margin="0,0,0,10" />
+                                   Foreground="{StaticResource TextMutedBrush}" FontSize="11" Margin="0,0,0,10" />
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -37,28 +35,21 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Search Defaults -->
                 <Border Style="{StaticResource Card}" Margin="0,0,0,16">
                     <StackPanel>
                         <TextBlock Text="SEARCH DEFAULTS" Style="{StaticResource FormLabel}" Margin="0,0,0,12" />
-
                         <CheckBox Content="Search subdirectories by default"
                                   Style="{StaticResource StyledCheckBox}"
-                                  IsChecked="{Binding SearchSubDirectoriesByDefault}"
-                                  Margin="0,0,0,10" />
-
+                                  IsChecked="{Binding SearchSubDirectoriesByDefault}" Margin="0,0,0,10" />
                         <CheckBox Content="Search file contents by default"
                                   Style="{StaticResource StyledCheckBox}"
-                                  IsChecked="{Binding SearchContentsDefault}"
-                                  Margin="0,0,0,10" />
-
+                                  IsChecked="{Binding SearchContentsDefault}" Margin="0,0,0,10" />
                         <CheckBox Content="Allow partial keyword matching by default"
                                   Style="{StaticResource StyledCheckBox}"
                                   IsChecked="{Binding AllowPartialMatchDefault}" />
                     </StackPanel>
                 </Border>
 
-                <!-- Application Info -->
                 <Border Style="{StaticResource Card}" Margin="0,0,0,16">
                     <StackPanel>
                         <TextBlock Text="APPLICATION INFO" Style="{StaticResource FormLabel}" Margin="0,0,0,12" />
@@ -74,7 +65,7 @@
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Application"
                                        Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,0,0,6" />
-                            <TextBlock Grid.Row="0" Grid.Column="1" Text="BABSLAI — SnapSearch"
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="BABSLAI SnapSearch"
                                        Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Margin="0,0,0,6" />
                             <TextBlock Grid.Row="1" Grid.Column="0" Text="Release"
                                        Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,0,0,6" />
@@ -88,7 +79,6 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Save Button -->
                 <StackPanel Orientation="Horizontal">
                     <Button Content="Save Settings" Style="{StaticResource PrimaryButton}"
                             Command="{Binding SaveSettingsCommand}" Padding="20,10" />
@@ -97,9 +87,8 @@
                                VerticalAlignment="Center" Margin="16,0,0,0" FontSize="12" />
                 </StackPanel>
 
-                <ProgressBar Height="3" Margin="0,12,0,0"
-                             IsIndeterminate="True" Background="Transparent"
-                             Foreground="{StaticResource AccentBrush}"
+                <ProgressBar Height="4" Margin="0,12,0,0" IsIndeterminate="True"
+                             Background="Transparent" Foreground="{StaticResource AccentBrush}"
                              Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}" />
             </StackPanel>
         </ScrollViewer>
