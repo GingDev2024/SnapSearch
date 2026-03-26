@@ -88,7 +88,7 @@
         <Setter Property="CaretBrush" Value="{StaticResource AccentBrush}" />
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="5,6" />
+        <Setter Property="Padding" Value="10,5" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="Template">
             <Setter.Value>
@@ -116,7 +116,7 @@
         <Setter Property="CaretBrush" Value="{StaticResource AccentBrush}" />
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="5,6" />
+        <Setter Property="Padding" Value="10,8" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="Template">
             <Setter.Value>
