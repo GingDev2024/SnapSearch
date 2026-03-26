@@ -20,6 +20,7 @@ namespace SnapSearch.Presentation.Views
             _vm = vm;
             DataContext = _vm;
             _vm.LogoutRequested += OnLogoutRequested;
+            Closed += OnClosed;
         }
 
         #endregion Public Constructors
@@ -31,6 +32,12 @@ namespace SnapSearch.Presentation.Views
         #endregion Public Methods
 
         #region Private Methods
+
+        private void OnClosed(object? sender, EventArgs e)
+        {
+            _vm.LogoutRequested -= OnLogoutRequested;
+            Closed -= OnClosed;
+        }
 
         private void OnLogoutRequested()
         {

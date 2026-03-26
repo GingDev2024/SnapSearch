@@ -87,13 +87,19 @@ namespace SnapSearch.Presentation.ViewModels
         private void ApplyFilter()
         {
             Logs.Clear();
+            var filter = FilterText?.ToLower() ?? string.Empty;
+
             var filtered = string.IsNullOrWhiteSpace(FilterText)
                 ? _allLogs
                 : _allLogs.Where(l =>
-                    l.Username.Contains(FilterText, StringComparison.OrdinalIgnoreCase) ||
-                    l.Action.Contains(FilterText, StringComparison.OrdinalIgnoreCase) ||
-                    (l.SearchKeyword?.Contains(FilterText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                    (l.FilePath?.Contains(FilterText, StringComparison.OrdinalIgnoreCase) ?? false));
+                    (l.Username?.ToLower().Contains(filter) ?? false) ||
+                    (l.IpAddress?.ToLower().Contains(filter) ?? false) ||
+                    (l.MacAddress?.ToLower().Contains(filter) ?? false) ||
+                    (l.Action?.ToLower().Contains(filter) ?? false) ||
+                    (l.Details?.ToLower().Contains(filter) ?? false) ||
+                    (l.SearchKeyword?.ToLower().Contains(filter) ?? false) ||
+                    (l.FilePath?.ToLower().Contains(filter) ?? false) ||
+                    l.AccessedAt.ToString("yyyy-MM-dd HH:mm:ss").Contains(filter));
 
             foreach (var l in filtered)
                 Logs.Add(l);
