@@ -1,5 +1,4 @@
-﻿using SnapSearch.Application.Common.Helpers;
-using SnapSearch.Presentation.ViewModels;
+﻿using SnapSearch.Presentation.ViewModels;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -22,6 +21,7 @@ namespace SnapSearch.Presentation.Views
             _vm = vm;
             DataContext = _vm;
             _vm.LoginSucceeded += OnLoginSucceeded;
+            Closed += OnClosed;
         }
 
         #endregion Public Constructors
@@ -37,6 +37,12 @@ namespace SnapSearch.Presentation.Views
             Close();
         }
 
+        private void OnClosed(object? sender, EventArgs e)
+        {
+            _vm.LoginSucceeded -= OnLoginSucceeded;
+            Closed -= OnClosed;
+        }
+
         private void DragBar_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.LeftButton == MouseButtonState.Pressed)
@@ -47,19 +53,18 @@ namespace SnapSearch.Presentation.Views
 
         private void Input_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
-            if (e.Key == System.Windows.Input.Key.Enter)
+            if (e.Key == Key.Enter)
                 PasswordBox.Focus();
         }
 
         private void PasswordBox_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
-            if (e.Key == System.Windows.Input.Key.Enter)
+            if (e.Key == Key.Enter)
                 TriggerLogin();
         }
 
         private void LoginButton_Click(object sender, RoutedEventArgs e)
         {
-            System.Windows.MessageBox.Show($"{PasswordHelper.Hash}");
             TriggerLogin();
         }
 

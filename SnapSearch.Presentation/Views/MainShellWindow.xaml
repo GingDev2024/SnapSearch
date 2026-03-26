@@ -2,6 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:SnapSearch.Presentation.ViewModels"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:view="clr-namespace:SnapSearch.Presentation.Views"
         Title="BABSLAI SnapSearch"
         Width="1280" Height="750"
@@ -51,10 +52,9 @@
                     <Grid Grid.Row="0" Height="56" Background="Transparent"
                           MouseLeftButtonDown="TitleBar_MouseDown">
                         <StackPanel Orientation="Horizontal" Margin="16,0" VerticalAlignment="Center">
-                            <Border Width="32" Height="32" CornerRadius="8"
+                            <Border Width="32" Height="32" CornerRadius="50"
                                     Background="{StaticResource AccentGradient}">
-                                <TextBlock Text="&#x2315;" Foreground="White" FontSize="18"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <materialDesign:PackIcon Kind="Search" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" Height="32" Width="23" />
                             </Border>
                             <TextBlock Text="SnapSearch" Foreground="{StaticResource TextPrimaryBrush}"
                                        FontSize="16" FontWeight="Bold"
