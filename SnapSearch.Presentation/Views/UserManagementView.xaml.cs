@@ -1,5 +1,4 @@
 ﻿using SnapSearch.Presentation.ViewModels;
-using System.Windows.Controls;
 
 namespace SnapSearch.Presentation.Views
 {
@@ -8,9 +7,7 @@ namespace SnapSearch.Presentation.Views
         #region Public Constructors
 
         public UserManagementView()
-        {
-            InitializeComponent();
-        }
+        { InitializeComponent(); }
 
         #endregion Public Constructors
 
