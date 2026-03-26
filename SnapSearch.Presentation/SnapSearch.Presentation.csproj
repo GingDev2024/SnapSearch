@@ -16,6 +16,7 @@
     <None Remove="appsettings.Development.json" />
     <None Remove="appsettings.json" />
     <None Remove="appsettings.Production.json" />
+    <None Remove="Resources\snapsearch.png" />
   </ItemGroup>
 
 	<ItemGroup>
@@ -48,6 +49,8 @@
   </ItemGroup>
 
   <ItemGroup>
+	<Resource Include="Resources\snapsearch.png" />
+	<Resource Include="Resources\snapsearchlogo.ico" />
     <Folder Include="Common\Profiles\" />
     <Folder Include="Models\" />
   </ItemGroup>

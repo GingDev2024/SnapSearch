@@ -83,20 +83,20 @@
 
     <!-- TextBox -->
     <Style x:Key="SearchTextBox" TargetType="TextBox">
-        <Setter Property="Background" Value="{StaticResource SurfaceLightBrush}" />
-        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        <Setter Property="Background" Value="{StaticResource BorderBrush}" />
+        <Setter Property="Foreground" Value="Black" />
         <Setter Property="CaretBrush" Value="{DynamicResource AccentBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="10,8" />
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Padding" Value="7,5" />
+        <Setter Property="FontSize" Value="14" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
                     <Border Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="6">
+                            CornerRadius="6">  
                         <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" />
                     </Border>
                     <ControlTemplate.Triggers>
@@ -109,15 +109,17 @@
         </Setter>
     </Style>
 
+
+
     <!-- PasswordBox -->
     <Style x:Key="StyledPasswordBox" TargetType="PasswordBox">
-        <Setter Property="Background" Value="{StaticResource SurfaceLightBrush}" />
-        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        <Setter Property="Background" Value="{StaticResource BorderBrush}" />
+        <Setter Property="Foreground" Value="Black" />
         <Setter Property="CaretBrush" Value="{DynamicResource AccentBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="10,8" />
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Padding" Value="7,5" />
+        <Setter Property="FontSize" Value="14" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="PasswordBox">
@@ -125,7 +127,8 @@
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="6">
-                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" />
+                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" 
+                                      Foreground="Black"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsFocused" Value="True">
@@ -183,6 +186,7 @@
 
     <!-- Form Label -->
     <Style x:Key="FormLabel" TargetType="TextBlock">
+        <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
         <Setter Property="FontSize" Value="11" />
         <Setter Property="FontWeight" Value="SemiBold" />

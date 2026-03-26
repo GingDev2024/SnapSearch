@@ -74,6 +74,6 @@ namespace SnapSearch.Presentation.Views
                 _vm.LoginCommand.Execute(PasswordBox.Password);
         }
 
-        #endregion Private Methods
+        #endregion Private Methods      
     }
 }

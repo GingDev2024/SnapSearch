@@ -76,7 +76,7 @@
 
                     <!-- Navigation -->
                     <StackPanel Grid.Row="1" Margin="0,16,0,0">
-                        <TextBlock Text="NAVIGATION" Foreground="{StaticResource TextMutedBrush}"
+                        <TextBlock Text="NAVIGATION" Foreground="{StaticResource TextPrimaryBrush}"
                                    FontSize="10" FontWeight="Bold" Margin="22,0,0,8" />
                         <Button Content="Search Files"
                                 Style="{Binding IsSearchActive, Converter={StaticResource NavStyleConverter}}"
@@ -98,11 +98,11 @@
                         <Border Height="1" Background="{StaticResource BorderBrush}" Margin="14,16,14,8" />
 
                         <!-- Theme Toggle Button -->
-                        <Button Command="{Binding ToggleThemeCommand}"
+                        <!--<Button Command="{Binding ToggleThemeCommand}"
                                 Style="{StaticResource NavButton}"
                                 ToolTip="{Binding ThemeLabel}">
                             <StackPanel Orientation="Horizontal">
-                                <!-- Toggle track -->
+                                --><!-- Toggle track --><!--
                                 <Border Width="40" Height="22" CornerRadius="11"
                                         VerticalAlignment="Center" Margin="0,0,10,0">
                                     <Border.Style>
@@ -115,7 +115,7 @@
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
-                                    <!-- Thumb -->
+                                    --><!-- Thumb --><!--
                                     <Border Width="16" Height="16" CornerRadius="8"
                                             Background="White" VerticalAlignment="Center">
                                         <Border.Style>
@@ -136,7 +136,7 @@
                                            Foreground="{StaticResource TextSecondaryBrush}"
                                            FontSize="12" VerticalAlignment="Center" />
                             </StackPanel>
-                        </Button>
+                        </Button>-->
                     </StackPanel>
 
                     <!-- User Panel -->

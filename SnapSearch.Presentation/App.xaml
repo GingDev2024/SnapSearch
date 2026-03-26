@@ -22,9 +22,9 @@
                     <Color x:Key="AccentHoverColor">#3A7AE4</Color>
                     <Color x:Key="SurfaceColor">#1E2438</Color>
                     <Color x:Key="SurfaceLightColor">#2A3250</Color>
-                    <Color x:Key="BorderColor">#3A4268</Color>
-                    <Color x:Key="TextPrimaryColor">#E8ECF5</Color>
-                    <Color x:Key="TextSecondaryColor">White</Color>
+                    <Color x:Key="BorderColor">White</Color>
+                    <Color x:Key="TextPrimaryColor">#1B1C1C</Color>
+                    <Color x:Key="TextSecondaryColor">Black</Color>
                     <Color x:Key="TextMutedColor">Gray</Color>
                     <Color x:Key="SuccessColor">#2ECC71</Color>
                     <Color x:Key="WarningColor">#F39C12</Color>
@@ -45,17 +45,24 @@
                     <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
                     <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
                     <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}" />
+                 
 
-                    <!-- Gradients -->
+                        <!-- Gradients -->
                     <LinearGradientBrush x:Key="AccentGradient" StartPoint="0,0" EndPoint="1,1">
                         <GradientStop Color="#4F8EF7" Offset="0" />
                         <GradientStop Color="#7B5FF5" Offset="1" />
                     </LinearGradientBrush>
 
                     <LinearGradientBrush x:Key="SidebarGradient" StartPoint="0,0" EndPoint="0,1">
-                        <GradientStop Color="#141929" Offset="0" />
-                        <GradientStop Color="#1A2035" Offset="1" />
+                        <GradientStop Color="Azure" Offset="0" />
+                        <GradientStop Color="AliceBlue" Offset="1" />
                     </LinearGradientBrush>
+                    
+                    <LinearGradientBrush x:Key="BackgroundWindowColor" StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="Azure" Offset="0" />
+                        <GradientStop Color="AliceBlue" Offset="1" />
+                    </LinearGradientBrush>
+                    
                 </ResourceDictionary>
 
                 <ResourceDictionary Source="Resources/Styles.xaml" />
