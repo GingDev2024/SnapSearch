@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using SnapSearch.Application;
 using SnapSearch.Application.Contracts;
 using SnapSearch.Infrastructure;
+using SnapSearch.Presentation.Common;
 using SnapSearch.Presentation.ViewModels;
 using SnapSearch.Presentation.Views;
 using System.IO;
@@ -35,6 +36,8 @@ namespace SnapSearch.Presentation
             var services = new ServiceCollection();
             ConfigureServices(services);
             _services = services.BuildServiceProvider();
+
+            ThemeManager.Apply(AppTheme.Dark);
 
             // Show login first
             var loginWindow = _services.GetRequiredService<LoginWindow>();
