@@ -76,8 +76,8 @@
 
                     <!-- Navigation -->
                     <StackPanel Grid.Row="1" Margin="0,16,0,0">
-                        <TextBlock Text="NAVIGATION" Foreground="AliceBlue"
-                                   FontSize="15" FontWeight="Bold" Margin="22,0,0,8" />
+                        <TextBlock Text="NAVIGATION" Foreground="{StaticResource TextMutedBrush}"
+                                   FontSize="10" FontWeight="Bold" Margin="22,0,0,8" />
                         <Button Content="Search Files"
                                 Style="{Binding IsSearchActive, Converter={StaticResource NavStyleConverter}}"
                                 Command="{Binding NavigateSearchCommand}" />
@@ -93,6 +93,50 @@
                                 Style="{StaticResource NavButton}"
                                 Command="{Binding NavigateSettingsCommand}"
                                 Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}" />
+
+                        <!-- Theme Toggle separator -->
+                        <Border Height="1" Background="{StaticResource BorderBrush}" Margin="14,16,14,8" />
+
+                        <!-- Theme Toggle Button -->
+                        <Button Command="{Binding ToggleThemeCommand}"
+                                Style="{StaticResource NavButton}"
+                                ToolTip="{Binding ThemeLabel}">
+                            <StackPanel Orientation="Horizontal">
+                                <!-- Toggle track -->
+                                <Border Width="40" Height="22" CornerRadius="11"
+                                        VerticalAlignment="Center" Margin="0,0,10,0">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="False">
+                                                    <Setter Property="Background" Value="{StaticResource BorderBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <!-- Thumb -->
+                                    <Border Width="16" Height="16" CornerRadius="8"
+                                            Background="White" VerticalAlignment="Center">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="HorizontalAlignment" Value="Right" />
+                                                <Setter Property="Margin" Value="0,0,3,0" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="False">
+                                                        <Setter Property="HorizontalAlignment" Value="Left" />
+                                                        <Setter Property="Margin" Value="3,0,0,0" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                    </Border>
+                                </Border>
+                                <TextBlock Text="{Binding ThemeLabel}"
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           FontSize="12" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
 
                     <!-- User Panel -->
