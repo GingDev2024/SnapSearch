@@ -5,7 +5,7 @@
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </UserControl.Resources>
 
-    <Grid Background="{StaticResource PrimaryBrush}" Margin="28">
+    <Grid Background="{StaticResource BackgroundWindowColor}" Margin="28">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -14,7 +14,14 @@
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0" Margin="0,0,0,16">
-            <TextBlock Text="Access Logs" Style="{StaticResource SectionHeader}" Margin="0" />
+            <TextBlock Text="Access Logs" Style="{StaticResource SectionHeader}" 
+                       Margin="0" />
+            <TextBlock Text="Monitor and review user activity within the system. Track login history, access times, and actions to ensure security and accountability."
+                       TextWrapping="Wrap"
+                       FontSize="12"
+                       FontWeight="SemiBold"
+                       Margin="0,25,0,0"/>
+            
             <Button Content="Export CSV" Style="{StaticResource SecondaryButton}"
                     HorizontalAlignment="Right" Command="{Binding ExportCsvCommand}" Padding="12,6" />
         </Grid>
@@ -35,11 +42,13 @@
                 <TextBlock Grid.Column="0" Text="FROM" Style="{StaticResource FormLabel}"
                            VerticalAlignment="Center" Margin="0,0,8,0" />
                 <DatePicker Grid.Column="1" SelectedDate="{Binding FromDate}"
-                            Background="{StaticResource SurfaceLightBrush}" Foreground="Black" />
+                            Background="{StaticResource BackgroundWindowColor}" Foreground="Black" 
+                            BorderBrush="{StaticResource AccentBrush}"/>
                 <TextBlock Grid.Column="3" Text="TO" Style="{StaticResource FormLabel}"
                            VerticalAlignment="Center" Margin="0,0,8,0" />
                 <DatePicker Grid.Column="4" SelectedDate="{Binding ToDate}"
-                            Background="{StaticResource SurfaceLightBrush}" Foreground="Black" />
+                            Background="{StaticResource BackgroundWindowColor}" Foreground="Black" 
+                            BorderBrush="{StaticResource AccentBrush}"/>
                 <TextBox Grid.Column="6" Style="{StaticResource SearchTextBox}"
                          Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" />
                 <Button Grid.Column="8" Content="Load" Style="{StaticResource PrimaryButton}"

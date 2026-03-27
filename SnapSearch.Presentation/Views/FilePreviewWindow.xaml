@@ -5,12 +5,12 @@
         Width="1000" Height="720"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None" AllowsTransparency="True"
-        Background="Transparent">
+        Background="{DynamicResource BackgroundWindowColor}">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </Window.Resources>
 
-    <Border CornerRadius="12" ClipToBounds="True" Background="{StaticResource PrimaryBrush}">
+    <Border CornerRadius="12" ClipToBounds="True" Background="{StaticResource BackgroundWindowColor}">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="48" />
@@ -19,43 +19,44 @@
             </Grid.RowDefinitions>
 
             <Border Grid.Row="0" Background="{StaticResource PrimaryLightBrush}"
-                    MouseLeftButtonDown="TitleBar_MouseDown">
+                    MouseLeftButtonDown="TitleBar_MouseDown" >
                 <Grid Margin="16,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="{Binding CurrentFile.FileName}"
-                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   Foreground="White"
                                    FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
-                        <TextBlock Text=" — " Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                        <TextBlock Text=" — " Foreground="White" VerticalAlignment="Center" />
                         <TextBlock Text="{Binding CurrentFile.SizeDisplay}"
-                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   Foreground="White"
                                    FontSize="12" VerticalAlignment="Center" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <Border Background="{StaticResource SurfaceLightBrush}" CornerRadius="6"
+                        <Border Background="#BBE2FC"  CornerRadius="6"
                                 Padding="8,4" Margin="0,0,12,0">
                             <StackPanel Orientation="Horizontal">
-                                <Button Content="Prev" Style="{StaticResource SecondaryButton}"
+                                <Button Content="Prev" Style="{StaticResource PrimaryButton}"
                                         Command="{Binding PreviousMatchCommand}" Padding="8,2" FontSize="11" />
                                 <TextBlock Text="{Binding MatchDisplay}"
-                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           Foreground="Black"
                                            FontSize="12" VerticalAlignment="Center" Margin="8,0" />
-                                <Button Content="Next" Style="{StaticResource SecondaryButton}"
+                                <Button Content="Next" Style="{StaticResource PrimaryButton}"
                                         Command="{Binding NextMatchCommand}" Padding="8,2" FontSize="11" />
                             </StackPanel>
                         </Border>
-                        <Button Content="Print" Style="{StaticResource SecondaryButton}"
+                        <Button Content="Print" Style="{StaticResource PrimaryButton}"
                                 Command="{Binding PrintCommand}" Padding="10,4" Margin="0,0,6,0"
                                 Visibility="{Binding CanPrint, Converter={StaticResource BoolToVis}}" />
-                        <Button Content="Export" Style="{StaticResource SecondaryButton}"
+                        <Button Content="Export" Style="{StaticResource PrimaryButton}"
                                 Command="{Binding ExportCommand}" Padding="10,4" Margin="0,0,6,0"
                                 Visibility="{Binding CanExport, Converter={StaticResource BoolToVis}}" />
-                        <Button Content="Copy Path" Style="{StaticResource SecondaryButton}"
+                        <Button Content="Copy Path" Style="{StaticResource PrimaryButton}"
                                 Command="{Binding CopyPathCommand}" Padding="10,4" Margin="0,0,12,0"
                                 Visibility="{Binding CanCopy, Converter={StaticResource BoolToVis}}" />
                         <Button Content="X" Width="28" Height="28" FontSize="12"
                                 Background="Transparent" BorderThickness="0"
-                                Foreground="{StaticResource TextMutedBrush}" Cursor="Hand"
-                                Click="CloseButton_Click" />
+                                Foreground="{StaticResource DangerBrush}" Cursor="Hand"
+                                Click="CloseButton_Click" 
+                                FontWeight="Bold"/>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -66,13 +67,13 @@
                     <ColumnDefinition Width="220" />
                 </Grid.ColumnDefinitions>
 
-                <Border Grid.Column="0" Background="{StaticResource SurfaceBrush}">
+                <Border Grid.Column="0" Background="{StaticResource BackgroundWindowColor}">
                     <ScrollViewer x:Name="TextScrollViewer"
                                   Visibility="{Binding IsTextFile, Converter={StaticResource BoolToVis}}"
                                   HorizontalScrollBarVisibility="Auto"
                                   VerticalScrollBarVisibility="Auto">
                         <RichTextBox x:Name="ContentRichTextBox"
-                                     Background="Transparent"
+                                     Background="{DynamicResource BackgroundWindowColor}"
                                      Foreground="{StaticResource TextPrimaryBrush}"
                                      FontFamily="Consolas" FontSize="12"
                                      IsReadOnly="True" BorderThickness="0" Padding="16">
@@ -91,20 +92,23 @@
                         <Border Grid.Row="0" Padding="12,10"
                                 BorderThickness="0,0,0,1" BorderBrush="{StaticResource BorderBrush}">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="MATCHES " Foreground="{StaticResource TextSecondaryBrush}"
+                                <TextBlock Text="MATCHES " 
+                                           Foreground="White"
                                            FontSize="11" FontWeight="SemiBold" />
-                                <TextBlock Text="{Binding TotalMatches}" Foreground="{StaticResource AccentBrush}"
-                                           FontSize="11" FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding TotalMatches}" 
+                                           Foreground="{StaticResource AccentBrush}"
+                                           FontSize="12" FontWeight="Bold"
+                                           Margin="4,0,0,0"/>
                             </StackPanel>
                         </Border>
                         <ListBox Grid.Row="1" ItemsSource="{Binding ContentMatches}"
                                  SelectedItem="{Binding SelectedMatch}"
-                                 Background="Transparent" BorderThickness="0"
+                                 Background="{StaticResource BackgroundWindowColor}" BorderThickness="0"
                                  SelectionChanged="MatchList_SelectionChanged">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <Border Padding="10,8" CornerRadius="6" Margin="4,2"
-                                            Background="{StaticResource SurfaceColor}">
+                                            Background="{StaticResource SurfaceBrush}">
                                         <StackPanel>
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="Ln " FontSize="10"
@@ -131,11 +135,11 @@
 
             <Border Grid.Row="2" Padding="16,6" BorderThickness="0,1,0,0"
                     BorderBrush="{StaticResource BorderBrush}"
-                    Background="{StaticResource PrimaryLightBrush}">
+                    Background="{DynamicResource BackgroundWindowColor}">
                 <Grid>
                     <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusText}" />
                     <TextBlock HorizontalAlignment="Right" Foreground="{StaticResource TextMutedBrush}"
-                               FontSize="10" Text="{Binding CurrentFile.FilePath}"
+                               FontSize="12" Text="{Binding CurrentFile.FilePath}"
                                TextTrimming="CharacterEllipsis" />
                 </Grid>
             </Border>

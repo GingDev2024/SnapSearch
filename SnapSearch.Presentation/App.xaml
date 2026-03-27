@@ -6,26 +6,21 @@
 
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-
-                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Light.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Defaults.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Primary/MaterialDesignColor.DeepPurple.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Accent/MaterialDesignColor.Lime.xaml" />
-
+                
                 <!-- Theme Colors -->
                 <ResourceDictionary>
 
                     <!-- Colors -->
                     <Color x:Key="PrimaryColor">#1A1F2E</Color>
-                    <Color x:Key="PrimaryLightColor">#252C40</Color>
-                    <Color x:Key="AccentColor">#4F8EF7</Color>
+                    <Color x:Key="PrimaryLightColor">#BBE2FC</Color>
+                    <Color x:Key="AccentColor">#2063D4</Color>
                     <Color x:Key="AccentHoverColor">#3A7AE4</Color>
                     <Color x:Key="SurfaceColor">#1E2438</Color>
                     <Color x:Key="SurfaceLightColor">#2A3250</Color>
                     <Color x:Key="BorderColor">White</Color>
-                    <Color x:Key="TextPrimaryColor">#1B1C1C</Color>
-                    <Color x:Key="TextSecondaryColor">Black</Color>
-                    <Color x:Key="TextMutedColor">Gray</Color>
+                    <Color x:Key="TextPrimaryColor">Black</Color>
+                    <Color x:Key="TextSecondaryColor">White</Color> 
+                    <Color x:Key="TextMutedColor">#4E5356</Color>
                     <Color x:Key="SuccessColor">#2ECC71</Color>
                     <Color x:Key="WarningColor">#F39C12</Color>
                     <Color x:Key="DangerColor">#E74C3C</Color>
