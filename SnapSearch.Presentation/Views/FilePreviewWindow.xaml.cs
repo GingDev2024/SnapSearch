@@ -29,7 +29,7 @@ namespace SnapSearch.Presentation.Views
             Loaded += async (_, _) =>
             {
                 await _vm.LoadFileAsync(file, keyword);
-                if (_vm.IsTextFile)
+                if (!string.IsNullOrEmpty(_vm.FileContent))
                     RenderHighlightedContent();
             };
         }

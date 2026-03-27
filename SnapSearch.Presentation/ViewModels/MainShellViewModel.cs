@@ -89,7 +89,7 @@ namespace SnapSearch.Presentation.ViewModels
         public void Initialize()
         {
             var user = SessionContext.Instance.CurrentUser;
-            CurrentUserDisplay = user != null ? $"{user.Username}  [{user.Role}]" : string.Empty;
+            CurrentUserDisplay = user != null ? $"{user.Username} - {user.Role}" : string.Empty;
             OnPropertyChanged(nameof(IsAdmin));
             NavigateTo("Search");
         }

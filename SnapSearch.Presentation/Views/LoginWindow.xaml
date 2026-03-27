@@ -14,7 +14,7 @@
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </Window.Resources>
 
-    <Border CornerRadius="16" ClipToBounds="True" Cursor="IBeam" Height="626" VerticalAlignment="Top">
+    <Border CornerRadius="16" ClipToBounds="True" Cursor="IBeam" Height="536" VerticalAlignment="Center" Margin="46,0,53,0">
         <Border.Background>
             <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Color="Azure" Offset="0" />
@@ -22,7 +22,7 @@
             </LinearGradientBrush>
         </Border.Background>
 
-        <Grid Margin="0,0,0,52">
+        <Grid Margin="0,0,0,10">
             <!-- 🔥 MAIN SPLIT -->
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -45,7 +45,7 @@
 
                     <Border Width="120" Height="120">
                         <Image Source="pack://application:,,,/Resources/snapsearch.png"
-                               Stretch="Fill" Margin="-23,-45,-23,0"/>
+                               Stretch="Fill" Margin="-23,-55,-23,10"/>
                     </Border>
 
                     <TextBlock Text="SNAPSEARCH"
@@ -53,7 +53,7 @@
                                FontWeight="Bold"
                                Foreground="#020445"
                                HorizontalAlignment="Center"
-                               Margin="0,20,0,0" Height="49"/>
+                               Margin="0,0,0,0" Height="49"/>
                     <TextBlock Text="We make financial dreams come true!"
                         FontSize="25"
                         FontWeight="Bold"
@@ -74,7 +74,13 @@
             <!-- 🔹 RIGHT SIDE (LOGIN FORM) -->
             <StackPanel Grid.Column="2"
                         Grid.Row="1"
-                        Margin="60,120,60,0" Height="438" VerticalAlignment="Top">
+                        Margin="6,40,24,0" Height="447" VerticalAlignment="Top">
+                <TextBlock Text="LOGIN"
+                             FontSize="26"
+                             FontWeight="Bold"
+                             Foreground="#020445"
+                             HorizontalAlignment="Center"
+                             Margin="2,20,0,10"/>
 
                 <TextBlock Text="Welcome! Find your files quickly and easily."
                      FontSize="16"
@@ -112,7 +118,7 @@
 
                 <ProgressBar IsIndeterminate="True"
                              Height="4"
-                             Margin="0,20,0,0"
+                             Margin="0,40,0,0"
                              Background="Transparent"
                              Foreground="LightGreen"
                              Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}" />

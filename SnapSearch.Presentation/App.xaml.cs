@@ -9,6 +9,7 @@ using SnapSearch.Presentation.ViewModels;
 using SnapSearch.Presentation.Views;
 using System.IO;
 using System.Windows;
+using System.Windows.Media.Imaging;
 
 namespace SnapSearch.Presentation
 {
@@ -32,6 +33,19 @@ namespace SnapSearch.Presentation
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+            
+            // Load the icon
+            var iconUri = new Uri("pack://application:,,,/Resources/snapsearchlogo.ico", UriKind.Absolute);
+
+            // Set the icon for each new window when it's created
+            EventManager.RegisterClassHandler(typeof(Window), Window.LoadedEvent,
+                new RoutedEventHandler((sender, args) =>
+                {
+                    if (sender is Window window)
+                    {
+                        window.Icon = BitmapFrame.Create(iconUri);
+                    }
+                }));
 
             var services = new ServiceCollection();
             ConfigureServices(services);
