@@ -4,43 +4,47 @@ using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading; // ADD THIS
 
 namespace SnapSearch.Presentation.Views
 {
     public partial class FilePreviewWindow : Window
     {
         #region Fields
-
         private readonly FilePreviewViewModel _vm;
-
         #endregion Fields
 
         #region Public Constructors
-
         public FilePreviewWindow(FileResultDto file, string keyword)
         {
             InitializeComponent();
             _vm = App.GetService<FilePreviewViewModel>();
             DataContext = _vm;
-
             _vm.ScrollToLineRequested += ScrollToLine;
             _vm.PrintRequested += OnPrintRequested;
 
             Loaded += async (_, _) =>
             {
                 await _vm.LoadFileAsync(file, keyword);
+
+                // FIX: yield to the dispatcher so WPF processes the IsTextFile
+                // binding change and makes the ScrollViewer Visible BEFORE
+                // we write into the RichTextBox. Without this, the FlowDocument
+                // is populated while the control is still Collapsed and the
+                // layout never runs, so the content appears blank.
+                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Render);
+
                 if (!string.IsNullOrEmpty(_vm.FileContent))
                     RenderHighlightedContent();
             };
         }
-
         #endregion Public Constructors
 
         #region Private Methods
-
         private void RenderHighlightedContent()
         {
             ContentRichTextBox.Document.Blocks.Clear();
+
             if (string.IsNullOrEmpty(_vm.FileContent))
                 return;
 
@@ -59,7 +63,8 @@ namespace SnapSearch.Presentation.Views
                 {
                     int lastIndex = 0;
                     int idx;
-                    while ((idx = line.IndexOf(keyword, lastIndex, StringComparison.OrdinalIgnoreCase)) >= 0)
+                    while ((idx = line.IndexOf(keyword, lastIndex,
+                               StringComparison.OrdinalIgnoreCase)) >= 0)
                     {
                         if (idx > lastIndex)
                             linePara.Inlines.Add(new Run(line[lastIndex..idx]));
@@ -70,9 +75,9 @@ namespace SnapSearch.Presentation.Views
                             Foreground = System.Windows.Media.Brushes.White,
                             FontWeight = FontWeights.Bold
                         });
-
                         lastIndex = idx + keyword.Length;
                     }
+
                     if (lastIndex < line.Length)
                         linePara.Inlines.Add(new Run(line[lastIndex..]));
                 }
@@ -85,6 +90,7 @@ namespace SnapSearch.Presentation.Views
         {
             if (!_vm.IsTextFile)
                 return;
+
             var blocks = ContentRichTextBox.Document.Blocks.ToList();
             if (lineNumber > 0 && lineNumber - 1 < blocks.Count)
                 blocks[lineNumber - 1].BringIntoView();
@@ -95,11 +101,12 @@ namespace SnapSearch.Presentation.Views
             var pd = new System.Windows.Controls.PrintDialog();
             if (pd.ShowDialog() == true)
                 pd.PrintDocument(
-                    ((IDocumentPaginatorSource) ContentRichTextBox.Document).DocumentPaginator,
+                    ((IDocumentPaginatorSource)ContentRichTextBox.Document).DocumentPaginator,
                     _vm.CurrentFile?.FileName ?? "SnapSearch Print");
         }
 
-        private void MatchList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        private void MatchList_SelectionChanged(object sender,
+            System.Windows.Controls.SelectionChangedEventArgs e)
         {
             if (_vm.SelectedMatch != null)
                 ScrollToLine(_vm.SelectedMatch.LineNumber);
@@ -112,7 +119,6 @@ namespace SnapSearch.Presentation.Views
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
-
         #endregion Private Methods
     }
 }
