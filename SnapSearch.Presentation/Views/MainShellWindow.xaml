@@ -76,8 +76,6 @@
 
                     <!-- Navigation -->
                     <StackPanel Grid.Row="1" Margin="0,16,0,0">
-                        <TextBlock Text="NAVIGATION" Foreground="{StaticResource TextMutedBrush}"
-                                   FontSize="10" FontWeight="Bold" Margin="22,0,0,8" />
                         <TextBlock Text="NAVIGATION" Foreground="Black"
                                    FontSize="15" FontWeight="Bold" Margin="57,0,0,16" />
                         <Button Content="Search Files"
