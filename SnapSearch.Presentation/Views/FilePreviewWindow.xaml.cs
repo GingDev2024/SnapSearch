@@ -1,10 +1,12 @@
 ﻿using SnapSearch.Application.DTOs;
 using SnapSearch.Presentation.ViewModels;
+using System.IO;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Threading; // ADD THIS
+using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 
 namespace SnapSearch.Presentation.Views
 {
@@ -27,13 +29,18 @@ namespace SnapSearch.Presentation.Views
             {
                 await _vm.LoadFileAsync(file, keyword);
 
-                // FIX: yield to the dispatcher so WPF processes the IsTextFile
-                // binding change and makes the ScrollViewer Visible BEFORE
-                // we write into the RichTextBox. Without this, the FlowDocument
-                // is populated while the control is still Collapsed and the
-                // layout never runs, so the content appears blank.
+                // flush bindings FIRST so Visibility updates before we load
                 await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Render);
 
+                // PDF
+                if (_vm.IsPdfFile && _vm.CurrentFile != null)
+                    PdfViewer.LoadPdf(_vm.CurrentFile.FilePath);
+
+                // Image
+                if (_vm.IsImageFile && _vm.CurrentFile != null)
+                    LoadImage(_vm.CurrentFile.FilePath);
+
+                // Text
                 if (!string.IsNullOrEmpty(_vm.FileContent))
                     RenderHighlightedContent();
             };
@@ -41,9 +48,32 @@ namespace SnapSearch.Presentation.Views
         #endregion Public Constructors
 
         #region Private Methods
+
+        private void LoadImage(string filePath)
+        {
+            try
+            {
+                var bitmap = new BitmapImage();
+                using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                {
+                    bitmap.BeginInit();
+                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmap.StreamSource = stream;
+                    bitmap.EndInit();
+                    bitmap.Freeze();
+                }
+                PreviewImage.Source = bitmap;
+            }
+            catch (Exception ex)
+            {
+                _vm.StatusMessage = $"Could not load image: {ex.Message}";
+            }
+        }
+
         private void RenderHighlightedContent()
         {
             ContentRichTextBox.Document.Blocks.Clear();
+            ContentRichTextBox.Document.PageWidth = 10000; // ADD THIS — prevents letter-by-letter wrapping
 
             if (string.IsNullOrEmpty(_vm.FileContent))
                 return;
@@ -53,7 +83,14 @@ namespace SnapSearch.Presentation.Views
 
             foreach (var line in lines)
             {
-                var linePara = new Paragraph { Margin = new Thickness(0) };
+                var linePara = new Paragraph 
+                { 
+                    Padding = new Thickness(0),
+                    Margin = new Thickness(0),
+                    TextAlignment = TextAlignment.Left,
+                    KeepTogether = true
+
+                };
 
                 if (string.IsNullOrWhiteSpace(keyword))
                 {
@@ -88,8 +125,7 @@ namespace SnapSearch.Presentation.Views
 
         private void ScrollToLine(int lineNumber)
         {
-            if (!_vm.IsTextFile)
-                return;
+            if (!_vm.IsTextFile) return;
 
             var blocks = ContentRichTextBox.Document.Blocks.ToList();
             if (lineNumber > 0 && lineNumber - 1 < blocks.Count)
@@ -103,6 +139,23 @@ namespace SnapSearch.Presentation.Views
                 pd.PrintDocument(
                     ((IDocumentPaginatorSource)ContentRichTextBox.Document).DocumentPaginator,
                     _vm.CurrentFile?.FileName ?? "SnapSearch Print");
+        }
+
+        private void OpenWithDefaultApp_Click(object sender, RoutedEventArgs e)
+        {
+            if (_vm.CurrentFile == null) return;
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = _vm.CurrentFile.FilePath,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                _vm.StatusMessage = $"Could not open file: {ex.Message}";
+            }
         }
 
         private void MatchList_SelectionChanged(object sender,
@@ -119,6 +172,7 @@ namespace SnapSearch.Presentation.Views
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
+
         #endregion Private Methods
     }
 }
