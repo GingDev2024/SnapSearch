@@ -17,13 +17,9 @@ namespace SnapSearch.Presentation.ViewModels
 
         private FileResultDto? _currentFile;
         private string _keyword = string.Empty;
-
         private string _fileContent = string.Empty;
-
         private int _currentMatchIndex;
-
         private int _totalMatches;
-
         private ContentMatchDto? _selectedMatch;
 
         #endregion Fields
@@ -47,7 +43,6 @@ namespace SnapSearch.Presentation.ViewModels
         #region Events
 
         public event Action<int>? ScrollToLineRequested;
-
         public event Action? PrintRequested;
 
         #endregion Events
@@ -108,8 +103,11 @@ namespace SnapSearch.Presentation.ViewModels
         public bool CanExport => SessionContext.Instance.HasPermission("ExportFile");
         public bool CanCopy => SessionContext.Instance.HasPermission("CopyFile");
 
+        // --- file type detection ---
         public bool IsTextFile => CurrentFile != null && IsPlainText(CurrentFile.Extension);
         public bool IsPdfFile => CurrentFile?.Extension.Equals(".pdf", StringComparison.OrdinalIgnoreCase) == true;
+        public bool IsImageFile => CurrentFile != null && IsImage(CurrentFile.Extension);
+        public bool IsUnsupportedFile => CurrentFile != null && !IsTextFile && !IsPdfFile && !IsImageFile;
 
         public ICommand NextMatchCommand { get; }
         public ICommand PreviousMatchCommand { get; }
@@ -133,13 +131,11 @@ namespace SnapSearch.Presentation.ViewModels
 
             try
             {
-                // Load text content for text files
+                // only read raw text for text files
                 if (IsPlainText(file.Extension))
-                {
                     FileContent = await File.ReadAllTextAsync(file.FilePath);
-                }
 
-                // Load content matches
+                // load keyword matches
                 if (!string.IsNullOrWhiteSpace(keyword))
                 {
                     var matches = await _searchService.GetContentMatchesAsync(file.FilePath, keyword);
@@ -166,8 +162,11 @@ namespace SnapSearch.Presentation.ViewModels
             finally
             {
                 IsBusy = false;
+                // notify all type flags so bindings update
                 OnPropertyChanged(nameof(IsTextFile));
                 OnPropertyChanged(nameof(IsPdfFile));
+                OnPropertyChanged(nameof(IsImageFile));
+                OnPropertyChanged(nameof(IsUnsupportedFile));
             }
         }
 
@@ -176,8 +175,23 @@ namespace SnapSearch.Presentation.ViewModels
         #region Private Methods
 
         private static bool IsPlainText(string ext) =>
-            ext.ToLower() is ".txt" or ".log" or ".csv" or ".xml" or ".json"
-                or ".md" or ".ini" or ".cfg" or ".bat" or ".ps1" or ".cs" or ".html";
+            ext.ToLower() is
+                // documents
+                ".txt" or ".log" or ".md" or ".rtf" or
+                // data
+                ".csv" or ".json" or ".xml" or ".yaml" or ".yml" or ".toml" or
+                // config
+                ".ini" or ".cfg" or ".config" or ".env" or ".properties" or
+                // code
+                ".cs" or ".vb" or ".fs" or ".py" or ".js" or ".ts" or ".java" or
+                ".cpp" or ".c" or ".h" or ".go" or ".rs" or ".php" or ".rb" or
+                ".html" or ".htm" or ".css" or ".scss" or ".sql" or
+                // scripts
+                ".bat" or ".cmd" or ".ps1" or ".sh";
+
+        private static bool IsImage(string ext) =>
+            ext.ToLower() is ".png" or ".jpg" or ".jpeg" or ".bmp" or
+                             ".gif" or ".webp" or ".tiff" or ".tif" or ".ico";
 
         private void GoToNextMatch(object? _)
         {
@@ -201,8 +215,7 @@ namespace SnapSearch.Presentation.ViewModels
 
         private async Task ExecutePrintAsync(object? _)
         {
-            if (CurrentFile == null)
-                return;
+            if (CurrentFile == null) return;
             var userId = SessionContext.Instance.CurrentUser?.Id;
             var username = SessionContext.Instance.CurrentUser?.Username ?? string.Empty;
             await _accessLogService.LogAsync(userId, username, ActionType.PrintFile, CurrentFile.FilePath);
@@ -211,8 +224,7 @@ namespace SnapSearch.Presentation.ViewModels
 
         private async Task ExecuteExportAsync(object? _)
         {
-            if (CurrentFile == null)
-                return;
+            if (CurrentFile == null) return;
             var dlg = new Microsoft.Win32.SaveFileDialog
             {
                 FileName = CurrentFile.FileName,
@@ -223,16 +235,15 @@ namespace SnapSearch.Presentation.ViewModels
                 File.Copy(CurrentFile.FilePath, dlg.FileName, overwrite: true);
                 var userId = SessionContext.Instance.CurrentUser?.Id;
                 var username = SessionContext.Instance.CurrentUser?.Username ?? string.Empty;
-                await _accessLogService.LogAsync(userId, username, ActionType.ExportFile, CurrentFile.FilePath,
-                    details: $"Exported to: {dlg.FileName}");
+                await _accessLogService.LogAsync(userId, username, ActionType.ExportFile,
+                    CurrentFile.FilePath, details: $"Exported to: {dlg.FileName}");
                 StatusMessage = "File exported successfully.";
             }
         }
 
         private void ExecuteCopyPath(object? _)
         {
-            if (CurrentFile == null)
-                return;
+            if (CurrentFile == null) return;
             System.Windows.Clipboard.SetText(CurrentFile.FilePath);
             StatusMessage = "Path copied to clipboard.";
         }

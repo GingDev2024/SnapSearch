@@ -188,6 +188,8 @@
     <!-- DataGrid -->
     <Style x:Key="StyledDataGrid" TargetType="DataGrid">
         <Setter Property="Background" Value="#BBE2FC"/>
+        <Setter Property="FontSize" Value="15"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="Black" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="GridLinesVisibility" Value="Horizontal" />

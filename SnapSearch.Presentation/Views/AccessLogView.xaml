@@ -22,7 +22,7 @@
                        FontWeight="SemiBold"
                        Margin="0,25,0,0"/>
             
-            <Button Content="Export CSV" Style="{StaticResource SecondaryButton}"
+            <Button Content="Export CSV" Style="{StaticResource PrimaryButton}"
                     HorizontalAlignment="Right" Command="{Binding ExportCsvCommand}" Padding="12,6" />
         </Grid>
 
@@ -62,7 +62,7 @@
                       ItemsSource="{Binding Logs}">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Time"
-                                        Binding="{Binding AccessedAt, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="150" />
+                                        Binding="{Binding AccessedAt, StringFormat='{}{0:MM/dd/yyyy hh:mm tt}'}" Width="180" />
                     <DataGridTextColumn Header="User"       Binding="{Binding Username}"      Width="120" />
                     <DataGridTextColumn Header="Action"     Binding="{Binding Action}"         Width="110" />
                     <DataGridTextColumn Header="Keyword"    Binding="{Binding SearchKeyword}"  Width="130" />

@@ -16,10 +16,10 @@ namespace SnapSearch.Presentation.ViewModels
 
         // Form fields
         private string _formUsername = string.Empty;
-
         private string _formRole = "ViewerOnly";
         private string _formPassword = string.Empty;
         private bool _formIsActive = true;
+        private DateTime _formCreatedAt = DateTime.UtcNow.AddHours(8);
 
         #endregion Fields
 
@@ -78,6 +78,12 @@ namespace SnapSearch.Presentation.ViewModels
             set => SetProperty(ref _formIsActive, value);
         }
 
+        public DateTime FormCreatedAt 
+        { 
+            get => _formCreatedAt;
+            set => SetProperty(ref _formCreatedAt, value); 
+        }
+
         public bool IsEditing => SelectedUser != null;
 
         public List<string> Roles { get; } = new()
@@ -128,7 +134,8 @@ namespace SnapSearch.Presentation.ViewModels
                         Username = FormUsername,
                         Role = FormRole,
                         IsActive = FormIsActive,
-                        NewPassword = string.IsNullOrWhiteSpace(FormPassword) ? null : FormPassword
+                        UpdatedAt = FormCreatedAt,
+                        NewPassword = string.IsNullOrWhiteSpace(FormPassword) ? null : FormPassword,
                     };
                     await _userService.UpdateUserAsync(dto);
                     StatusMessage = "User updated successfully.";
@@ -144,7 +151,8 @@ namespace SnapSearch.Presentation.ViewModels
                     {
                         Username = FormUsername,
                         Password = FormPassword,
-                        Role = FormRole
+                        Role = FormRole,
+                        CreatedAt = FormCreatedAt
                     };
                     await _userService.CreateUserAsync(dto);
                     StatusMessage = "User created successfully.";
@@ -179,6 +187,7 @@ namespace SnapSearch.Presentation.ViewModels
             FormRole = user.Role;
             FormIsActive = user.IsActive;
             FormPassword = string.Empty;
+            FormCreatedAt = user.CreatedAt;
         }
 
         private void ClearForm(object? _)
@@ -188,6 +197,7 @@ namespace SnapSearch.Presentation.ViewModels
             FormRole = "ViewerOnly";
             FormPassword = string.Empty;
             FormIsActive = true;
+            FormCreatedAt = DateTime.UtcNow.AddHours(8);    
             OnPropertyChanged(nameof(IsEditing));
         }
 
