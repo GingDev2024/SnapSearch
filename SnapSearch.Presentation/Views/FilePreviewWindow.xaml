@@ -9,14 +9,6 @@
         AllowsTransparency="False"
         Background="{StaticResource BackgroundWindowColor}">
 
-    <!--
-        KEY FIX: AllowsTransparency="False"
-        AllowsTransparency="True" forces WPF into a software rendering path that
-        causes a completely blank/white window when combined with WindowStyle=None
-        and a DynamicResource background on the root Border. Turning it off fixes
-        the blank window while keeping the custom chrome look via the inner Border.
-    -->
-
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </Window.Resources>
