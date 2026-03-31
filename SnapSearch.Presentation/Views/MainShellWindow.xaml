@@ -10,7 +10,7 @@
         WindowStartupLocation="CenterScreen"
         WindowStyle="SingleBorderWindow"
         AllowsTransparency="False"
-        Background="Transparent">
+        Background="{StaticResource BackgroundWindowColor}">
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
@@ -30,7 +30,7 @@
 
     <Border CornerRadius="12" ClipToBounds="True">
         <Border.Background>
-            <SolidColorBrush Color="#0F1422" />
+            <SolidColorBrush Color="Azure" />
         </Border.Background>
         <Grid>
             <Grid.ColumnDefinitions>
@@ -39,8 +39,8 @@
             </Grid.ColumnDefinitions>
 
             <!-- SIDEBAR -->
-            <Border Grid.Column="0" Background="{StaticResource SidebarGradient}"
-                    BorderThickness="0,0,1,0" BorderBrush="{StaticResource BorderBrush}">
+            <Border Grid.Column="0" Background="{StaticResource BackgroundWindowColor}"
+                    BorderThickness="0,0,1,0" BorderBrush="Transparent">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -49,18 +49,19 @@
                     </Grid.RowDefinitions>
 
                     <!-- Logo + Title bar -->
-                    <Grid Grid.Row="0" Height="56" Background="Transparent"
+                    <Grid Grid.Row="0" Height="56" Background="{StaticResource BackgroundWindowColor}"
                           MouseLeftButtonDown="TitleBar_MouseDown">
                         <StackPanel Orientation="Horizontal" Margin="16,0" VerticalAlignment="Center">
-                            <Border Width="32" Height="32" CornerRadius="50"
-                                    Background="{StaticResource AccentGradient}">
+                            <Border Width="32" Height="32" CornerRadius="50">
+                                <Image Source="pack://application:,,,/Resources/snapsearch.png"
+                                       Stretch="Uniform" Margin="2,1,0,0" />
                             </Border>
-                            <TextBlock Text="SnapSearch" Foreground="{StaticResource TextPrimaryBrush}"
+                            <TextBlock Text="SnapSearch" Foreground="Black"
                                        FontSize="16" FontWeight="Bold"
                                        VerticalAlignment="Center" Margin="10,0,0,0" />
                         </StackPanel>
                         <!-- Window buttons -->
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                        <!--<StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
                                     VerticalAlignment="Center" Margin="0,0,8,0">
                             <Button Content="&#x2014;" Width="22" Height="22" FontSize="10"
                                     Background="Transparent" BorderThickness="0"
@@ -70,13 +71,15 @@
                                     Background="Transparent" BorderThickness="0"
                                     Foreground="{StaticResource TextMutedBrush}" Cursor="Hand"
                                     Click="CloseButton_Click" />
-                        </StackPanel>
+                        </StackPanel>-->
                     </Grid>
 
                     <!-- Navigation -->
                     <StackPanel Grid.Row="1" Margin="0,16,0,0">
                         <TextBlock Text="NAVIGATION" Foreground="{StaticResource TextMutedBrush}"
                                    FontSize="10" FontWeight="Bold" Margin="22,0,0,8" />
+                        <TextBlock Text="NAVIGATION" Foreground="Black"
+                                   FontSize="15" FontWeight="Bold" Margin="57,0,0,16" />
                         <Button Content="Search Files"
                                 Style="{Binding IsSearchActive, Converter={StaticResource NavStyleConverter}}"
                                 Command="{Binding NavigateSearchCommand}" />
@@ -144,7 +147,7 @@
 
                     <!-- User Panel -->
                     <Border Grid.Row="2" Margin="12,0,12,16" Padding="12"
-                            Background="{StaticResource SurfaceLightBrush}"
+                            Background="{StaticResource BackgroundWindowColor}"
                             CornerRadius="8">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -152,12 +155,21 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="{Binding CurrentUserDisplay}"
-                                       Foreground="{StaticResource TextSecondaryBrush}"
-                                       FontSize="11" TextWrapping="Wrap" />
-                            <Button Grid.Column="1" Content="Logout" ToolTip="Logout"
-                                    Style="{StaticResource NavButton}"
+                                       Margin="0,7,0,0"
+                                       Foreground="Black"
+                                       FontSize="12"
+                                       FontWeight="Bold"
+                                       TextWrapping="Wrap" />
+                            <!--<Button Grid.Column="1" Content="Logout" ToolTip="Logout"
+                                   Foreground="Red"
+                                    FontWeight="SemiBold"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
                                     Command="{Binding LogoutCommand}"
-                                    Padding="8,4" FontSize="11" />
+                                    Padding="8,4" FontSize="11" />-->
+
+                            <Button Grid.Column="1" Content="➜] Logout" Style="{DynamicResource DangerButton}"
+                            Command="{Binding LogoutCommand}" FontSize="11" Padding="9" />
                         </Grid>
                     </Border>
                 </Grid>

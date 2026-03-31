@@ -1,16 +1,27 @@
 ﻿<Window x:Class="SnapSearch.Presentation.Views.FilePreviewWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:SnapSearch.Presentation.Views"
         Title="File Preview"
         Width="1000" Height="720"
         WindowStartupLocation="CenterScreen"
-        WindowStyle="None" AllowsTransparency="True"
-        Background="Transparent">
+        WindowStyle="None"
+        AllowsTransparency="False"
+        Background="{StaticResource BackgroundWindowColor}">
+
+    <!--
+        KEY FIX: AllowsTransparency="False"
+        AllowsTransparency="True" forces WPF into a software rendering path that
+        causes a completely blank/white window when combined with WindowStyle=None
+        and a DynamicResource background on the root Border. Turning it off fixes
+        the blank window while keeping the custom chrome look via the inner Border.
+    -->
+
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </Window.Resources>
 
-    <Border CornerRadius="12" ClipToBounds="True" Background="{StaticResource PrimaryBrush}">
+    <Border CornerRadius="0" Background="{StaticResource BackgroundWindowColor}">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="48" />
@@ -18,69 +29,130 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
+            <!-- Title bar -->
             <Border Grid.Row="0" Background="{StaticResource PrimaryLightBrush}"
                     MouseLeftButtonDown="TitleBar_MouseDown">
                 <Grid Margin="16,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="{Binding CurrentFile.FileName}"
-                                   Foreground="{StaticResource TextPrimaryBrush}"
-                                   FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
-                        <TextBlock Text=" — " Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                                   Foreground="White" FontSize="13" FontWeight="SemiBold"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text=" — " Foreground="White" VerticalAlignment="Center" />
                         <TextBlock Text="{Binding CurrentFile.SizeDisplay}"
-                                   Foreground="{StaticResource TextSecondaryBrush}"
-                                   FontSize="12" VerticalAlignment="Center" />
+                                   Foreground="White" FontSize="12" VerticalAlignment="Center" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <Border Background="{StaticResource SurfaceLightBrush}" CornerRadius="6"
-                                Padding="8,4" Margin="0,0,12,0">
+                        <Border Background="#BBE2FC" CornerRadius="6" Padding="8,4" Margin="0,0,12,0">
                             <StackPanel Orientation="Horizontal">
-                                <Button Content="Prev" Style="{StaticResource SecondaryButton}"
+                                <Button Content="Prev" Style="{StaticResource PrimaryButton}"
                                         Command="{Binding PreviousMatchCommand}" Padding="8,2" FontSize="11" />
-                                <TextBlock Text="{Binding MatchDisplay}"
-                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                <TextBlock Text="{Binding MatchDisplay}" Foreground="Black"
                                            FontSize="12" VerticalAlignment="Center" Margin="8,0" />
-                                <Button Content="Next" Style="{StaticResource SecondaryButton}"
+                                <Button Content="Next" Style="{StaticResource PrimaryButton}"
                                         Command="{Binding NextMatchCommand}" Padding="8,2" FontSize="11" />
                             </StackPanel>
                         </Border>
-                        <Button Content="Print" Style="{StaticResource SecondaryButton}"
+                        <Button Content="Print" Style="{StaticResource PrimaryButton}"
                                 Command="{Binding PrintCommand}" Padding="10,4" Margin="0,0,6,0"
                                 Visibility="{Binding CanPrint, Converter={StaticResource BoolToVis}}" />
-                        <Button Content="Export" Style="{StaticResource SecondaryButton}"
+                        <Button Content="Export" Style="{StaticResource PrimaryButton}"
                                 Command="{Binding ExportCommand}" Padding="10,4" Margin="0,0,6,0"
                                 Visibility="{Binding CanExport, Converter={StaticResource BoolToVis}}" />
-                        <Button Content="Copy Path" Style="{StaticResource SecondaryButton}"
+                        <Button Content="Copy Path" Style="{StaticResource PrimaryButton}"
                                 Command="{Binding CopyPathCommand}" Padding="10,4" Margin="0,0,12,0"
                                 Visibility="{Binding CanCopy, Converter={StaticResource BoolToVis}}" />
                         <Button Content="X" Width="28" Height="28" FontSize="12"
                                 Background="Transparent" BorderThickness="0"
-                                Foreground="{StaticResource TextMutedBrush}" Cursor="Hand"
-                                Click="CloseButton_Click" />
+                                Foreground="{StaticResource DangerBrush}" Cursor="Hand"
+                                Click="CloseButton_Click" FontWeight="Bold" />
                     </StackPanel>
                 </Grid>
             </Border>
 
+            <!-- Content area -->
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="220" />
                 </Grid.ColumnDefinitions>
 
-                <Border Grid.Column="0" Background="{StaticResource SurfaceBrush}">
-                    <ScrollViewer x:Name="TextScrollViewer"
-                                  Visibility="{Binding IsTextFile, Converter={StaticResource BoolToVis}}"
-                                  HorizontalScrollBarVisibility="Auto"
-                                  VerticalScrollBarVisibility="Auto">
-                        <RichTextBox x:Name="ContentRichTextBox"
-                                     Background="Transparent"
-                                     Foreground="{StaticResource TextPrimaryBrush}"
-                                     FontFamily="Consolas" FontSize="12"
-                                     IsReadOnly="True" BorderThickness="0" Padding="16">
-                            <FlowDocument />
-                        </RichTextBox>
-                    </ScrollViewer>
+                <!-- Left: file viewers -->
+                <Border Grid.Column="0" Background="{StaticResource BackgroundWindowColor}">
+                    <Grid>
+
+                        <!-- 1. Text / code files -->
+                        <ScrollViewer x:Name="TextScrollViewer"
+                                      Visibility="{Binding IsTextFile, Converter={StaticResource BoolToVis}}"
+                                      HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Auto"
+                                      Background="{StaticResource BackgroundWindowColor}">
+                            <RichTextBox x:Name="ContentRichTextBox"
+                                         Background="{StaticResource BackgroundWindowColor}"
+                                         Foreground="Black"
+                                         FontFamily="Consolas"
+                                         FontSize="13"
+                                         IsReadOnly="True"
+                                         BorderThickness="0"
+                                         Padding="16"
+                                         AcceptsReturn="True">
+                                <RichTextBox.Document>
+                                    <FlowDocument PagePadding="4,0,4,0"
+                                                  PageWidth="10000"
+                                                  TextAlignment="Left"
+                                                  FontFamily="Consolas"
+                                                  FontSize="13" />
+                                </RichTextBox.Document>
+                            </RichTextBox>
+                        </ScrollViewer>
+
+                        <!-- 2. PDF files -->
+                        <views:PdfViewerControl x:Name="PdfViewer"
+                                                Visibility="{Binding IsPdfFile, Converter={StaticResource BoolToVis}}" />
+
+                        <!-- 3. Image files -->
+                        <ScrollViewer Visibility="{Binding IsImageFile, Converter={StaticResource BoolToVis}}"
+                                      HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Auto">
+                            <Image x:Name="PreviewImage"
+                                   Stretch="Uniform" Margin="16"
+                                   RenderOptions.BitmapScalingMode="HighQuality" />
+                        </ScrollViewer>
+
+                        <!-- 4. Unsupported files (docx, xlsx, pptx, etc.) -->
+                        <StackPanel Visibility="{Binding IsUnsupportedFile, Converter={StaticResource BoolToVis}}"
+                                    VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <TextBlock Text="⚠" FontSize="48" HorizontalAlignment="Center"
+                                       Foreground="{StaticResource TextMutedBrush}" />
+                            <TextBlock Text="Preview not available for this file type"
+                                       FontSize="14" Foreground="{StaticResource TextMutedBrush}"
+                                       HorizontalAlignment="Center" Margin="0,12,0,0" />
+                            <TextBlock Text="{Binding CurrentFile.Extension}"
+                                       FontSize="12" Foreground="{StaticResource TextMutedBrush}"
+                                       HorizontalAlignment="Center" Margin="0,4,0,0" />
+                            <Button Content="Open with Default App"
+                                    Style="{StaticResource PrimaryButton}"
+                                    Margin="0,20,0,0" Padding="16,8"
+                                    Click="OpenWithDefaultApp_Click" />
+                        </StackPanel>
+
+                        <!-- 5. Loading indicator -->
+                        <Border Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"
+                                Background="{StaticResource BackgroundWindowColor}"
+                                VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <ProgressBar IsIndeterminate="True" Width="200" Height="6"
+                                             Foreground="{StaticResource AccentBrush}"
+                                             Background="Transparent" />
+                                <TextBlock Text="{Binding StatusMessage}"
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           FontSize="12" HorizontalAlignment="Center"
+                                           Margin="0,10,0,0" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
                 </Border>
 
+                <!-- Right: matches panel -->
                 <Border Grid.Column="1" Background="{StaticResource PrimaryLightBrush}"
                         BorderThickness="1,0,0,0" BorderBrush="{StaticResource BorderBrush}">
                     <Grid>
@@ -91,20 +163,21 @@
                         <Border Grid.Row="0" Padding="12,10"
                                 BorderThickness="0,0,0,1" BorderBrush="{StaticResource BorderBrush}">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="MATCHES " Foreground="{StaticResource TextSecondaryBrush}"
+                                <TextBlock Text="MATCHES " Foreground="White"
                                            FontSize="11" FontWeight="SemiBold" />
-                                <TextBlock Text="{Binding TotalMatches}" Foreground="{StaticResource AccentBrush}"
-                                           FontSize="11" FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding TotalMatches}"
+                                           Foreground="{StaticResource AccentBrush}"
+                                           FontSize="12" FontWeight="Bold" Margin="4,0,0,0" />
                             </StackPanel>
                         </Border>
                         <ListBox Grid.Row="1" ItemsSource="{Binding ContentMatches}"
                                  SelectedItem="{Binding SelectedMatch}"
-                                 Background="Transparent" BorderThickness="0"
+                                 Background="{StaticResource BackgroundWindowColor}" BorderThickness="0"
                                  SelectionChanged="MatchList_SelectionChanged">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <Border Padding="10,8" CornerRadius="6" Margin="4,2"
-                                            Background="{StaticResource SurfaceColor}">
+                                            Background="{StaticResource SurfaceBrush}">
                                         <StackPanel>
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="Ln " FontSize="10"
@@ -129,13 +202,14 @@
                 </Border>
             </Grid>
 
+            <!-- Status bar -->
             <Border Grid.Row="2" Padding="16,6" BorderThickness="0,1,0,0"
                     BorderBrush="{StaticResource BorderBrush}"
-                    Background="{StaticResource PrimaryLightBrush}">
+                    Background="{StaticResource BackgroundWindowColor}">
                 <Grid>
                     <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusText}" />
                     <TextBlock HorizontalAlignment="Right" Foreground="{StaticResource TextMutedBrush}"
-                               FontSize="10" Text="{Binding CurrentFile.FilePath}"
+                               FontSize="12" Text="{Binding CurrentFile.FilePath}"
                                TextTrimming="CharacterEllipsis" />
                 </Grid>
             </Border>

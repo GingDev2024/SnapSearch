@@ -5,14 +5,19 @@
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </UserControl.Resources>
 
-    <Grid Background="{StaticResource PrimaryBrush}" Margin="28">
+    <Grid Background="{StaticResource BackgroundWindowColor}" Margin="28">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="Settings" Style="{StaticResource SectionHeader}" />
-
+        <TextBlock Grid.Row="0" Text="Settings" Style="{StaticResource SectionHeader}"/>
+        <TextBlock Grid.Column="0"
+                   Text="Customize your search settings, choose a default directory, and view application information to enhance your workflow."
+                   FontSize="12"
+                   FontWeight="SemiBold"
+                   TextWrapping="Wrap"
+                   Margin="0,25,0,20"/>
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel MaxWidth="600" HorizontalAlignment="Left">
 
@@ -20,7 +25,9 @@
                     <StackPanel>
                         <TextBlock Text="DEFAULT SEARCH DIRECTORY" Style="{StaticResource FormLabel}" />
                         <TextBlock Text="The folder SnapSearch opens by default when searching."
-                                   Foreground="{StaticResource TextMutedBrush}" FontSize="11" Margin="0,0,0,10" />
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   FontWeight="SemiBold"
+                                   FontSize="11" Margin="0,0,0,10" />
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -29,7 +36,7 @@
                             </Grid.ColumnDefinitions>
                             <TextBox Grid.Column="0" Style="{StaticResource SearchTextBox}"
                                      Text="{Binding DefaultDirectory, UpdateSourceTrigger=PropertyChanged}" />
-                            <Button Grid.Column="2" Content="Browse" Style="{StaticResource SecondaryButton}"
+                            <Button Grid.Column="2" Content="Browse" Style="{StaticResource PrimaryButton}"
                                     Command="{Binding BrowseDirectoryCommand}" Padding="14,8" />
                         </Grid>
                     </StackPanel>
@@ -64,17 +71,17 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Application"
-                                       Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,0,0,6" />
+                                       Foreground="{StaticResource TextMutedBrush}" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,6" />
                             <TextBlock Grid.Row="0" Grid.Column="1" Text="BABSLAI SnapSearch"
-                                       Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Margin="0,0,0,6" />
+                                       Foreground="Black" FontSize="12" Margin="0,0,0,6" FontWeight="SemiBold"   />
                             <TextBlock Grid.Row="1" Grid.Column="0" Text="Release"
-                                       Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="0,0,0,6" />
+                                       Foreground="{StaticResource TextMutedBrush}" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,6" />
                             <TextBlock Grid.Row="1" Grid.Column="1" Text="1.0"
-                                       Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Margin="0,0,0,6" />
+                                       Foreground="Black" FontSize="12" Margin="0,0,0,6" FontWeight="SemiBold"/>
                             <TextBlock Grid.Row="2" Grid.Column="0" Text="Platform"
-                                       Foreground="{StaticResource TextMutedBrush}" FontSize="12" />
+                                       Foreground="{StaticResource TextMutedBrush}" FontWeight="SemiBold" FontSize="12" />
                             <TextBlock Grid.Row="2" Grid.Column="1" Text=".NET 8 / WPF"
-                                       Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" />
+                                       Foreground="Black" FontSize="12" FontWeight="SemiBold"/>
                         </Grid>
                     </StackPanel>
                 </Border>
@@ -88,7 +95,7 @@
                 </StackPanel>
 
                 <ProgressBar Height="4" Margin="0,12,0,0" IsIndeterminate="True"
-                             Background="Transparent" Foreground="{StaticResource AccentBrush}"
+                             Background="Transparent" Foreground="{StaticResource SuccessBrush}"
                              Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}" />
             </StackPanel>
         </ScrollViewer>
