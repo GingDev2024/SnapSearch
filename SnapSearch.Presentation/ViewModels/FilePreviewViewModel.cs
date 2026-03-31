@@ -1,8 +1,12 @@
-﻿using SnapSearch.Application.Contracts;
+﻿using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Wordprocessing;
+using SnapSearch.Application.Contracts;
 using SnapSearch.Application.DTOs;
 using SnapSearch.Domain.Enums;
 using SnapSearch.Presentation.Common;
 using System.Collections.ObjectModel;
+using System.Data;
 using System.IO;
 using System.Windows.Input;
 
@@ -18,9 +22,13 @@ namespace SnapSearch.Presentation.ViewModels
         private FileResultDto? _currentFile;
         private string _keyword = string.Empty;
         private string _fileContent = string.Empty;
+        private string _docxText = string.Empty;
         private int _currentMatchIndex;
         private int _totalMatches;
         private ContentMatchDto? _selectedMatch;
+        private DataTable? _xlsxData;
+        private ObservableCollection<string> _xlsxSheetNames = new();
+        private string? _selectedSheetName;
 
         #endregion Fields
 
@@ -36,6 +44,7 @@ namespace SnapSearch.Presentation.ViewModels
             PrintCommand = new AsyncRelayCommand(ExecutePrintAsync, _ => CanPrint);
             ExportCommand = new AsyncRelayCommand(ExecuteExportAsync, _ => CanExport);
             CopyPathCommand = new RelayCommand(ExecuteCopyPath);
+            SelectSheetCommand = new RelayCommand(ExecuteSelectSheet);
         }
 
         #endregion Constructor
@@ -60,10 +69,11 @@ namespace SnapSearch.Presentation.ViewModels
             private set
             {
                 SetProperty(ref _currentFile, value);
-                // Immediately refresh all file-type computed flags
                 OnPropertyChanged(nameof(IsTextFile));
                 OnPropertyChanged(nameof(IsPdfFile));
                 OnPropertyChanged(nameof(IsImageFile));
+                OnPropertyChanged(nameof(IsDocxFile));
+                OnPropertyChanged(nameof(IsXlsxFile));
                 OnPropertyChanged(nameof(IsUnsupportedFile));
             }
         }
@@ -78,6 +88,40 @@ namespace SnapSearch.Presentation.ViewModels
         {
             get => _fileContent;
             set => SetProperty(ref _fileContent, value);
+        }
+
+        /// <summary>Extracted plain text from a .docx file for RichTextBox rendering.</summary>
+        public string DocxText
+        {
+            get => _docxText;
+            set => SetProperty(ref _docxText, value);
+        }
+
+        /// <summary>Parsed sheet data for XLSX DataGrid binding.</summary>
+        public DataTable? XlsxData
+        {
+            get => _xlsxData;
+            set => SetProperty(ref _xlsxData, value);
+        }
+
+        /// <summary>List of sheet names in the XLSX file.</summary>
+        public ObservableCollection<string> XlsxSheetNames
+        {
+            get => _xlsxSheetNames;
+            set => SetProperty(ref _xlsxSheetNames, value);
+        }
+
+        /// <summary>Currently selected sheet name.</summary>
+        public string? SelectedSheetName
+        {
+            get => _selectedSheetName;
+            set
+            {
+                if (_selectedSheetName == value) return;
+                SetProperty(ref _selectedSheetName, value);
+                if (value != null && CurrentFile != null)
+                    _ = LoadXlsxSheetAsync(CurrentFile.FilePath, value);
+            }
         }
 
         public int CurrentMatchIndex
@@ -109,26 +153,22 @@ namespace SnapSearch.Presentation.ViewModels
         public bool CanCopy => SessionContext.Instance.HasPermission("CopyFile");
 
         // ── File type flags ───────────────────────────────────────────────────
-        // IMPORTANT: IsTextFile must NOT include .pdf/.docx/.doc/.xlsx etc.
-        // Those have dedicated viewers.  IsUnsupportedFile catches everything else
-        // (docx, xlsx, pptx …) and shows the "Open with Default App" panel.
         public bool IsTextFile => CurrentFile != null && IsPlainText(CurrentFile.Extension);
-
         public bool IsPdfFile => CurrentFile?.Extension.Equals(".pdf", StringComparison.OrdinalIgnoreCase) == true;
         public bool IsImageFile => CurrentFile != null && IsImage(CurrentFile.Extension);
+        public bool IsDocxFile => CurrentFile != null && IsDocx(CurrentFile.Extension);
+        public bool IsXlsxFile => CurrentFile != null && IsXlsx(CurrentFile.Extension);
 
-        /// <summary>
-        /// True for any file that isn't plain text, PDF, or image.
-        /// Includes .docx, .xlsx, .pptx, .doc, .xls, .ppt, and anything else.
-        /// The view shows "Open with Default App" for these.
-        /// </summary>
-        public bool IsUnsupportedFile => CurrentFile != null && !IsTextFile && !IsPdfFile && !IsImageFile;
+        public bool IsUnsupportedFile =>
+            CurrentFile != null &&
+            !IsTextFile && !IsPdfFile && !IsImageFile && !IsDocxFile && !IsXlsxFile;
 
         public ICommand NextMatchCommand { get; }
         public ICommand PreviousMatchCommand { get; }
         public ICommand PrintCommand { get; }
         public ICommand ExportCommand { get; }
         public ICommand CopyPathCommand { get; }
+        public ICommand SelectSheetCommand { get; }
 
         #endregion Properties
 
@@ -136,8 +176,13 @@ namespace SnapSearch.Presentation.ViewModels
 
         public async Task LoadFileAsync(FileResultDto file, string keyword)
         {
-            // Reset all state before loading
+            // Reset all state
             FileContent = string.Empty;
+            DocxText = string.Empty;
+            XlsxData = null;
+            XlsxSheetNames.Clear();
+            _selectedSheetName = null;
+            OnPropertyChanged(nameof(SelectedSheetName));
             TotalMatches = 0;
             CurrentMatchIndex = 0;
             SelectedMatch = null;
@@ -146,19 +191,34 @@ namespace SnapSearch.Presentation.ViewModels
             IsBusy = true;
             StatusMessage = "Loading...";
 
-            // Setting CurrentFile fires all IsXxxFile property notifications immediately
             CurrentFile = file;
             Keyword = keyword;
 
             try
             {
-                // Only read raw bytes for plain text files.
-                // PDFs render via PdfiumViewer; Office docs open with default app.
                 if (IsTextFile)
+                {
                     FileContent = await File.ReadAllTextAsync(file.FilePath);
+                }
+                else if (IsDocxFile)
+                {
+                    DocxText = await Task.Run(() => ExtractDocxText(file.FilePath));
+                }
+                else if (IsXlsxFile)
+                {
+                    // Parse entirely on background thread — returns all data
+                    var (sheetNames, firstTable) = await Task.Run(() => LoadXlsxWorkbookData(file.FilePath));
 
-                // Always fetch content matches when a keyword is present —
-                // the service handles pdf/docx/plain-text extraction internally.
+                    // Back on UI thread — assign before FileLoaded fires
+                    XlsxSheetNames.Clear();
+                    foreach (var name in sheetNames)
+                        XlsxSheetNames.Add(name);
+
+                    XlsxData = firstTable;
+                    _selectedSheetName = sheetNames.FirstOrDefault();
+                    OnPropertyChanged(nameof(SelectedSheetName));
+                }
+
                 if (!string.IsNullOrWhiteSpace(keyword))
                 {
                     var matches = await _searchService.GetContentMatchesAsync(file.FilePath, keyword);
@@ -190,15 +250,11 @@ namespace SnapSearch.Presentation.ViewModels
             finally
             {
                 IsBusy = false;
-                // Fire AFTER IsBusy=false so the loading overlay hides before content appears
+                // XlsxData is guaranteed set before this fires
                 FileLoaded?.Invoke();
             }
         }
 
-        /// <summary>
-        /// Called by the view after RenderHighlightedContent() completes.
-        /// Only now is BringIntoView safe — the blocks exist in the RichTextBox.
-        /// </summary>
         public void OnTextRendered()
         {
             if (TotalMatches > 0 && ContentMatches.Count > 0)
@@ -207,36 +263,154 @@ namespace SnapSearch.Presentation.ViewModels
 
         #endregion Public Methods
 
-        #region Private Methods
+        #region Private Methods — File Type Helpers
 
-        /// <summary>
-        /// Plain-text extensions that can be read as raw strings and shown in the RichTextBox.
-        /// Deliberately excludes .pdf, .docx, .doc, .xlsx, .xls, .pptx, .ppt — those
-        /// are handled by their own viewers or the "Open with Default App" fallback.
-        /// </summary>
         private static bool IsPlainText(string ext) =>
             ext.ToLower() is
-                // documents
                 ".txt" or ".log" or ".md" or ".rtf" or
-                // data
                 ".csv" or ".json" or ".xml" or ".yaml" or ".yml" or ".toml" or
-                // config
                 ".ini" or ".cfg" or ".config" or ".env" or ".properties" or
-                // code — all the common ones
                 ".cs" or ".vb" or ".fs" or ".py" or ".js" or ".ts" or ".java" or
                 ".cpp" or ".c" or ".h" or ".go" or ".rs" or ".php" or ".rb" or
                 ".html" or ".htm" or ".css" or ".scss" or ".sql" or
-                // scripts
                 ".bat" or ".cmd" or ".ps1" or ".sh";
 
         private static bool IsImage(string ext) =>
             ext.ToLower() is ".png" or ".jpg" or ".jpeg" or ".bmp" or
                              ".gif" or ".webp" or ".tiff" or ".tif" or ".ico";
 
+        private static bool IsDocx(string ext) =>
+            ext.ToLower() is ".docx" or ".doc";
+
+        private static bool IsXlsx(string ext) =>
+            ext.ToLower() is ".xlsx" or ".xls";
+
+        #endregion Private Methods — File Type Helpers
+
+        #region Private Methods — DOCX
+
+        private static string ExtractDocxText(string filePath)
+        {
+            using var doc = WordprocessingDocument.Open(filePath, false);
+            var body = doc.MainDocumentPart?.Document?.Body;
+            if (body == null) return string.Empty;
+
+            var sb = new System.Text.StringBuilder();
+            foreach (var paragraph in body.Elements<Paragraph>())
+                sb.AppendLine(paragraph.InnerText);
+
+            return sb.ToString();
+        }
+
+        #endregion Private Methods — DOCX
+
+        #region Private Methods — XLSX
+
+        /// <summary>
+        /// Parses the workbook entirely on a background thread.
+        /// Returns sheet names + the first sheet's DataTable.
+        /// </summary>
+        private static (List<string> sheetNames, DataTable table) LoadXlsxWorkbookData(string filePath)
+        {
+            using var workbook = new XLWorkbook(filePath);
+            var sheetNames = workbook.Worksheets.Select(ws => ws.Name).ToList();
+            var table = sheetNames.Count > 0
+                ? BuildDataTable(workbook.Worksheet(sheetNames[0]))
+                : new DataTable();
+
+            return (sheetNames, table);
+        }
+
+        /// <summary>
+        /// Loads a specific sheet when the user clicks a tab.
+        /// </summary>
+        private async Task LoadXlsxSheetAsync(string filePath, string sheetName)
+        {
+            try
+            {
+                IsBusy = true;
+                StatusMessage = $"Loading sheet: {sheetName}...";
+
+                var table = await Task.Run(() =>
+                {
+                    using var workbook = new XLWorkbook(filePath);
+                    return BuildDataTable(workbook.Worksheet(sheetName));
+                });
+
+                XlsxData = table;
+                StatusMessage = $"Sheet '{sheetName}' loaded.";
+                FileLoaded?.Invoke();
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Error loading sheet: {ex.Message}";
+                System.Diagnostics.Debug.WriteLine($"[FilePreviewViewModel] LoadXlsxSheetAsync error: {ex}");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        /// <summary>
+        /// Builds a DataTable from a worksheet.
+        /// FIX: Trims header names and deduplicates them so DuplicateNameException never throws.
+        /// Example: two columns both named "Test1 " become "Test1" and "Test1 (2)".
+        /// </summary>
+        private static DataTable BuildDataTable(IXLWorksheet ws)
+        {
+            var table = new DataTable();
+            var range = ws.RangeUsed();
+            if (range == null) return table;
+
+            var rows = range.RowsUsed().ToList();
+            if (rows.Count == 0) return table;
+
+            // ── Column headers with duplicate resolution ─────────────────────
+            var usedNames = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var cell in rows[0].Cells())
+            {
+                // Trim whitespace — "Test1 " and "Test1" are treated as the same name
+                var raw = cell.GetString().Trim();
+
+                if (string.IsNullOrWhiteSpace(raw))
+                    raw = $"Column {cell.Address.ColumnNumber}";
+
+                if (usedNames.TryGetValue(raw, out int count))
+                {
+                    // Name already used — append incrementing suffix
+                    usedNames[raw] = count + 1;
+                    raw = $"{raw} ({count + 1})";
+                }
+                else
+                {
+                    usedNames[raw] = 1;
+                }
+
+                table.Columns.Add(raw);
+            }
+
+            // ── Data rows ────────────────────────────────────────────────────
+            foreach (var row in rows.Skip(1))
+            {
+                var dataRow = table.NewRow();
+                var cells = row.Cells().ToList();
+                for (int i = 0; i < Math.Min(cells.Count, table.Columns.Count); i++)
+                    dataRow[i] = cells[i].GetString();
+                table.Rows.Add(dataRow);
+            }
+
+            return table;
+        }
+
+        #endregion Private Methods — XLSX
+
+        #region Private Methods — Commands
+
         private void GoToNextMatch(object? _)
         {
-            if (CurrentMatchIndex >= TotalMatches - 1)
-                return;
+            if (CurrentMatchIndex >= TotalMatches - 1) return;
             CurrentMatchIndex++;
             SelectedMatch = ContentMatches[CurrentMatchIndex];
             ScrollToLineRequested?.Invoke(ContentMatches[CurrentMatchIndex].LineNumber);
@@ -244,8 +418,7 @@ namespace SnapSearch.Presentation.ViewModels
 
         private void GoToPreviousMatch(object? _)
         {
-            if (CurrentMatchIndex <= 0)
-                return;
+            if (CurrentMatchIndex <= 0) return;
             CurrentMatchIndex--;
             SelectedMatch = ContentMatches[CurrentMatchIndex];
             ScrollToLineRequested?.Invoke(ContentMatches[CurrentMatchIndex].LineNumber);
@@ -253,8 +426,7 @@ namespace SnapSearch.Presentation.ViewModels
 
         private async Task ExecutePrintAsync(object? _)
         {
-            if (CurrentFile == null)
-                return;
+            if (CurrentFile == null) return;
             var userId = SessionContext.Instance.CurrentUser?.Id;
             var username = SessionContext.Instance.CurrentUser?.Username ?? string.Empty;
             await _accessLogService.LogAsync(userId, username, ActionType.PrintFile, CurrentFile.FilePath);
@@ -263,8 +435,7 @@ namespace SnapSearch.Presentation.ViewModels
 
         private async Task ExecuteExportAsync(object? _)
         {
-            if (CurrentFile == null)
-                return;
+            if (CurrentFile == null) return;
             var dlg = new Microsoft.Win32.SaveFileDialog
             {
                 FileName = CurrentFile.FileName,
@@ -283,12 +454,17 @@ namespace SnapSearch.Presentation.ViewModels
 
         private void ExecuteCopyPath(object? _)
         {
-            if (CurrentFile == null)
-                return;
+            if (CurrentFile == null) return;
             System.Windows.Clipboard.SetText(CurrentFile.FilePath);
             StatusMessage = "Path copied to clipboard.";
         }
 
-        #endregion Private Methods
+        private void ExecuteSelectSheet(object? param)
+        {
+            if (param is string sheetName && CurrentFile != null)
+                SelectedSheetName = sheetName;
+        }
+
+        #endregion Private Methods — Commands
     }
 }
