@@ -13,137 +13,201 @@ namespace SnapSearch.Presentation.Views
     public partial class FilePreviewWindow : Window
     {
         #region Fields
+
         private readonly FilePreviewViewModel _vm;
+        private readonly FileResultDto _pendingFile;
+        private readonly string _pendingKeyword;
+
         #endregion Fields
 
-        #region Public Constructors
+        #region Constructor
+
         public FilePreviewWindow(FileResultDto file, string keyword)
         {
             InitializeComponent();
+
+            _pendingFile = file;
+            _pendingKeyword = keyword;
+
             _vm = App.GetService<FilePreviewViewModel>();
             DataContext = _vm;
+
             _vm.ScrollToLineRequested += ScrollToLine;
             _vm.PrintRequested += OnPrintRequested;
+            _vm.FileLoaded += OnFileLoaded;
 
-            Loaded += async (_, _) =>
-            {
-                await _vm.LoadFileAsync(file, keyword);
-
-                // flush bindings FIRST so Visibility updates before we load
-                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Render);
-
-                // PDF
-                if (_vm.IsPdfFile && _vm.CurrentFile != null)
-                    PdfViewer.LoadPdf(_vm.CurrentFile.FilePath);
-
-                // Image
-                if (_vm.IsImageFile && _vm.CurrentFile != null)
-                    LoadImage(_vm.CurrentFile.FilePath);
-
-                // Text
-                if (!string.IsNullOrEmpty(_vm.FileContent))
-                    RenderHighlightedContent();
-            };
+            // Wait for the full visual tree (including WindowsFormsHost) to be ready
+            Loaded += OnWindowLoaded;
         }
-        #endregion Public Constructors
 
-        #region Private Methods
+        #endregion Constructor
+
+        #region Window Lifecycle
+
+        private async void OnWindowLoaded(object sender, RoutedEventArgs e)
+        {
+            Loaded -= OnWindowLoaded;
+
+            // Yield at Loaded priority so every control — especially WindowsFormsHost —
+            // has its Win32 handle created before we push content into it.
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Loaded);
+
+            await _vm.LoadFileAsync(_pendingFile, _pendingKeyword);
+        }
+
+        #endregion Window Lifecycle
+
+        #region FileLoaded → RenderContent
+
+        private void OnFileLoaded()
+        {
+            // FileLoaded fires from an async Task — always marshal back to UI thread.
+            Dispatcher.InvokeAsync(RenderContent, DispatcherPriority.Render);
+        }
+
+        private void RenderContent()
+        {
+            if (_vm.CurrentFile == null)
+                return;
+
+            System.Diagnostics.Debug.WriteLine(
+                $"[Preview] RenderContent — " +
+                $"IsText={_vm.IsTextFile} IsPdf={_vm.IsPdfFile} " +
+                $"IsImage={_vm.IsImageFile} IsUnsupported={_vm.IsUnsupportedFile} " +
+                $"ContentLen={_vm.FileContent?.Length ?? 0}");
+
+            // ── PDF ──────────────────────────────────────────────────────────
+            if (_vm.IsPdfFile)
+            {
+                // Give PdfiumViewer one more layout pass at Background priority
+                // so its WinForms handle is fully initialised before loading.
+                Dispatcher.InvokeAsync(() =>
+                {
+                    try
+                    { PdfViewer.LoadPdf(_vm.CurrentFile.FilePath); }
+                    catch (Exception ex) { _vm.StatusMessage = $"PDF error: {ex.Message}"; }
+                }, DispatcherPriority.Background);
+                return;
+            }
+
+            // ── Image ────────────────────────────────────────────────────────
+            if (_vm.IsImageFile)
+            {
+                LoadImage(_vm.CurrentFile.FilePath);
+                return;
+            }
+
+            // ── Text / code ──────────────────────────────────────────────────
+            if (_vm.IsTextFile)
+            {
+                if (string.IsNullOrEmpty(_vm.FileContent))
+                {
+                    _vm.StatusMessage = "File is empty.";
+                    return;
+                }
+                RenderHighlightedContent();
+                _vm.OnTextRendered();   // now safe to scroll
+                return;
+            }
+
+            // ── Unsupported (docx, xlsx, pptx …) ────────────────────────────
+            // The XAML Visibility binding on the "unsupported" StackPanel
+            // already shows the "Open with Default App" panel automatically.
+        }
+
+        #endregion FileLoaded → RenderContent
+
+        #region Rendering Helpers
 
         private void LoadImage(string filePath)
         {
             try
             {
                 var bitmap = new BitmapImage();
-                using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-                {
-                    bitmap.BeginInit();
-                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                    bitmap.StreamSource = stream;
-                    bitmap.EndInit();
-                    bitmap.Freeze();
-                }
+                using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+                bitmap.BeginInit();
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.StreamSource = stream;
+                bitmap.EndInit();
+                bitmap.Freeze();
                 PreviewImage.Source = bitmap;
             }
-            catch (Exception ex)
-            {
-                _vm.StatusMessage = $"Could not load image: {ex.Message}";
-            }
+            catch (Exception ex) { _vm.StatusMessage = $"Could not load image: {ex.Message}"; }
         }
 
         private void RenderHighlightedContent()
         {
-            ContentRichTextBox.Document.Blocks.Clear();
-            ContentRichTextBox.Document.PageWidth = 10000; // ADD THIS — prevents letter-by-letter wrapping
-
-            if (string.IsNullOrEmpty(_vm.FileContent))
-                return;
+            var doc = ContentRichTextBox.Document;
+            doc.Blocks.Clear();
+            doc.PageWidth = 10000; // prevent per-character line wrapping
 
             var keyword = _vm.Keyword;
             var lines = _vm.FileContent.Split('\n');
 
             foreach (var line in lines)
             {
-                var linePara = new Paragraph 
-                { 
-                    Padding = new Thickness(0),
+                var para = new Paragraph
+                {
                     Margin = new Thickness(0),
+                    Padding = new Thickness(0),
                     TextAlignment = TextAlignment.Left,
                     KeepTogether = true
-
                 };
 
                 if (string.IsNullOrWhiteSpace(keyword))
                 {
-                    linePara.Inlines.Add(new Run(line));
+                    para.Inlines.Add(new Run(line));
                 }
                 else
                 {
-                    int lastIndex = 0;
-                    int idx;
-                    while ((idx = line.IndexOf(keyword, lastIndex,
-                               StringComparison.OrdinalIgnoreCase)) >= 0)
+                    int last = 0, idx;
+                    while ((idx = line.IndexOf(keyword, last, StringComparison.OrdinalIgnoreCase)) >= 0)
                     {
-                        if (idx > lastIndex)
-                            linePara.Inlines.Add(new Run(line[lastIndex..idx]));
+                        if (idx > last)
+                            para.Inlines.Add(new Run(line[last..idx]));
 
-                        linePara.Inlines.Add(new Run(line.Substring(idx, keyword.Length))
+                        para.Inlines.Add(new Run(line.Substring(idx, keyword.Length))
                         {
                             Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(79, 142, 247)),
                             Foreground = System.Windows.Media.Brushes.White,
                             FontWeight = FontWeights.Bold
                         });
-                        lastIndex = idx + keyword.Length;
+                        last = idx + keyword.Length;
                     }
-
-                    if (lastIndex < line.Length)
-                        linePara.Inlines.Add(new Run(line[lastIndex..]));
+                    if (last < line.Length)
+                        para.Inlines.Add(new Run(line[last..]));
                 }
 
-                ContentRichTextBox.Document.Blocks.Add(linePara);
+                doc.Blocks.Add(para);
             }
         }
 
         private void ScrollToLine(int lineNumber)
         {
-            if (!_vm.IsTextFile) return;
-
+            if (!_vm.IsTextFile)
+                return;
             var blocks = ContentRichTextBox.Document.Blocks.ToList();
             if (lineNumber > 0 && lineNumber - 1 < blocks.Count)
                 blocks[lineNumber - 1].BringIntoView();
         }
+
+        #endregion Rendering Helpers
+
+        #region UI Event Handlers
 
         private void OnPrintRequested()
         {
             var pd = new System.Windows.Controls.PrintDialog();
             if (pd.ShowDialog() == true)
                 pd.PrintDocument(
-                    ((IDocumentPaginatorSource)ContentRichTextBox.Document).DocumentPaginator,
+                    ((IDocumentPaginatorSource) ContentRichTextBox.Document).DocumentPaginator,
                     _vm.CurrentFile?.FileName ?? "SnapSearch Print");
         }
 
         private void OpenWithDefaultApp_Click(object sender, RoutedEventArgs e)
         {
-            if (_vm.CurrentFile == null) return;
+            if (_vm.CurrentFile == null)
+                return;
             try
             {
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
@@ -152,10 +216,7 @@ namespace SnapSearch.Presentation.Views
                     UseShellExecute = true
                 });
             }
-            catch (Exception ex)
-            {
-                _vm.StatusMessage = $"Could not open file: {ex.Message}";
-            }
+            catch (Exception ex) { _vm.StatusMessage = $"Could not open file: {ex.Message}"; }
         }
 
         private void MatchList_SelectionChanged(object sender,
@@ -173,6 +234,6 @@ namespace SnapSearch.Presentation.Views
 
         private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
 
-        #endregion Private Methods
+        #endregion UI Event Handlers
     }
 }

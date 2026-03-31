@@ -9,8 +9,13 @@ namespace SnapSearch.Infrastructure.Services
         #region Fields
 
         private static readonly string[] PreviewableExtensions =
-            { ".txt", ".log", ".csv", ".xml", ".json", ".md", ".ini", ".cfg", ".bat", ".ps1",
-              ".pdf", ".docx", ".doc", ".xlsx", ".xls", ".pptx", ".ppt" };
+        {
+            ".txt", ".log", ".csv", ".xml", ".json", ".md", ".ini", ".cfg", ".bat", ".ps1",
+            ".pdf", ".docx", ".doc", ".xlsx", ".xls", ".pptx", ".ppt",
+            ".cs", ".vb", ".fs", ".py", ".js", ".ts", ".java", ".cpp", ".c", ".h",
+            ".go", ".rs", ".php", ".rb", ".html", ".htm", ".css", ".scss", ".sql",
+            ".yaml", ".yml", ".toml", ".env", ".properties", ".config", ".sh", ".cmd"
+        };
 
         #endregion Fields
 
@@ -52,7 +57,7 @@ namespace SnapSearch.Infrastructure.Services
                     if (!fileInfo.Exists)
                         continue;
 
-                    // Extension filter
+                    // Extension filter (double-check — pattern may be broad)
                     if (!string.IsNullOrWhiteSpace(request.ExtensionFilter))
                     {
                         var ext = request.ExtensionFilter.StartsWith(".")
@@ -74,22 +79,25 @@ namespace SnapSearch.Infrastructure.Services
                     if (request.SizeMax.HasValue && fileInfo.Length > request.SizeMax.Value)
                         continue;
 
-                    // Name keyword match
+                    // Name match
                     bool nameMatch = request.AllowPartialMatch
                         ? fileInfo.Name.Contains(request.Keyword, StringComparison.OrdinalIgnoreCase)
                         : fileInfo.Name.Equals(request.Keyword, StringComparison.OrdinalIgnoreCase);
 
+                    // Content match — run when SearchFileContents is on, regardless of nameMatch
+                    // so that ContentMatchCount is always accurate when the file is previewed.
                     bool contentMatch = false;
                     int contentMatchCount = 0;
 
-                    if (request.SearchFileContents && !nameMatch)
+                    if (request.SearchFileContents)
                     {
-                        var matches = await SearchFileContentAsync(filePath, request.Keyword, cancellationToken);
-                        var matchList = matches.ToList();
+                        var matchList = (await SearchFileContentAsync(
+                            filePath, request.Keyword, cancellationToken)).ToList();
                         contentMatch = matchList.Count > 0;
                         contentMatchCount = matchList.Count;
                     }
 
+                    // Include file if it matches by name OR by content
                     if (!nameMatch && !contentMatch)
                         continue;
 
@@ -126,7 +134,7 @@ namespace SnapSearch.Infrastructure.Services
                 if (ext is ".docx" or ".doc")
                     return await SearchDocxContentAsync(filePath, keyword, cancellationToken);
 
-                // Plain text fallback
+                // Plain text — use the expanded IsTextFile check
                 if (!IsTextFile(ext))
                     return matches;
 
@@ -148,7 +156,7 @@ namespace SnapSearch.Infrastructure.Services
                     }
                 }
             }
-            catch { /* unreadable file */ }
+            catch { /* unreadable or locked file — silently skip */ }
 
             return matches;
         }
@@ -163,24 +171,32 @@ namespace SnapSearch.Infrastructure.Services
 
         #region Private Methods
 
+        /// <summary>
+        /// Expanded plain-text check — matches every extension the ViewModel treats as text.
+        /// </summary>
         private static bool IsTextFile(string ext) =>
-            ext is ".txt" or ".log" or ".csv" or ".xml" or ".json"
-                or ".md" or ".ini" or ".cfg" or ".bat" or ".ps1" or ".cs" or ".html" or ".htm";
+            ext is
+                ".txt" or ".log" or ".md" or ".rtf" or
+                ".csv" or ".json" or ".xml" or ".yaml" or ".yml" or ".toml" or
+                ".ini" or ".cfg" or ".config" or ".env" or ".properties" or
+                ".cs" or ".vb" or ".fs" or ".py" or ".js" or ".ts" or ".java" or
+                ".cpp" or ".c" or ".h" or ".go" or ".rs" or ".php" or ".rb" or
+                ".html" or ".htm" or ".css" or ".scss" or ".sql" or
+                ".bat" or ".cmd" or ".ps1" or ".sh";
 
         private async Task<IEnumerable<ContentMatchDto>> SearchPdfContentAsync(
-                            string filePath, string keyword, CancellationToken cancellationToken)
+            string filePath, string keyword, CancellationToken cancellationToken)
         {
             var matches = new List<ContentMatchDto>();
+            int matchIndex = 1;
             try
             {
                 using var doc = UglyToad.PdfPig.PdfDocument.Open(filePath);
-                int matchIndex = 1;
                 foreach (var page in doc.GetPages())
                 {
                     if (cancellationToken.IsCancellationRequested)
                         break;
-                    var text = page.Text;
-                    var lines = text.Split('\n');
+                    var lines = page.Text.Split('\n');
                     for (int i = 0; i < lines.Length; i++)
                     {
                         if (lines[i].Contains(keyword, StringComparison.OrdinalIgnoreCase))
@@ -197,7 +213,7 @@ namespace SnapSearch.Infrastructure.Services
                     }
                 }
             }
-            catch { /* Not a valid PDF or library not available */ }
+            catch { /* invalid PDF or library unavailable */ }
             return await Task.FromResult(matches);
         }
 
@@ -205,6 +221,8 @@ namespace SnapSearch.Infrastructure.Services
             string filePath, string keyword, CancellationToken cancellationToken)
         {
             var matches = new List<ContentMatchDto>();
+            int lineNumber = 1;
+            int matchIndex = 1;
             try
             {
                 using var doc = DocumentFormat.OpenXml.Packaging.WordprocessingDocument.Open(filePath, false);
@@ -212,8 +230,6 @@ namespace SnapSearch.Infrastructure.Services
                 if (body == null)
                     return matches;
 
-                int lineNumber = 1;
-                int matchIndex = 1;
                 foreach (var para in body.Elements<DocumentFormat.OpenXml.Wordprocessing.Paragraph>())
                 {
                     if (cancellationToken.IsCancellationRequested)
@@ -233,7 +249,7 @@ namespace SnapSearch.Infrastructure.Services
                     lineNumber++;
                 }
             }
-            catch { /* Not a valid docx */ }
+            catch { /* invalid docx */ }
             return await Task.FromResult(matches);
         }
 

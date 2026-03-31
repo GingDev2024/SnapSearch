@@ -24,7 +24,7 @@ namespace SnapSearch.Presentation.ViewModels
 
         #endregion Fields
 
-        #region Public Constructors
+        #region Constructor
 
         public FilePreviewViewModel(ISearchService searchService, IAccessLogService accessLogService)
         {
@@ -38,11 +38,16 @@ namespace SnapSearch.Presentation.ViewModels
             CopyPathCommand = new RelayCommand(ExecuteCopyPath);
         }
 
-        #endregion Public Constructors
+        #endregion Constructor
 
         #region Events
 
+        /// <summary>Fires at the very end of LoadFileAsync — all properties are set.</summary>
+        public event Action? FileLoaded;
+
+        /// <summary>Fires only after the view finishes populating the RichTextBox.</summary>
         public event Action<int>? ScrollToLineRequested;
+
         public event Action? PrintRequested;
 
         #endregion Events
@@ -52,7 +57,15 @@ namespace SnapSearch.Presentation.ViewModels
         public FileResultDto? CurrentFile
         {
             get => _currentFile;
-            set => SetProperty(ref _currentFile, value);
+            private set
+            {
+                SetProperty(ref _currentFile, value);
+                // Immediately refresh all file-type computed flags
+                OnPropertyChanged(nameof(IsTextFile));
+                OnPropertyChanged(nameof(IsPdfFile));
+                OnPropertyChanged(nameof(IsImageFile));
+                OnPropertyChanged(nameof(IsUnsupportedFile));
+            }
         }
 
         public string Keyword
@@ -70,21 +83,13 @@ namespace SnapSearch.Presentation.ViewModels
         public int CurrentMatchIndex
         {
             get => _currentMatchIndex;
-            set
-            {
-                SetProperty(ref _currentMatchIndex, value);
-                OnPropertyChanged(nameof(MatchDisplay));
-            }
+            set { SetProperty(ref _currentMatchIndex, value); OnPropertyChanged(nameof(MatchDisplay)); }
         }
 
         public int TotalMatches
         {
             get => _totalMatches;
-            set
-            {
-                SetProperty(ref _totalMatches, value);
-                OnPropertyChanged(nameof(MatchDisplay));
-            }
+            set { SetProperty(ref _totalMatches, value); OnPropertyChanged(nameof(MatchDisplay)); }
         }
 
         public string MatchDisplay => TotalMatches > 0
@@ -103,10 +108,20 @@ namespace SnapSearch.Presentation.ViewModels
         public bool CanExport => SessionContext.Instance.HasPermission("ExportFile");
         public bool CanCopy => SessionContext.Instance.HasPermission("CopyFile");
 
-        // --- file type detection ---
+        // ── File type flags ───────────────────────────────────────────────────
+        // IMPORTANT: IsTextFile must NOT include .pdf/.docx/.doc/.xlsx etc.
+        // Those have dedicated viewers.  IsUnsupportedFile catches everything else
+        // (docx, xlsx, pptx …) and shows the "Open with Default App" panel.
         public bool IsTextFile => CurrentFile != null && IsPlainText(CurrentFile.Extension);
+
         public bool IsPdfFile => CurrentFile?.Extension.Equals(".pdf", StringComparison.OrdinalIgnoreCase) == true;
         public bool IsImageFile => CurrentFile != null && IsImage(CurrentFile.Extension);
+
+        /// <summary>
+        /// True for any file that isn't plain text, PDF, or image.
+        /// Includes .docx, .xlsx, .pptx, .doc, .xls, .ppt, and anything else.
+        /// The view shows "Open with Default App" for these.
+        /// </summary>
         public bool IsUnsupportedFile => CurrentFile != null && !IsTextFile && !IsPdfFile && !IsImageFile;
 
         public ICommand NextMatchCommand { get; }
@@ -121,21 +136,29 @@ namespace SnapSearch.Presentation.ViewModels
 
         public async Task LoadFileAsync(FileResultDto file, string keyword)
         {
+            // Reset all state before loading
+            FileContent = string.Empty;
+            TotalMatches = 0;
+            CurrentMatchIndex = 0;
+            SelectedMatch = null;
+            ContentMatches.Clear();
+
+            IsBusy = true;
+            StatusMessage = "Loading...";
+
+            // Setting CurrentFile fires all IsXxxFile property notifications immediately
             CurrentFile = file;
             Keyword = keyword;
-            ContentMatches.Clear();
-            CurrentMatchIndex = 0;
-            FileContent = string.Empty;
-            IsBusy = true;
-            StatusMessage = "Loading file...";
 
             try
             {
-                // only read raw text for text files
-                if (IsPlainText(file.Extension))
+                // Only read raw bytes for plain text files.
+                // PDFs render via PdfiumViewer; Office docs open with default app.
+                if (IsTextFile)
                     FileContent = await File.ReadAllTextAsync(file.FilePath);
 
-                // load keyword matches
+                // Always fetch content matches when a keyword is present —
+                // the service handles pdf/docx/plain-text extraction internally.
                 if (!string.IsNullOrWhiteSpace(keyword))
                 {
                     var matches = await _searchService.GetContentMatchesAsync(file.FilePath, keyword);
@@ -143,12 +166,16 @@ namespace SnapSearch.Presentation.ViewModels
                         ContentMatches.Add(m);
 
                     TotalMatches = ContentMatches.Count;
+
                     if (TotalMatches > 0)
                     {
+                        CurrentMatchIndex = 0;
                         SelectedMatch = ContentMatches[0];
-                        ScrollToLineRequested?.Invoke(ContentMatches[0].LineNumber);
                     }
-                    StatusMessage = $"{TotalMatches} match(es) found.";
+
+                    StatusMessage = TotalMatches > 0
+                        ? $"{TotalMatches} match(es) found."
+                        : "No matches found.";
                 }
                 else
                 {
@@ -158,22 +185,35 @@ namespace SnapSearch.Presentation.ViewModels
             catch (Exception ex)
             {
                 StatusMessage = $"Error loading file: {ex.Message}";
+                System.Diagnostics.Debug.WriteLine($"[FilePreviewViewModel] LoadFileAsync error: {ex}");
             }
             finally
             {
                 IsBusy = false;
-                // notify all type flags so bindings update
-                OnPropertyChanged(nameof(IsTextFile));
-                OnPropertyChanged(nameof(IsPdfFile));
-                OnPropertyChanged(nameof(IsImageFile));
-                OnPropertyChanged(nameof(IsUnsupportedFile));
+                // Fire AFTER IsBusy=false so the loading overlay hides before content appears
+                FileLoaded?.Invoke();
             }
+        }
+
+        /// <summary>
+        /// Called by the view after RenderHighlightedContent() completes.
+        /// Only now is BringIntoView safe — the blocks exist in the RichTextBox.
+        /// </summary>
+        public void OnTextRendered()
+        {
+            if (TotalMatches > 0 && ContentMatches.Count > 0)
+                ScrollToLineRequested?.Invoke(ContentMatches[0].LineNumber);
         }
 
         #endregion Public Methods
 
         #region Private Methods
 
+        /// <summary>
+        /// Plain-text extensions that can be read as raw strings and shown in the RichTextBox.
+        /// Deliberately excludes .pdf, .docx, .doc, .xlsx, .xls, .pptx, .ppt — those
+        /// are handled by their own viewers or the "Open with Default App" fallback.
+        /// </summary>
         private static bool IsPlainText(string ext) =>
             ext.ToLower() is
                 // documents
@@ -182,7 +222,7 @@ namespace SnapSearch.Presentation.ViewModels
                 ".csv" or ".json" or ".xml" or ".yaml" or ".yml" or ".toml" or
                 // config
                 ".ini" or ".cfg" or ".config" or ".env" or ".properties" or
-                // code
+                // code — all the common ones
                 ".cs" or ".vb" or ".fs" or ".py" or ".js" or ".ts" or ".java" or
                 ".cpp" or ".c" or ".h" or ".go" or ".rs" or ".php" or ".rb" or
                 ".html" or ".htm" or ".css" or ".scss" or ".sql" or
@@ -195,27 +235,26 @@ namespace SnapSearch.Presentation.ViewModels
 
         private void GoToNextMatch(object? _)
         {
-            if (CurrentMatchIndex < TotalMatches - 1)
-            {
-                CurrentMatchIndex++;
-                SelectedMatch = ContentMatches[CurrentMatchIndex];
-                ScrollToLineRequested?.Invoke(ContentMatches[CurrentMatchIndex].LineNumber);
-            }
+            if (CurrentMatchIndex >= TotalMatches - 1)
+                return;
+            CurrentMatchIndex++;
+            SelectedMatch = ContentMatches[CurrentMatchIndex];
+            ScrollToLineRequested?.Invoke(ContentMatches[CurrentMatchIndex].LineNumber);
         }
 
         private void GoToPreviousMatch(object? _)
         {
-            if (CurrentMatchIndex > 0)
-            {
-                CurrentMatchIndex--;
-                SelectedMatch = ContentMatches[CurrentMatchIndex];
-                ScrollToLineRequested?.Invoke(ContentMatches[CurrentMatchIndex].LineNumber);
-            }
+            if (CurrentMatchIndex <= 0)
+                return;
+            CurrentMatchIndex--;
+            SelectedMatch = ContentMatches[CurrentMatchIndex];
+            ScrollToLineRequested?.Invoke(ContentMatches[CurrentMatchIndex].LineNumber);
         }
 
         private async Task ExecutePrintAsync(object? _)
         {
-            if (CurrentFile == null) return;
+            if (CurrentFile == null)
+                return;
             var userId = SessionContext.Instance.CurrentUser?.Id;
             var username = SessionContext.Instance.CurrentUser?.Username ?? string.Empty;
             await _accessLogService.LogAsync(userId, username, ActionType.PrintFile, CurrentFile.FilePath);
@@ -224,7 +263,8 @@ namespace SnapSearch.Presentation.ViewModels
 
         private async Task ExecuteExportAsync(object? _)
         {
-            if (CurrentFile == null) return;
+            if (CurrentFile == null)
+                return;
             var dlg = new Microsoft.Win32.SaveFileDialog
             {
                 FileName = CurrentFile.FileName,
@@ -243,7 +283,8 @@ namespace SnapSearch.Presentation.ViewModels
 
         private void ExecuteCopyPath(object? _)
         {
-            if (CurrentFile == null) return;
+            if (CurrentFile == null)
+                return;
             System.Windows.Clipboard.SetText(CurrentFile.FilePath);
             StatusMessage = "Path copied to clipboard.";
         }

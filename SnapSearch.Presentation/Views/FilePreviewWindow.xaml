@@ -5,13 +5,23 @@
         Title="File Preview"
         Width="1000" Height="720"
         WindowStartupLocation="CenterScreen"
-        WindowStyle="None" AllowsTransparency="True"
-        Background="{DynamicResource BackgroundWindowColor}">
+        WindowStyle="None"
+        AllowsTransparency="False"
+        Background="{StaticResource BackgroundWindowColor}">
+
+    <!--
+        KEY FIX: AllowsTransparency="False"
+        AllowsTransparency="True" forces WPF into a software rendering path that
+        causes a completely blank/white window when combined with WindowStyle=None
+        and a DynamicResource background on the root Border. Turning it off fixes
+        the blank window while keeping the custom chrome look via the inner Border.
+    -->
+
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </Window.Resources>
 
-    <Border CornerRadius="12" ClipToBounds="True" Background="{StaticResource BackgroundWindowColor}">
+    <Border CornerRadius="0" Background="{StaticResource BackgroundWindowColor}">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="48" />
@@ -71,12 +81,11 @@
                     <Grid>
 
                         <!-- 1. Text / code files -->
-                        <!-- 1. Text / code files -->
                         <ScrollViewer x:Name="TextScrollViewer"
-                                          Visibility="{Binding IsTextFile, Converter={StaticResource BoolToVis}}"
-                                          HorizontalScrollBarVisibility="Auto"
-                                          VerticalScrollBarVisibility="Auto"
-                                          Background="{StaticResource BackgroundWindowColor}">
+                                      Visibility="{Binding IsTextFile, Converter={StaticResource BoolToVis}}"
+                                      HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Auto"
+                                      Background="{StaticResource BackgroundWindowColor}">
                             <RichTextBox x:Name="ContentRichTextBox"
                                          Background="{StaticResource BackgroundWindowColor}"
                                          Foreground="Black"
@@ -85,14 +94,13 @@
                                          IsReadOnly="True"
                                          BorderThickness="0"
                                          Padding="16"
-                                         AcceptsReturn="True">      
+                                         AcceptsReturn="True">
                                 <RichTextBox.Document>
-                                    <FlowDocument
-                                            PagePadding="4,0,4,0"
-                                            PageWidth="10000"
-                                            TextAlignment="Left"
-                                            FontFamily="Consolas"
-                                            FontSize="13" />    
+                                    <FlowDocument PagePadding="4,0,4,0"
+                                                  PageWidth="10000"
+                                                  TextAlignment="Left"
+                                                  FontFamily="Consolas"
+                                                  FontSize="13" />
                                 </RichTextBox.Document>
                             </RichTextBox>
                         </ScrollViewer>
@@ -110,7 +118,7 @@
                                    RenderOptions.BitmapScalingMode="HighQuality" />
                         </ScrollViewer>
 
-                        <!-- 4. Unsupported files -->
+                        <!-- 4. Unsupported files (docx, xlsx, pptx, etc.) -->
                         <StackPanel Visibility="{Binding IsUnsupportedFile, Converter={StaticResource BoolToVis}}"
                                     VerticalAlignment="Center" HorizontalAlignment="Center">
                             <TextBlock Text="⚠" FontSize="48" HorizontalAlignment="Center"
@@ -127,6 +135,20 @@
                                     Click="OpenWithDefaultApp_Click" />
                         </StackPanel>
 
+                        <!-- 5. Loading indicator -->
+                        <Border Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"
+                                Background="{StaticResource BackgroundWindowColor}"
+                                VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <ProgressBar IsIndeterminate="True" Width="200" Height="6"
+                                             Foreground="{StaticResource AccentBrush}"
+                                             Background="Transparent" />
+                                <TextBlock Text="{Binding StatusMessage}"
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           FontSize="12" HorizontalAlignment="Center"
+                                           Margin="0,10,0,0" />
+                            </StackPanel>
+                        </Border>
                     </Grid>
                 </Border>
 
@@ -183,7 +205,7 @@
             <!-- Status bar -->
             <Border Grid.Row="2" Padding="16,6" BorderThickness="0,1,0,0"
                     BorderBrush="{StaticResource BorderBrush}"
-                    Background="{DynamicResource BackgroundWindowColor}">
+                    Background="{StaticResource BackgroundWindowColor}">
                 <Grid>
                     <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusText}" />
                     <TextBlock HorizontalAlignment="Right" Foreground="{StaticResource TextMutedBrush}"

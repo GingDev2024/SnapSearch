@@ -6,7 +6,6 @@
 
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                
                 <!-- Theme Colors -->
                 <ResourceDictionary>
 
@@ -19,7 +18,7 @@
                     <Color x:Key="SurfaceLightColor">#2A3250</Color>
                     <Color x:Key="BorderColor">White</Color>
                     <Color x:Key="TextPrimaryColor">Black</Color>
-                    <Color x:Key="TextSecondaryColor">White</Color> 
+                    <Color x:Key="TextSecondaryColor">White</Color>
                     <Color x:Key="TextMutedColor">#4E5356</Color>
                     <Color x:Key="SuccessColor">#2ECC71</Color>
                     <Color x:Key="WarningColor">#F39C12</Color>
@@ -40,9 +39,8 @@
                     <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
                     <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
                     <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}" />
-                 
 
-                        <!-- Gradients -->
+                    <!-- Gradients -->
                     <LinearGradientBrush x:Key="AccentGradient" StartPoint="0,0" EndPoint="1,1">
                         <GradientStop Color="#4F8EF7" Offset="0" />
                         <GradientStop Color="#7B5FF5" Offset="1" />
@@ -52,12 +50,11 @@
                         <GradientStop Color="Azure" Offset="0" />
                         <GradientStop Color="AliceBlue" Offset="1" />
                     </LinearGradientBrush>
-                    
+
                     <LinearGradientBrush x:Key="BackgroundWindowColor" StartPoint="0,0" EndPoint="0,1">
                         <GradientStop Color="Azure" Offset="0" />
                         <GradientStop Color="AliceBlue" Offset="1" />
                     </LinearGradientBrush>
-                    
                 </ResourceDictionary>
 
                 <ResourceDictionary Source="Resources/Styles.xaml" />
