@@ -6,12 +6,6 @@
 
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-
-                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Light.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Defaults.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Primary/MaterialDesignColor.DeepPurple.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Accent/MaterialDesignColor.Lime.xaml" />
-
                 <!-- Theme Colors -->
                 <ResourceDictionary>
 
@@ -45,9 +39,8 @@
                     <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
                     <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
                     <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}" />
-                 
 
-                        <!-- Gradients -->
+                    <!-- Gradients -->
                     <LinearGradientBrush x:Key="AccentGradient" StartPoint="0,0" EndPoint="1,1">
                         <GradientStop Color="#4F8EF7" Offset="0" />
                         <GradientStop Color="#7B5FF5" Offset="1" />
@@ -57,12 +50,11 @@
                         <GradientStop Color="Azure" Offset="0" />
                         <GradientStop Color="AliceBlue" Offset="1" />
                     </LinearGradientBrush>
-                    
+
                     <LinearGradientBrush x:Key="BackgroundWindowColor" StartPoint="0,0" EndPoint="0,1">
                         <GradientStop Color="Azure" Offset="0" />
                         <GradientStop Color="AliceBlue" Offset="1" />
                     </LinearGradientBrush>
-                    
                 </ResourceDictionary>
 
                 <ResourceDictionary Source="Resources/Styles.xaml" />

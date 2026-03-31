@@ -54,7 +54,6 @@
                         <StackPanel Orientation="Horizontal" Margin="16,0" VerticalAlignment="Center">
                             <Border Width="32" Height="32" CornerRadius="50"
                                     Background="{StaticResource AccentGradient}">
-                                <materialDesign:PackIcon Kind="Search" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" Height="32" Width="23" />
                             </Border>
                             <TextBlock Text="SnapSearch" Foreground="{StaticResource TextPrimaryBrush}"
                                        FontSize="16" FontWeight="Bold"
@@ -76,7 +75,7 @@
 
                     <!-- Navigation -->
                     <StackPanel Grid.Row="1" Margin="0,16,0,0">
-                        <TextBlock Text="NAVIGATION" Foreground="{StaticResource TextPrimaryBrush}"
+                        <TextBlock Text="NAVIGATION" Foreground="{StaticResource TextMutedBrush}"
                                    FontSize="10" FontWeight="Bold" Margin="22,0,0,8" />
                         <Button Content="Search Files"
                                 Style="{Binding IsSearchActive, Converter={StaticResource NavStyleConverter}}"
@@ -102,7 +101,9 @@
                                 Style="{StaticResource NavButton}"
                                 ToolTip="{Binding ThemeLabel}">
                             <StackPanel Orientation="Horizontal">
-                                --><!-- Toggle track --><!--
+                                -->
+                        <!-- Toggle track -->
+                        <!--
                                 <Border Width="40" Height="22" CornerRadius="11"
                                         VerticalAlignment="Center" Margin="0,0,10,0">
                                     <Border.Style>
@@ -115,7 +116,9 @@
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
-                                    --><!-- Thumb --><!--
+                                    -->
+                        <!-- Thumb -->
+                        <!--
                                     <Border Width="16" Height="16" CornerRadius="8"
                                             Background="White" VerticalAlignment="Center">
                                         <Border.Style>
