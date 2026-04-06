@@ -154,6 +154,7 @@ namespace SnapSearch.Presentation.ViewModels
 
         // ── File type flags ───────────────────────────────────────────────────
         public bool IsTextFile => CurrentFile != null && IsPlainText(CurrentFile.Extension);
+
         public bool IsPdfFile => CurrentFile?.Extension.Equals(".pdf", StringComparison.OrdinalIgnoreCase) == true;
         public bool IsImageFile => CurrentFile != null && IsImage(CurrentFile.Extension);
         public bool IsDocxFile => CurrentFile != null && IsDocx(CurrentFile.Extension);
@@ -323,37 +324,6 @@ namespace SnapSearch.Presentation.ViewModels
         }
 
         /// <summary>
-        /// Loads a specific sheet when the user clicks a tab.
-        /// </summary>
-        private async Task LoadXlsxSheetAsync(string filePath, string sheetName)
-        {
-            try
-            {
-                IsBusy = true;
-                StatusMessage = $"Loading sheet: {sheetName}...";
-
-                var table = await Task.Run(() =>
-                {
-                    using var workbook = new XLWorkbook(filePath);
-                    return BuildDataTable(workbook.Worksheet(sheetName));
-                });
-
-                XlsxData = table;
-                StatusMessage = $"Sheet '{sheetName}' loaded.";
-                FileLoaded?.Invoke();
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = $"Error loading sheet: {ex.Message}";
-                System.Diagnostics.Debug.WriteLine($"[FilePreviewViewModel] LoadXlsxSheetAsync error: {ex}");
-            }
-            finally
-            {
-                IsBusy = false;
-            }
-        }
-
-        /// <summary>
         /// Builds a DataTable from a worksheet.
         /// FIX: Trims header names and deduplicates them so DuplicateNameException never throws.
         /// Example: two columns both named "Test1 " become "Test1" and "Test1 (2)".
@@ -405,6 +375,37 @@ namespace SnapSearch.Presentation.ViewModels
             return table;
         }
 
+        /// <summary>
+        /// Loads a specific sheet when the user clicks a tab.
+        /// </summary>
+        private async Task LoadXlsxSheetAsync(string filePath, string sheetName)
+        {
+            try
+            {
+                IsBusy = true;
+                StatusMessage = $"Loading sheet: {sheetName}...";
+
+                var table = await Task.Run(() =>
+                {
+                    using var workbook = new XLWorkbook(filePath);
+                    return BuildDataTable(workbook.Worksheet(sheetName));
+                });
+
+                XlsxData = table;
+                StatusMessage = $"Sheet '{sheetName}' loaded.";
+                FileLoaded?.Invoke();
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Error loading sheet: {ex.Message}";
+                System.Diagnostics.Debug.WriteLine($"[FilePreviewViewModel] LoadXlsxSheetAsync error: {ex}");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
         #endregion Private Methods — XLSX
 
         #region Private Methods — Commands
@@ -437,20 +438,52 @@ namespace SnapSearch.Presentation.ViewModels
         private async Task ExecuteExportAsync(object? _)
         {
             if (CurrentFile == null) return;
+
+            // Detect the original extension to pre-select the right filter
+            var ext = Path.GetExtension(CurrentFile.FileName)?.ToLower() ?? string.Empty;
+
+            var filter = ext switch
+            {
+                ".pdf" => "PDF Files (*.pdf)|*.pdf|All Files (*.*)|*.*",
+                ".docx" => "Word Documents (*.docx)|*.docx|All Files (*.*)|*.*",
+                ".xlsx" => "Excel Files (*.xlsx)|*.xlsx|All Files (*.*)|*.*",
+                ".txt" => "Text Files (*.txt)|*.txt|All Files (*.*)|*.*",
+                ".png" => "PNG Images (*.png)|*.png|All Files (*.*)|*.*",
+                ".jpg" or ".jpeg" => "JPEG Images (*.jpg)|*.jpg|All Files (*.*)|*.*",
+                _ => "All Files (*.*)|*.*"
+            };
+
             var dlg = new Microsoft.Win32.SaveFileDialog
             {
-                FileName = CurrentFile.FileName,
-                Filter = "All Files (*.*)|*.*"
+                FileName = Path.GetFileNameWithoutExtension(CurrentFile.FileName),
+                DefaultExt = ext,
+                Filter = filter
             };
-            if (dlg.ShowDialog() == true)
+
+            if (dlg.ShowDialog() != true) return;
+
+            // Warn if user changed the extension
+            var chosenExt = Path.GetExtension(dlg.FileName)?.ToLower();
+            if (!string.IsNullOrEmpty(chosenExt) && chosenExt != ext)
             {
-                File.Copy(CurrentFile.FilePath, dlg.FileName, overwrite: true);
-                var userId = SessionContext.Instance.CurrentUser?.Id;
-                var username = SessionContext.Instance.CurrentUser?.Username ?? string.Empty;
-                await _accessLogService.LogAsync(userId, username, ActionType.ExportFile,
-                    CurrentFile.FilePath, details: $"Exported to: {dlg.FileName}");
-                StatusMessage = "File exported successfully.";
+                var result = System.Windows.MessageBox.Show(
+                    $"The original file is a '{ext}' file but you chose to save as '{chosenExt}'.\n\n" +
+                    "The file will be copied as-is without conversion. Continue?",
+                    "Extension Mismatch",
+                    System.Windows.MessageBoxButton.YesNo,
+                    System.Windows.MessageBoxImage.Warning);
+
+                if (result != System.Windows.MessageBoxResult.Yes) return;
             }
+
+            File.Copy(CurrentFile.FilePath, dlg.FileName, overwrite: true);
+
+            var userId = SessionContext.Instance.CurrentUser?.Id;
+            var username = SessionContext.Instance.CurrentUser?.Username ?? string.Empty;
+            await _accessLogService.LogAsync(userId, username, ActionType.ExportFile,
+                CurrentFile.FilePath, details: $"Exported to: {dlg.FileName}");
+
+            StatusMessage = "File exported successfully.";
         }
 
         private void ExecuteCopyPath(object? _)

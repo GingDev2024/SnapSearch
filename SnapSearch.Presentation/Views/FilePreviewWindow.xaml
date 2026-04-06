@@ -22,7 +22,7 @@
             </Grid.RowDefinitions>
 
             <!-- Title bar -->
-            <Border Grid.Row="0" Background="{StaticResource PrimaryLightBrush}"
+            <Border Grid.Row="0" Background="#FF252C40"
                     MouseLeftButtonDown="TitleBar_MouseDown">
                 <Grid Margin="16,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -54,7 +54,7 @@
                                 Command="{Binding CopyPathCommand}" Padding="10,4" Margin="0,0,12,0"
                                 Visibility="{Binding CanCopy, Converter={StaticResource BoolToVis}}" />
                         <Button Content="X" Width="28" Height="28" FontSize="12"
-                                Background="Transparent" BorderThickness="0"
+                                Background="#FF252C40" BorderThickness="0"
                                 Foreground="{StaticResource DangerBrush}" Cursor="Hand"
                                 Click="CloseButton_Click" FontWeight="Bold" />
                     </StackPanel>
@@ -124,7 +124,7 @@
                                     Padding="16,8" BorderThickness="0,0,0,1"
                                     BorderBrush="{StaticResource BorderBrush}">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="📄" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Text="📄" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" />
                                     <TextBlock Text="Word Document Preview"
                                                FontSize="12" FontWeight="SemiBold"
                                                Foreground="{StaticResource TextSecondaryBrush}"
@@ -163,7 +163,7 @@
                                 <!-- Row 0: header bar — fixed -->
                                 <RowDefinition Height="36" />
                                 <!-- Row 1: sheet tabs — fixed -->
-                                <RowDefinition Height="*"  />
+                                <RowDefinition Height="*" />
                                 <!-- Row 2: DataGrid — fills rest -->
                             </Grid.RowDefinitions>
 
@@ -212,10 +212,8 @@
                                                     FontSize="11" />
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
-
                                 </ItemsControl>
                             </ScrollViewer>
-
 
                             <!-- XLSX DataGrid — fills all remaining height -->
 
@@ -278,9 +276,7 @@
                                         </Style.Triggers>
                                     </Style>
                                 </DataGrid.RowStyle>
-
                             </DataGrid>
-
                         </Grid>
 
                         <!-- 6. Unsupported files -->
@@ -299,7 +295,6 @@
                                     Margin="0,20,0,0" Padding="16,8"
                                     Click="OpenWithDefaultApp_Click" />
                         </StackPanel>
-
                     </Grid>
                 </Border>
 
@@ -312,7 +307,7 @@
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
                         <Border Grid.Row="0" Padding="12,10"
-                                BorderThickness="0,0,0,1" BorderBrush="{StaticResource BorderBrush}">
+                                BorderThickness="0,0,0,1" BorderBrush="#FF252C40" Background="#FF252C40">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="MATCHES " Foreground="White"
                                            FontSize="11" FontWeight="SemiBold" />
@@ -367,4 +362,3 @@
         </Grid>
     </Border>
 </Window>
-
