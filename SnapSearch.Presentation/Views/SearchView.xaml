@@ -24,8 +24,8 @@
                            FontSize="12"
                            FontWeight="SemiBold"
                            TextWrapping="Wrap"
-                           Margin="0,25,0,0"/>
-                
+                           Margin="0,25,0,0" />
+
                 <TextBlock Grid.Column="1" VerticalAlignment="Center"
                            Foreground="{StaticResource TextSecondaryBrush}" FontSize="12">
                     <Run Text="{Binding TotalResults}" />
@@ -86,11 +86,10 @@
                     <Button Content="Search" Style="{StaticResource PrimaryButton}"
                             Command="{Binding SearchCommand}" Height="36" Margin="0,20,0,0" />
                     <Button Content="Clear" Style="{DynamicResource DangerButton}"
-                            Command="{Binding ClearCommand}" Height="32" Margin="0,8,0,0"/> 
-                          
+                            Command="{Binding ClearCommand}" Height="32" Margin="0,8,0,0" />
                 </StackPanel>
             </Border>
-    
+
             <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
@@ -104,12 +103,12 @@
                               SelectedItem="{Binding SelectedFile}"
                               MouseDoubleClick="DataGrid_MouseDoubleClick">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="File Name"    Binding="{Binding FileName}"    Width="200" />
-                            <DataGridTextColumn Header="Extension"    Binding="{Binding Extension}"   Width="80" />
-                            <DataGridTextColumn Header="Size"         Binding="{Binding SizeDisplay}" Width="80" />
-                            <DataGridTextColumn Header="Last Modified" Binding="{Binding LastModified, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" Width="140" />
-                            <DataGridTextColumn Header="Matches"      Binding="{Binding ContentMatchCount}" Width="70" />
-                            <DataGridTextColumn Header="Path"         Binding="{Binding Directory}"   Width="*" />
+                            <DataGridTextColumn Header="File Name"    Binding="{Binding FileName}"    Width="230" CanUserSort="True" />
+                            <DataGridTextColumn Header="Extension"    Binding="{Binding Extension}"   Width="80" CanUserSort="True" />
+                            <DataGridTextColumn Header="Size"         Binding="{Binding SizeDisplay}" Width="80" CanUserSort="True" />
+                            <DataGridTextColumn Header="Last Modified" Binding="{Binding LastModified, StringFormat='{}{0:MM/dd/yyyy hh:mm tt}'}" Width="150" CanUserSort="True" />
+                            <DataGridTextColumn Header="Matches"      Binding="{Binding ContentMatchCount}" Width="60" CanUserSort="True" />
+                            <DataGridTextColumn Header="Path"         Binding="{Binding Directory}"   Width="*" CanUserSort="True" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </Border>

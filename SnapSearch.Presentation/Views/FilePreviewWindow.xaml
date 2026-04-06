@@ -124,7 +124,7 @@
                                     Padding="16,8" BorderThickness="0,0,0,1"
                                     BorderBrush="{StaticResource BorderBrush}">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="📄" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                    <TextBlock Text="📄" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="White" />
                                     <TextBlock Text="Word Document Preview"
                                                FontSize="12" FontWeight="SemiBold"
                                                Foreground="{StaticResource TextSecondaryBrush}"
@@ -326,7 +326,7 @@
                                             Background="{StaticResource SurfaceBrush}">
                                         <StackPanel>
                                             <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="Ln " FontSize="10"
+                                                <TextBlock Text="Line " FontSize="10"
                                                            Foreground="{StaticResource AccentBrush}" FontWeight="Bold" />
                                                 <TextBlock Text="{Binding LineNumber}" FontSize="10"
                                                            Foreground="{StaticResource AccentBrush}" FontWeight="Bold" />
