@@ -159,91 +159,119 @@
                         <!-- 5. XLSX files -->
                         <Grid Visibility="{Binding IsXlsxFile, Converter={StaticResource BoolToVis}}">
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="40" />   <!-- header — fixed -->
-                                <RowDefinition Height="36" />   <!-- sheet tabs — fixed -->
-                                <RowDefinition Height="*" />    <!-- DataGrid — fills rest -->
+                                <RowDefinition Height="40" />
+                                <!-- Row 0: header bar — fixed -->
+                                <RowDefinition Height="36" />
+                                <!-- Row 1: sheet tabs — fixed -->
+                                <RowDefinition Height="*"  />
+                                <!-- Row 2: DataGrid — fills rest -->
                             </Grid.RowDefinitions>
 
                             <!-- XLSX header bar -->
-                            <Border Grid.Row="0" Background="{StaticResource SurfaceLightBrush}"
-                                    Padding="16,8" BorderThickness="0,0,0,1"
+                            <Border Grid.Row="0"
+                                    Background="{StaticResource SurfaceLightBrush}"
+                                    Padding="16,8"
+                                    BorderThickness="0,0,0,1"
                                     BorderBrush="{StaticResource BorderBrush}">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="📊" FontSize="14" Foreground="White"
-                                               VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Text="📊"
+                                               FontSize="14"
+                                               Foreground="White"
+                                               VerticalAlignment="Center"
+                                               Margin="0,0,8,0" />
                                     <TextBlock Text="Spreadsheet Preview"
-                                               FontSize="12" FontWeight="SemiBold"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"
                                                Foreground="{StaticResource TextSecondaryBrush}"
                                                VerticalAlignment="Center" />
                                 </StackPanel>
                             </Border>
-
-                            <!-- Sheet tabs -->
                             <ScrollViewer Grid.Row="1"
                                           HorizontalScrollBarVisibility="Auto"
                                           VerticalScrollBarVisibility="Disabled"
                                           Background="{StaticResource SurfaceLightBrush}">
                                 <ItemsControl ItemsSource="{Binding XlsxSheetNames}">
+
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" />
+                                            <StackPanel Orientation="Horizontal"
+                                                        VerticalAlignment="Center" />
                                         </ItemsPanelTemplate>
                                     </ItemsControl.ItemsPanel>
+
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
+
                                             <Button Content="{Binding}"
+                                                    Command="{Binding DataContext.SelectSheetCommand,
+                                                                      RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}"
+                                                    Style="{StaticResource PrimaryButton}"
                                                     Padding="14,4"
                                                     Margin="2,2,0,2"
-                                                    FontSize="11"
-                                                    Command="{Binding DataContext.SelectSheetCommand,
-                                                        RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    CommandParameter="{Binding}"
-                                                    Style="{StaticResource PrimaryButton}" />
+                                                    FontSize="11" />
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
+
                                 </ItemsControl>
                             </ScrollViewer>
 
+
                             <!-- XLSX DataGrid — fills all remaining height -->
+
                             <DataGrid Grid.Row="2"
                                       x:Name="XlsxDataGrid"
+
                                       AutoGenerateColumns="True"
                                       AutoGeneratingColumn="XlsxDataGrid_AutoGeneratingColumn"
+
                                       IsReadOnly="True"
                                       CanUserAddRows="False"
                                       CanUserDeleteRows="False"
                                       CanUserResizeColumns="True"
-                                      CanUserResizeRows="False"
+                                      CanUserResizeRows="True"
                                       CanUserSortColumns="True"
+
+                                      SelectionMode="Extended"
+                                      SelectionUnit="Cell"
+
                                       GridLinesVisibility="All"
                                       HorizontalGridLinesBrush="#E0E0E0"
                                       VerticalGridLinesBrush="#E0E0E0"
+
                                       HorizontalScrollBarVisibility="Auto"
                                       VerticalScrollBarVisibility="Auto"
+
+                                      EnableColumnVirtualization="True"
+                                      EnableRowVirtualization="True"
+
                                       Background="White"
                                       RowBackground="White"
                                       AlternatingRowBackground="#F5F8FF"
                                       BorderThickness="0"
+
                                       FontSize="12"
                                       FontFamily="Segoe UI"
                                       RowHeight="28"
                                       ColumnHeaderHeight="32"
-                                      SelectionMode="Extended"
-                                      SelectionUnit="Cell"
-                                      EnableColumnVirtualization="True"
-                                      EnableRowVirtualization="True"
+
                                       ColumnHeaderStyle="{StaticResource DataGridColumnHeader}"
                                       Style="{StaticResource StyledDataGrid}">
 
+                                <!-- ── Row appearance ────────────────────────────────── -->
                                 <DataGrid.RowStyle>
                                     <Style TargetType="DataGridRow">
-                                        <Setter Property="FontSize" Value="12" />
+                                        <Setter Property="FontSize"   Value="12" />
                                         <Setter Property="FontFamily" Value="Segoe UI" />
+
                                         <Style.Triggers>
+                                            <!-- Selected row: blue highlight, keep text readable -->
                                             <Trigger Property="IsSelected" Value="True">
                                                 <Setter Property="Background" Value="#CCE5FF" />
                                                 <Setter Property="Foreground" Value="Black" />
                                             </Trigger>
+
+                                            <!-- Hover row: subtle highlight -->
                                             <Trigger Property="IsMouseOver" Value="True">
                                                 <Setter Property="Background" Value="#EAF4FF" />
                                             </Trigger>
@@ -251,22 +279,8 @@
                                     </Style>
                                 </DataGrid.RowStyle>
 
-                                <DataGrid.CellStyle>
-                                    <Style TargetType="DataGridCell">
-                                        <Setter Property="Padding" Value="8,4" />
-                                        <Setter Property="BorderThickness" Value="0" />
-                                        <Setter Property="VerticalAlignment" Value="Center" />
-                                        <Style.Triggers>
-                                            <Trigger Property="IsSelected" Value="True">
-                                                <Setter Property="Background" Value="#CCE5FF" />
-                                                <Setter Property="Foreground" Value="Black" />
-                                                <Setter Property="BorderBrush" Value="#4F8EF7" />
-                                            </Trigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </DataGrid.CellStyle>
-
                             </DataGrid>
+
                         </Grid>
 
                         <!-- 6. Unsupported files -->

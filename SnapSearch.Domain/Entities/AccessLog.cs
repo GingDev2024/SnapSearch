@@ -1,4 +1,6 @@
-﻿namespace SnapSearch.Domain.Entities
+﻿using SnapSearch.Domain.Helpers;
+
+namespace SnapSearch.Domain.Entities
 {
     public class AccessLog
     {
@@ -12,7 +14,7 @@
         public string? SearchKeyword { get; set; }
         public string IpAddress { get; set; } = string.Empty;
         public string MacAddress { get; set; } = string.Empty;
-        public DateTime AccessedAt { get; set; } = DateTime.UtcNow.AddHours(8);
+        public DateTime AccessedAt { get; set; } = TimeHelper.Now;
         public string? Details { get; set; }
 
         #endregion Properties

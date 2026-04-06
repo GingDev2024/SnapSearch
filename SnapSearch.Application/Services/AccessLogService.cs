@@ -5,6 +5,7 @@ using SnapSearch.Application.Contracts.Infrastructure;
 using SnapSearch.Application.DTOs;
 using SnapSearch.Domain.Entities;
 using SnapSearch.Domain.Enums;
+using SnapSearch.Domain.Helpers;
 
 namespace SnapSearch.Application.Services
 {
@@ -42,7 +43,7 @@ namespace SnapSearch.Application.Services
                 SearchKeyword = keyword,
                 IpAddress = NetworkHelper.GetLocalIpAddress(),
                 MacAddress = NetworkHelper.GetMacAddress(),
-                AccessedAt = DateTime.UtcNow,
+                AccessedAt = TimeHelper.Now,
                 Details = details
             }, cancellationToken);
         }

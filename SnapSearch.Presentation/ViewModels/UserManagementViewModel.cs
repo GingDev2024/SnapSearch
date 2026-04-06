@@ -1,5 +1,6 @@
 ﻿using SnapSearch.Application.Contracts;
 using SnapSearch.Application.DTOs;
+using SnapSearch.Domain.Helpers;
 using SnapSearch.Presentation.Common;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
@@ -16,10 +17,11 @@ namespace SnapSearch.Presentation.ViewModels
 
         // Form fields
         private string _formUsername = string.Empty;
+
         private string _formRole = "ViewerOnly";
         private string _formPassword = string.Empty;
         private bool _formIsActive = true;
-        private DateTime _formCreatedAt = DateTime.UtcNow.AddHours(8);
+        private DateTime _formCreatedAt = TimeHelper.Now;
 
         #endregion Fields
 
@@ -78,10 +80,10 @@ namespace SnapSearch.Presentation.ViewModels
             set => SetProperty(ref _formIsActive, value);
         }
 
-        public DateTime FormCreatedAt 
-        { 
+        public DateTime FormCreatedAt
+        {
             get => _formCreatedAt;
-            set => SetProperty(ref _formCreatedAt, value); 
+            set => SetProperty(ref _formCreatedAt, value);
         }
 
         public bool IsEditing => SelectedUser != null;
@@ -197,7 +199,7 @@ namespace SnapSearch.Presentation.ViewModels
             FormRole = "ViewerOnly";
             FormPassword = string.Empty;
             FormIsActive = true;
-            FormCreatedAt = DateTime.UtcNow.AddHours(8);    
+            FormCreatedAt = DateTime.UtcNow.AddHours(8);
             OnPropertyChanged(nameof(IsEditing));
         }
 

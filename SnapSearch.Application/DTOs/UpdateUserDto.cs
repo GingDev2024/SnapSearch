@@ -1,4 +1,6 @@
-﻿namespace SnapSearch.Application.DTOs
+﻿using SnapSearch.Domain.Helpers;
+
+namespace SnapSearch.Application.DTOs
 {
     public class UpdateUserDto
     {
@@ -9,7 +11,7 @@
         public string Role { get; set; } = string.Empty;
         public bool IsActive { get; set; }
         public string? NewPassword { get; set; }
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow.AddHours(8);
+        public DateTime UpdatedAt { get; set; } = TimeHelper.Now;
 
 
         #endregion Properties

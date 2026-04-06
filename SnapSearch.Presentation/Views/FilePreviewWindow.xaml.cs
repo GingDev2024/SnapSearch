@@ -18,6 +18,7 @@ namespace SnapSearch.Presentation.Views
         private readonly FilePreviewViewModel _vm;
         private readonly FileResultDto _pendingFile;
         private readonly string _pendingKeyword;
+        //public bool IsColumnWidthFlexible { get; set; }
 
         #endregion Fields
 
@@ -63,8 +64,6 @@ namespace SnapSearch.Presentation.Views
         #region FileLoaded → RenderContent
 
         // Called by the ViewModel when all data is ready.
-        // We marshal to the UI thread at Render priority so the visual tree
-        // is fully updated before we start writing into RichTextBoxes etc.
         private void OnFileLoaded()
         {
             Dispatcher.InvokeAsync(RenderContentAsync, DispatcherPriority.Render);
@@ -75,11 +74,11 @@ namespace SnapSearch.Presentation.Views
             if (_vm.CurrentFile == null)
                 return;
 
-            System.Diagnostics.Debug.WriteLine(
-                $"[Preview] RenderContent — " +
-                $"IsText={_vm.IsTextFile} IsPdf={_vm.IsPdfFile} " +
-                $"IsImage={_vm.IsImageFile} IsDocx={_vm.IsDocxFile} " +
-                $"IsXlsx={_vm.IsXlsxFile} IsUnsupported={_vm.IsUnsupportedFile}");
+            //System.Diagnostics.Debug.WriteLine(
+            //    $"[Preview] RenderContent — " +
+            //    $"IsText={_vm.IsTextFile} IsPdf={_vm.IsPdfFile} " +
+            //    $"IsImage={_vm.IsImageFile} IsDocx={_vm.IsDocxFile} " +
+            //    $"IsXlsx={_vm.IsXlsxFile} IsUnsupported={_vm.IsUnsupportedFile}");
 
             // ── PDF ──────────────────────────────────────────────────────────
             if (_vm.IsPdfFile)
@@ -127,8 +126,6 @@ namespace SnapSearch.Presentation.Views
             }
 
             // ── XLSX ─────────────────────────────────────────────────────────
-            // XlsxData is guaranteed non-null here because the ViewModel sets it
-            // on the UI thread BEFORE firing the FileLoaded event.
             if (_vm.IsXlsxFile)
             {
                 if (_vm.XlsxData == null)
@@ -137,22 +134,57 @@ namespace SnapSearch.Presentation.Views
                     return;
                 }
 
-                // Clear columns first so AutoGeneratingColumn fires fresh on every load.
-                // Without this, switching files can show stale columns.
                 XlsxDataGrid.ItemsSource = null;
                 XlsxDataGrid.Columns.Clear();
                 XlsxDataGrid.ItemsSource = _vm.XlsxData.DefaultView;
+
+                // Adjust column widths after WPF finishes its next layout pass.
+                AdjustXlsxColumnWidthsAfterLayout();
                 return;
             }
-
-            // ── Unsupported ──────────────────────────────────────────────────
-            // The XAML Visibility binding on the "Unsupported" StackPanel handles
-            // showing the "Open with Default App" button automatically.
         }
 
         #endregion FileLoaded → RenderContent
 
         #region Rendering Helpers
+
+        /// <summary>
+        /// Adds a single line of text to a Paragraph, wrapping every match of
+        /// the keyword in a blue highlighted Run so it stands out visually.
+        /// </summary>
+        private static void AppendHighlightedLine(Paragraph para, string line, string keyword)
+        {
+            // No keyword — just add the plain text
+            if (string.IsNullOrWhiteSpace(keyword))
+            {
+                para.Inlines.Add(new Run(line));
+                return;
+            }
+
+            int last = 0, idx;
+
+            // Walk through every occurrence of the keyword (case-insensitive)
+            while ((idx = line.IndexOf(keyword, last, StringComparison.OrdinalIgnoreCase)) >= 0)
+            {
+                // Add the non-highlighted text that comes BEFORE this match
+                if (idx > last)
+                    para.Inlines.Add(new Run(line[last..idx]));
+
+                // Add the matched keyword with a blue background
+                para.Inlines.Add(new Run(line.Substring(idx, keyword.Length))
+                {
+                    Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(79, 142, 247)),
+                    Foreground = System.Windows.Media.Brushes.White,
+                    FontWeight = FontWeights.Bold
+                });
+
+                last = idx + keyword.Length;
+            }
+
+            // Add any remaining text after the last match
+            if (last < line.Length)
+                para.Inlines.Add(new Run(line[last..]));
+        }
 
         /// <summary>
         /// Loads an image file from disk and displays it in the PreviewImage control.
@@ -230,44 +262,6 @@ namespace SnapSearch.Presentation.Views
         }
 
         /// <summary>
-        /// Adds a single line of text to a Paragraph, wrapping every match of
-        /// the keyword in a blue highlighted Run so it stands out visually.
-        /// </summary>
-        private static void AppendHighlightedLine(Paragraph para, string line, string keyword)
-        {
-            // No keyword — just add the plain text
-            if (string.IsNullOrWhiteSpace(keyword))
-            {
-                para.Inlines.Add(new Run(line));
-                return;
-            }
-
-            int last = 0, idx;
-
-            // Walk through every occurrence of the keyword (case-insensitive)
-            while ((idx = line.IndexOf(keyword, last, StringComparison.OrdinalIgnoreCase)) >= 0)
-            {
-                // Add the non-highlighted text that comes BEFORE this match
-                if (idx > last)
-                    para.Inlines.Add(new Run(line[last..idx]));
-
-                // Add the matched keyword with a blue background
-                para.Inlines.Add(new Run(line.Substring(idx, keyword.Length))
-                {
-                    Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(79, 142, 247)),
-                    Foreground = System.Windows.Media.Brushes.White,
-                    FontWeight = FontWeights.Bold
-                });
-
-                last = idx + keyword.Length;
-            }
-
-            // Add any remaining text after the last match
-            if (last < line.Length)
-                para.Inlines.Add(new Run(line[last..]));
-        }
-
-        /// <summary>
         /// Scrolls the viewer to make the specified line number visible.
         /// Used when the user clicks a match in the right-hand matches panel.
         /// </summary>
@@ -287,24 +281,13 @@ namespace SnapSearch.Presentation.Views
             }
         }
 
-        /// <summary>
-        /// Called automatically by the DataGrid for each column it generates
-        /// from the DataTable.  We control column width and cell padding here.
-        ///
-        /// Strategy:
-        ///   - Measure each column to fit its content (SizeToCells).
-        ///   - After ALL columns are generated and the grid has done its first
-        ///     layout pass, decide whether to stretch columns to fill the grid
-        ///     or keep them content-sized with a scrollbar (see OnXlsxDataGridLoaded).
-        /// </summary>
         private void XlsxDataGrid_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)
         {
             if (e.Column is not DataGridTextColumn col) return;
 
-            // Size to content for now — we may switch to Star later
+            // Size to content initially; ApplyXlsxColumnWidths may switch to Star.
             col.Width = new DataGridLength(1, DataGridLengthUnitType.SizeToCells);
 
-            // Style the text inside each cell
             col.ElementStyle = new Style(typeof(TextBlock))
             {
                 Setters =
@@ -314,38 +297,40 @@ namespace SnapSearch.Presentation.Views
                     new Setter(TextBlock.TextTrimmingProperty,       TextTrimming.CharacterEllipsis)
                 }
             };
-
-            // Hook the Loaded event so we can check total column width vs available
-            // space AFTER the grid has finished its first layout pass.
-            // We unsubscribe first to avoid multiple subscriptions when switching sheets.
-            XlsxDataGrid.Loaded -= OnXlsxDataGridLoaded;
-            XlsxDataGrid.Loaded += OnXlsxDataGridLoaded;
         }
 
         /// <summary>
-        /// Fired once after the DataGrid completes its first layout pass.
-        /// Decides whether columns should stretch (Star) or stay content-sized.
+        /// Subscribes a one-shot LayoutUpdated handler so ApplyXlsxColumnWidths
+        /// runs after WPF finishes measuring the new columns.
+        /// Called from RenderContentAsync immediately after ItemsSource is set.
         /// </summary>
-        private void OnXlsxDataGridLoaded(object sender, RoutedEventArgs e)
+        private void AdjustXlsxColumnWidthsAfterLayout()
         {
-            // Only run once per data-load
-            XlsxDataGrid.Loaded -= OnXlsxDataGridLoaded;
+            EventHandler? handler = null;
+            handler = (s, e) =>
+            {
+                XlsxDataGrid.LayoutUpdated -= handler;
+                ApplyXlsxColumnWidths();
+            };
+            XlsxDataGrid.LayoutUpdated += handler;
+        }
 
+        /// <summary>
+        /// Decides whether columns should stretch (Star) or stay content-sized.
+        /// Runs after LayoutUpdated so ActualWidth values are already measured.
+        /// </summary>
+        private void ApplyXlsxColumnWidths()
+        {
             if (XlsxDataGrid.Columns.Count == 0) return;
 
-            // Total width all columns currently occupy
             double totalColumnWidth = XlsxDataGrid.Columns.Sum(c => c.ActualWidth);
-
-            // Space available inside the grid (subtract scrollbar and row-header widths)
             double available = XlsxDataGrid.ActualWidth
                                - SystemParameters.VerticalScrollBarWidth
                                - XlsxDataGrid.RowHeaderActualWidth;
 
             if (totalColumnWidth < available)
             {
-                // All columns fit — stretch them proportionally so they fill the grid.
-                // We use each column's current content width as its Star weight so
-                // wider-content columns get proportionally more space.
+                // All columns fit — stretch proportionally to fill available space.
                 foreach (var col in XlsxDataGrid.Columns)
                 {
                     double weight = col.ActualWidth > 0 ? col.ActualWidth : 1;
@@ -354,8 +339,7 @@ namespace SnapSearch.Presentation.Views
             }
             else
             {
-                // Columns are wider than the panel — keep content size and let the
-                // horizontal scrollbar handle overflow.
+                // Columns overflow — keep content size, let scrollbar handle it.
                 foreach (var col in XlsxDataGrid.Columns)
                     col.Width = new DataGridLength(1, DataGridLengthUnitType.SizeToCells);
             }
@@ -365,9 +349,83 @@ namespace SnapSearch.Presentation.Views
 
         #region UI Event Handlers
 
+        /// use a FlowDocument so the printer driver can
+        /// reflow and paginate the text natively — consistent with DOCX/text printing.
+        /// </summary>
+        private static FlowDocument BuildXlsxFlowDocument(System.Data.DataTable table, string fileName)
+        {
+            var doc = new FlowDocument
+            {
+                FontFamily = new System.Windows.Media.FontFamily("Segoe UI"),
+                FontSize = 11,
+                PagePadding = new Thickness(40),
+                ColumnWidth = double.PositiveInfinity
+            };
+
+            // Title
+            doc.Blocks.Add(new Paragraph(new Run(fileName))
+            {
+                FontSize = 14,
+                FontWeight = FontWeights.Bold,
+                Margin = new Thickness(0, 0, 0, 10)
+            });
+
+            // Table
+            var flowTable = new Table();
+            doc.Blocks.Add(flowTable);
+
+            int columnCount = table.Columns.Count;
+
+            // Create columns
+            for (int i = 0; i < columnCount; i++)
+            {
+                flowTable.Columns.Add(new TableColumn
+                {
+                    Width = new GridLength(1, GridUnitType.Star),
+                });
+            }
+
+            // Header row
+            var headerGroup = new TableRowGroup();
+            flowTable.RowGroups.Add(headerGroup);
+
+            var headerRow = new TableRow();
+            headerGroup.Rows.Add(headerRow);
+
+            foreach (System.Data.DataColumn col in table.Columns)
+            {
+                headerRow.Cells.Add(new TableCell(new Paragraph(new Run(col.ColumnName)))
+                {
+                    FontWeight = FontWeights.Bold,
+                    Padding = new Thickness(4, 2, 4, 2),
+                    BorderThickness = new Thickness(0, 0, 0, 1),
+                    BorderBrush = System.Windows.Media.Brushes.Black
+                });
+            }
+
+            // Data rows
+            var dataGroup = new TableRowGroup();
+            flowTable.RowGroups.Add(dataGroup);
+
+            foreach (System.Data.DataRow row in table.Rows)
+            {
+                var tableRow = new TableRow();
+                dataGroup.Rows.Add(tableRow);
+
+                foreach (var cell in row.ItemArray)
+                {
+                    tableRow.Cells.Add(new TableCell(
+                        new Paragraph(new Run(cell?.ToString() ?? "")))
+                    {
+                        Padding = new Thickness(5)
+                    });
+                }
+            }
+
+            return doc;
+        }
+
         /// <summary>
-        /// Handles the Print button for ALL file types in one place.
-        ///
         /// PDF  → renders every page to a bitmap via PdfiumViewer and sends
         ///         each one to the printer using PrintVisual.
         /// DOCX → uses the FlowDocument paginator (built-in WPF print support).
@@ -401,6 +459,23 @@ namespace SnapSearch.Presentation.Views
                         ((IDocumentPaginatorSource)DocxRichTextBox.Document).DocumentPaginator,
                         fileName);
                 }
+                else if (_vm.IsXlsxFile)
+                {
+                    if (_vm.XlsxData == null)
+                    {
+                        _vm.StatusMessage = "No spreedsheet data to print.";
+                        return;
+                    }
+
+                    var doc = BuildXlsxFlowDocument(_vm.XlsxData, fileName);
+
+                    doc.PageWidth = pd.PrintableAreaWidth;
+                    doc.PageHeight = pd.PrintableAreaHeight;
+
+                    pd.PrintDocument(((IDocumentPaginatorSource)doc).DocumentPaginator, fileName);
+
+                    _vm.StatusMessage = "Spreadsheet sent to printer.";
+                }
                 else
                 {
                     // ── Text / code file printing ────────────────────────────
@@ -414,7 +489,7 @@ namespace SnapSearch.Presentation.Views
             catch (Exception ex)
             {
                 _vm.StatusMessage = $"Print error: {ex.Message}";
-                System.Diagnostics.Debug.WriteLine($"[FilePreviewWindow] Print error: {ex}");
+                // System.Diagnostics.Debug.WriteLine($"[FilePreviewWindow] Print error: {ex}");
             }
         }
 
