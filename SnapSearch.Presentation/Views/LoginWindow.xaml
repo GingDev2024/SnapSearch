@@ -31,21 +31,21 @@
             </Grid.ColumnDefinitions>
 
             <Grid.RowDefinitions>
-                <RowDefinition Height="36"/>
-                <RowDefinition Height="*"/>
+                <RowDefinition Height="36" />
+                <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
             <!-- 🔹 LEFT SIDE (LOGO / BRANDING) -->
             <Grid Grid.Column="0" Grid.Row="1" Margin="10,0,0,0">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="335*"/>
-                    <RowDefinition Height="204*"/>
+                    <RowDefinition Height="335*" />
+                    <RowDefinition Height="204*" />
                 </Grid.RowDefinitions>
                 <StackPanel VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,153,0,0" Grid.RowSpan="2">
 
                     <Border Width="120" Height="120">
                         <Image Source="pack://application:,,,/Resources/snapsearch.png"
-                               Stretch="Fill" Margin="-23,-55,-23,10"/>
+                               Stretch="Fill" Margin="-23,-55,-23,10" />
                     </Border>
 
                     <TextBlock Text="SNAPSEARCH"
@@ -53,23 +53,20 @@
                                FontWeight="Bold"
                                Foreground="#020445"
                                HorizontalAlignment="Center"
-                               Margin="0,0,0,0" Height="49"/>
-                    <TextBlock Text="We make financial dreams come true!"
-                        FontSize="25"
+                               Margin="0,0,0,0" Height="49" />
+                    <TextBlock Text="Find anything. Track everything. Miss nothing."
+                        FontSize="23"
                         FontWeight="Bold"
                         FontFamily="Gabriola"
-                        Foreground="#020445"
-                               />
+                        Foreground="#020445" />
                 </StackPanel>
             </Grid>
-
-
 
             <!-- 🔥 SEPARATOR -->
             <Rectangle Grid.Column="1"
                        Grid.RowSpan="2"
                        Fill="White"
-                       Opacity="0.2"/>
+                       Opacity="0.2" />
 
             <!-- 🔹 RIGHT SIDE (LOGIN FORM) -->
             <StackPanel Grid.Column="2"
@@ -80,26 +77,26 @@
                              FontWeight="Bold"
                              Foreground="#020445"
                              HorizontalAlignment="Center"
-                             Margin="2,20,0,10"/>
+                             Margin="2,20,0,10" />
 
                 <TextBlock Text="Welcome! Find your files quickly and easily."
                      FontSize="16"
                      FontWeight="Bold"
                      Foreground="#020445"
                      HorizontalAlignment="Center"
-                     Margin="0,10,0,20"/>
+                     Margin="0,10,0,20" />
 
                 <TextBlock Text="USERNAME" Style="{StaticResource FormLabel}" Width="364" Height="25" />
                 <TextBox x:Name="UsernameTextBox" Style="{StaticResource SearchTextBox}"
                          Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
                          Height="40" Width="368"
-                         KeyDown="Input_KeyDown"/>
+                         KeyDown="Input_KeyDown" />
 
                 <TextBlock Text="PASSWORD" Style="{StaticResource FormLabel}" Width="366" Height="25" Margin="0,15,0,0" />
                 <PasswordBox x:Name="PasswordBox"
                              Style="{StaticResource StyledPasswordBox}"
                              Height="40" Width="368"
-                             KeyDown="PasswordBox_KeyDown"/>
+                             KeyDown="PasswordBox_KeyDown" />
 
                 <TextBlock Text="{Binding ErrorMessage}"
                            Foreground="{StaticResource DangerBrush}"
@@ -114,7 +111,7 @@
                         Width="368"
                         FontSize="14"
                         Margin="0,15,0,0"
-                        Click="LoginButton_Click"/>
+                        Click="LoginButton_Click" />
 
                 <ProgressBar IsIndeterminate="True"
                              Height="4"
@@ -133,7 +130,7 @@
             <!-- 🔹 TOP BAR -->
             <Border Grid.Row="0" Grid.ColumnSpan="3"
                     Background="Transparent"
-                    MouseLeftButtonDown="DragBar_MouseDown"/>
+                    MouseLeftButtonDown="DragBar_MouseDown" />
 
             <Button Grid.Row="0" Grid.ColumnSpan="3"
                     Content="✕"
@@ -146,8 +143,7 @@
                     Background="Transparent"
                     BorderThickness="0"
                     Foreground="#565E7A"
-                    Click="CloseButton_Click"/>
-
+                    Click="CloseButton_Click" />
         </Grid>
     </Border>
 </Window>
