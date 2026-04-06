@@ -141,14 +141,28 @@ namespace SnapSearch.Infrastructure.Services
                 var lines = await File.ReadAllLinesAsync(filePath, Encoding.UTF8, cancellationToken);
                 for (int i = 0; i < lines.Length; i++)
                 {
+                    var cleanedLine = lines[i]
+                    .Replace("\uFEFF", "")   // BOM
+                    .Replace("\u200B", "")   // zero-width space
+                    .Replace("\u00A0", " ")  // non-breaking space → regular space
+                    .Replace("\r", "")       // carriage return
+                    .Trim();
+
                     int idx = 0;
                     while ((idx = lines[i].IndexOf(keyword, idx, StringComparison.OrdinalIgnoreCase)) >= 0)
                     {
+                        int snippetStart = Math.Max(0, idx - 1);
+                        int snippetEnd = Math.Min(cleanedLine.Length, idx + keyword.Length + 1);
+                        var snippet = cleanedLine.Substring(snippetStart, snippetEnd - snippetStart).Trim();
+
+                        if (snippetStart > 0) snippet = "..." + snippet;
+                        if (snippetEnd < cleanedLine.Length) snippet = snippet + "...";
+
                         matches.Add(new ContentMatchDto
                         {
                             LineNumber = i + 1,
                             MatchIndex = matches.Count + 1,
-                            LineContent = lines[i].Trim(),
+                            LineContent = snippet,
                             Keyword = keyword,
                             PageNumber = 1
                         });
@@ -185,36 +199,62 @@ namespace SnapSearch.Infrastructure.Services
                 ".bat" or ".cmd" or ".ps1" or ".sh";
 
         private async Task<IEnumerable<ContentMatchDto>> SearchPdfContentAsync(
-            string filePath, string keyword, CancellationToken cancellationToken)
+         string filePath, string keyword, CancellationToken cancellationToken)
         {
             var matches = new List<ContentMatchDto>();
-            int matchIndex = 1;
-            try
+
+            await Task.Run(() =>
             {
-                using var doc = UglyToad.PdfPig.PdfDocument.Open(filePath);
-                foreach (var page in doc.GetPages())
+                using var doc = PdfiumViewer.PdfDocument.Load(filePath);
+
+                for (int pageIndex = 0; pageIndex < doc.PageCount; pageIndex++)
                 {
-                    if (cancellationToken.IsCancellationRequested)
-                        break;
-                    var lines = page.Text.Split('\n');
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    var pageText = doc.GetPdfText(pageIndex);
+                    if (string.IsNullOrWhiteSpace(pageText)) continue;
+
+                    var cleanedText = pageText
+                        .Replace("\uFEFF", "")
+                        .Replace("\u200B", "")
+                        .Replace("\u00A0", " ")
+                        .Replace("\r", "")
+                        .Trim();
+
+                    // Split into real lines
+                    var lines = cleanedText.Split('\n');
+
                     for (int i = 0; i < lines.Length; i++)
                     {
-                        if (lines[i].Contains(keyword, StringComparison.OrdinalIgnoreCase))
+                        var cleanedLine = lines[i].Trim();
+                        if (string.IsNullOrWhiteSpace(cleanedLine)) continue;
+
+                        int idx = 0;
+                        while ((idx = cleanedLine.IndexOf(keyword, idx, StringComparison.OrdinalIgnoreCase)) >= 0)
                         {
+                            int snippetStart = Math.Max(0, idx - 1);
+                            int snippetEnd = Math.Min(cleanedLine.Length, idx + keyword.Length + 1);
+                            var snippet = cleanedLine.Substring(snippetStart, snippetEnd - snippetStart).Trim();
+
+                            if (snippetStart > 0) snippet = "..." + snippet;
+                            if (snippetEnd < cleanedLine.Length) snippet = snippet + "...";
+
                             matches.Add(new ContentMatchDto
                             {
                                 LineNumber = i + 1,
-                                MatchIndex = matchIndex++,
-                                LineContent = lines[i].Trim(),
+                                MatchIndex = matches.Count + 1,
+                                LineContent = snippet,   // ✅ only the relevant part
                                 Keyword = keyword,
-                                PageNumber = page.Number
+                                PageNumber = pageIndex + 1
                             });
+
+                            idx += keyword.Length;
                         }
                     }
                 }
-            }
-            catch { /* invalid PDF or library unavailable */ }
-            return await Task.FromResult(matches);
+            }, cancellationToken);
+
+            return matches;
         }
 
         private async Task<IEnumerable<ContentMatchDto>> SearchDocxContentAsync(

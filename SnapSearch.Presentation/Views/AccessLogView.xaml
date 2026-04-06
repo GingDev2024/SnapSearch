@@ -64,13 +64,13 @@
                       EnableColumnVirtualization="False">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Time"
-                                        Binding="{Binding AccessedAt, StringFormat='{}{0:MM/dd/yyyy hh:mm tt}'}" Width="180" />
-                    <DataGridTextColumn Header="User"       Binding="{Binding Username}"      Width="120" />
-                    <DataGridTextColumn Header="Action"     Binding="{Binding Action}"         Width="110" />
-                    <DataGridTextColumn Header="Keyword"    Binding="{Binding SearchKeyword}"  Width="130" />
-                    <DataGridTextColumn Header="IP Address" Binding="{Binding IpAddress}"      Width="120" />
-                    <DataGridTextColumn Header="MAC Address" Binding="{Binding MacAddress}"    Width="140" />
-                    <DataGridTextColumn Header="File / Details" Binding="{Binding Details}"   Width="*" />
+                                        Binding="{Binding AccessedAt, StringFormat='{}{0:MM/dd/yyyy hh:mm tt}'}" Width="180" CanUserSort="True" />
+                    <DataGridTextColumn Header="User"       Binding="{Binding Username}"      Width="120" CanUserSort="True" />
+                    <DataGridTextColumn Header="Action"     Binding="{Binding Action}"         Width="110" CanUserSort="True" />
+                    <DataGridTextColumn Header="Keyword"    Binding="{Binding SearchKeyword}"  Width="130" CanUserSort="True" />
+                    <DataGridTextColumn Header="IP Address" Binding="{Binding IpAddress}"      Width="120" CanUserSort="True" />
+                    <DataGridTextColumn Header="MAC Address" Binding="{Binding MacAddress}"    Width="140" CanUserSort="True" />
+                    <DataGridTextColumn Header="File / Details" Binding="{Binding Details}"   Width="*" CanUserSort="True" />
                 </DataGrid.Columns>
             </DataGrid>
         </Border>

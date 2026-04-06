@@ -34,12 +34,12 @@
                           ColumnHeaderStyle="{StaticResource DataGridColumnHeader}"
                           ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser}">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="190" />
-                        <DataGridTextColumn Header="Role"     Binding="{Binding Role}"     Width="190" />
+                        <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="190" CanUserSort="True"/>
+                        <DataGridTextColumn Header="Role"     Binding="{Binding Role}"     Width="190" CanUserSort="True"/>
                         <DataGridCheckBoxColumn Header="Active" Binding="{Binding IsActive}" Width="130" />
                         <DataGridTextColumn Header="Created"
                                             Binding="{Binding CreatedAt, StringFormat='{}{0:MM/dd/yyyy hh:mm tt}'}"
-                                            Width="*" />
+                                            Width="*" CanUserSort="True"/>
                     </DataGrid.Columns>
                 </DataGrid>
             </Border>
