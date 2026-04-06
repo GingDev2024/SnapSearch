@@ -54,8 +54,8 @@
                                Foreground="#020445"
                                HorizontalAlignment="Center"
                                Margin="0,0,0,0" Height="49" />
-                    <TextBlock Text="We make financial dreams come true!"
-                        FontSize="25"
+                    <TextBlock Text="Find anything. Track everything. Miss nothing."
+                        FontSize="23"
                         FontWeight="Bold"
                         FontFamily="Gabriola"
                         Foreground="#020445" />
