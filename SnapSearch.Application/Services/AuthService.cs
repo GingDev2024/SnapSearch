@@ -4,6 +4,7 @@ using SnapSearch.Application.Contracts;
 using SnapSearch.Application.Contracts.Infrastructure;
 using SnapSearch.Application.DTOs;
 using SnapSearch.Domain.Enums;
+using SnapSearch.Domain.Helpers;
 
 namespace SnapSearch.Application.Services
 {
@@ -53,7 +54,7 @@ namespace SnapSearch.Application.Services
                 Action = ActionType.Login.ToString(),
                 IpAddress = NetworkHelper.GetLocalIpAddress(),
                 MacAddress = NetworkHelper.GetMacAddress(),
-                AccessedAt = DateTime.UtcNow
+                AccessedAt = TimeHelper.Now
             }, cancellationToken);
 
             return CurrentUser;
@@ -70,7 +71,7 @@ namespace SnapSearch.Application.Services
                     Action = ActionType.Logout.ToString(),
                     IpAddress = NetworkHelper.GetLocalIpAddress(),
                     MacAddress = NetworkHelper.GetMacAddress(),
-                    AccessedAt = DateTime.UtcNow
+                    AccessedAt = TimeHelper.Now
                 }, cancellationToken);
             }
             CurrentUser = null;

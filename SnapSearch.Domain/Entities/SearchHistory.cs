@@ -1,4 +1,6 @@
-﻿namespace SnapSearch.Domain.Entities
+﻿using SnapSearch.Domain.Helpers;
+
+namespace SnapSearch.Domain.Entities
 {
     public class SearchHistory
     {
@@ -10,7 +12,7 @@
         public string? SearchDirectory { get; set; }
         public string? FileExtensionFilter { get; set; }
         public int ResultCount { get; set; }
-        public DateTime SearchedAt { get; set; } = DateTime.UtcNow;
+        public DateTime SearchedAt { get; set; } = TimeHelper.Now;
 
         #endregion Properties
     }

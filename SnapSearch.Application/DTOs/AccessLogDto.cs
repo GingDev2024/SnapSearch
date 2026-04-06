@@ -12,7 +12,7 @@
         public string? SearchKeyword { get; set; }
         public string IpAddress { get; set; } = string.Empty;
         public string MacAddress { get; set; } = string.Empty;
-        public DateTime AccessedAt { get; set; } = DateTime.UtcNow.AddHours(8);
+        public DateTime AccessedAt { get; set; }
         public string? Details { get; set; }
 
         #endregion Properties

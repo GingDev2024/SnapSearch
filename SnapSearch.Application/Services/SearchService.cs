@@ -5,6 +5,7 @@ using SnapSearch.Application.Contracts.Infrastructure;
 using SnapSearch.Application.DTOs;
 using SnapSearch.Domain.Entities;
 using SnapSearch.Domain.Enums;
+using SnapSearch.Domain.Helpers;
 
 namespace SnapSearch.Application.Services
 {
@@ -49,7 +50,7 @@ namespace SnapSearch.Application.Services
                 SearchDirectory = request.SearchDirectory,
                 FileExtensionFilter = request.ExtensionFilter,
                 ResultCount = results.Count,
-                SearchedAt = DateTime.UtcNow
+                SearchedAt = TimeHelper.Now
             }, cancellationToken);
 
             await _accessLogRepository.CreateAsync(new AccessLog
@@ -60,7 +61,7 @@ namespace SnapSearch.Application.Services
                 SearchKeyword = request.Keyword,
                 IpAddress = NetworkHelper.GetLocalIpAddress(),
                 MacAddress = NetworkHelper.GetMacAddress(),
-                AccessedAt = DateTime.UtcNow,
+                AccessedAt = TimeHelper.Now,
                 Details = $"Directory: {request.SearchDirectory}, Results: {results.Count}"
             }, cancellationToken);
 

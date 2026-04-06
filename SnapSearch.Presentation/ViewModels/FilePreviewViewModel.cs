@@ -314,6 +314,7 @@ namespace SnapSearch.Presentation.ViewModels
         {
             using var workbook = new XLWorkbook(filePath);
             var sheetNames = workbook.Worksheets.Select(ws => ws.Name).ToList();
+            // create message box if no sheets found (in other process)
             var table = sheetNames.Count > 0
                 ? BuildDataTable(workbook.Worksheet(sheetNames[0]))
                 : new DataTable();

@@ -4,6 +4,7 @@ using SnapSearch.Application.Contracts;
 using SnapSearch.Application.Contracts.Infrastructure;
 using SnapSearch.Application.DTOs;
 using SnapSearch.Domain.Entities;
+using SnapSearch.Domain.Helpers;
 
 namespace SnapSearch.Application.Services
 {
@@ -44,6 +45,8 @@ namespace SnapSearch.Application.Services
         {
             var user = _mapper.Map<User>(dto);
             user.PasswordHash = PasswordHelper.Hash(dto.Password);
+            user.CreatedAt = TimeHelper.Now;
+            user.UpdatedAt = TimeHelper.Now;
             var id = await _userRepository.CreateAsync(user, cancellationToken);
             user.Id = id;
             return _mapper.Map<UserDto>(user);
@@ -58,7 +61,7 @@ namespace SnapSearch.Application.Services
             existing.Username = dto.Username;
             existing.Role = dto.Role;
             existing.IsActive = dto.IsActive;
-            existing.UpdatedAt = DateTime.UtcNow;
+            existing.UpdatedAt = TimeHelper.Now;
 
             if (!string.IsNullOrWhiteSpace(dto.NewPassword))
                 existing.PasswordHash = PasswordHelper.Hash(dto.NewPassword);

@@ -1,5 +1,6 @@
 ﻿using SnapSearch.Application.Contracts;
 using SnapSearch.Application.DTOs;
+using SnapSearch.Domain.Helpers;
 using SnapSearch.Presentation.Common;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
@@ -13,7 +14,7 @@ namespace SnapSearch.Presentation.ViewModels
         private readonly IAccessLogService _accessLogService;
 
         private DateTime _fromDate = DateTime.Today.AddDays(-7);
-        private DateTime _toDate = DateTime.Today;
+        private DateTime _toDate = TimeHelper.Now;
         private string _filterText = string.Empty;
         private ObservableCollection<AccessLogDto> _allLogs = new();
 
