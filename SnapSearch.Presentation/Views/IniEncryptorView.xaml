@@ -1,0 +1,181 @@
+﻿<UserControl x:Class="SnapSearch.Presentation.Views.IniEncryptorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{StaticResource BackgroundWindowColor}">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="32,28,32,28">
+
+            <!-- ── Page header ─────────────────────────────────────────── -->
+            <StackPanel Margin="0,0,0,28">
+                <TextBlock Text="INI Credential Encryptor"
+                           FontSize="20" FontWeight="Bold"
+                           Foreground="Black" />
+                <TextBlock Text="Generate AES-256 encrypted values for snapsearch.ini"
+                           FontSize="12" Margin="0,4,0,0"
+                           Foreground="Gray" />
+            </StackPanel>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="360" />
+                    <ColumnDefinition Width="24" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- ── INPUT CARD ──────────────────────────────────────── -->
+                <Border Grid.Column="0"
+                        Background="{StaticResource BackgroundWindowColor}"
+                        CornerRadius="10" Padding="24,22"
+                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                        VerticalAlignment="Top">
+                    <StackPanel>
+                        <TextBlock Text="Plain-text Credentials"
+                                   FontSize="13" FontWeight="SemiBold"
+                                   Foreground="Black"
+                                   Margin="0,0,0,20" />
+
+                        <!-- Username -->
+                        <TextBlock Text="DB USERNAME"
+                                   FontSize="11" FontWeight="Bold"
+                                   Foreground="Black"
+                                   Margin="0,0,0,6" />
+                        <TextBox Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource SearchTextBox}"
+                                 Margin="0,0,0,16" />
+
+                        <!-- Password -->
+                        <TextBlock Text="DB PASSWORD"
+                                   FontSize="11" FontWeight="Bold"
+                                   Foreground="Black"
+                                   Margin="0,0,0,6" />
+                        <PasswordBox x:Name="PasswordInput"
+                                     Style="{StaticResource StyledPasswordBox}"
+                                     Margin="0,0,0,24"
+                                     PasswordChanged="PasswordInput_PasswordChanged" />
+
+                        <!-- Encrypt button -->
+                        <Button Content="Generate Encrypted Values"
+                                Padding="0,12"
+                                Style="{StaticResource PrimaryButton}"
+                                Command="{Binding EncryptCommand}" />
+
+                        <!-- Status -->
+                        <TextBlock Text="{Binding Status}"
+                                   TextWrapping="Wrap" FontSize="12"
+                                   Margin="0,12,0,0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="Green" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding StatusIsError}" Value="True">
+                                            <Setter Property="Foreground" Value="Red" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <!-- ── OUTPUT CARD ─────────────────────────────────────── -->
+                <Border Grid.Column="2"
+                        Background="{StaticResource BackgroundWindowColor}"
+                        CornerRadius="10" Padding="24,22"
+                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                        VerticalAlignment="Top">
+                    <StackPanel>
+                        <TextBlock Text="📋  Generated Values"
+                                   FontSize="13" FontWeight="SemiBold"
+                                   Foreground="Black"
+                                   Margin="0,0,0,20" />
+
+                        <!-- Encrypted User row -->
+                        <TextBlock Text="USER  — paste into snapsearch.ini"
+                                   FontSize="11" FontWeight="Bold"
+                                   Foreground="Black"
+                                   Margin="0,0,0,6" />
+                        <Grid Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding EncryptedUser, Mode=OneWay}"
+                                     Style="{StaticResource SearchTextBox}"
+                                     IsReadOnly="True"
+                                     FontFamily="Consolas" FontSize="11" />
+                            <Button Grid.Column="2" Content="📋 Copy" Padding="12,8"
+                                    Style="{StaticResource NavButton}"
+                                    Command="{Binding CopyUserCommand}" />
+                        </Grid>
+
+                        <!-- Encrypted Password row -->
+                        <TextBlock Text="PASSWORD  — paste into snapsearch.ini"
+                                   FontSize="11" FontWeight="Bold"
+                                   Foreground="Black"
+                                   Margin="0,0,0,6" />
+                        <Grid Margin="0,0,0,24">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding EncryptedPass, Mode=OneWay}"
+                                     Style="{StaticResource SearchTextBox}"
+                                     IsReadOnly="True"
+                                     FontFamily="Consolas" FontSize="11" />
+                            <Button Grid.Column="2" Content="📋 Copy" Padding="12,8"
+                                    Style="{StaticResource NavButton}"
+                                    Command="{Binding CopyPasswordCommand}" />
+                        </Grid>
+
+                        <!-- INI preview -->
+                        <Border Background="{StaticResource BackgroundWindowColor}"
+                                CornerRadius="8" Padding="16,14"
+                                BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="snapsearch.ini preview"
+                                           FontSize="11" Foreground="Gray"
+                                           Margin="0,0,0,10" />
+                                <TextBlock FontFamily="Consolas" FontSize="11"
+                                           Foreground="Black"
+                                           TextWrapping="Wrap" LineHeight="18">
+                                    <Run Text="[Machine_" /><Run Text="{Binding MachineName, Mode=OneWay}" /><Run Text="]" /><LineBreak />
+                                    <Run Text="Server=" /><Run Text="YOUR-SERVER\INSTANCE" Foreground="Gray" /><LineBreak />
+                                    <Run Text="Database=" /><Run Text="SnapSearchDb" Foreground="Gray" /><LineBreak />
+                                    <Run Text="User=" /><Run Text="{Binding EncryptedUser, Mode=OneWay}" Foreground="Blue" /><LineBreak />
+                                    <Run Text="Password=" /><Run Text="{Binding EncryptedPass, Mode=OneWay}" Foreground="Blue" /><LineBreak />
+                                    <Run Text="Encrypt=true" /><LineBreak />
+                                    <Run Text="TrustServerCertificate=true" />
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- ── HOW-TO callout ──────────────────────────────────────── -->
+            <Border Background="{StaticResource BackgroundWindowColor}"
+                    CornerRadius="10" Padding="22,16"
+                    Margin="0,20,0,0"
+                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                <StackPanel>
+                    <TextBlock Text="📄  How to use snapsearch.ini"
+                               FontSize="13" FontWeight="SemiBold"
+                               Foreground="Black"
+                               Margin="0,0,0,40" />
+                    <TextBlock FontSize="12" TextWrapping="Wrap" LineHeight="22"
+                               Foreground="Black">
+                        <Run FontWeight="Bold">1. </Run><Run Text="Navigate to snapsearch.ini in the publish folder." /><LineBreak />
+                        <Run FontWeight="Bold">2. </Run><Run Text="Add a [Machine_PCNAME] section — the preview above uses your current machine name." /><LineBreak />
+                        <Run FontWeight="Bold">3. </Run><Run Text="Paste the encrypted User= and Password= values generated here then saved." /><LineBreak />
+                        <Run FontWeight="Bold">4. </Run><Run Text="The EncryptionKey in appsettings.json must stay consistent — changing it invalidates all encrypted values." /><LineBreak />
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

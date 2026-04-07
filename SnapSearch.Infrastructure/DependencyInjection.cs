@@ -29,6 +29,7 @@ namespace SnapSearch.Infrastructure
 
             // Services
             services.AddTransient<IFileSearchService, FileSearchService>();
+            services.AddTransient<IHealthCheckService, HealthCheckService>();
 
             // DbContext
             services.AddTransient<AppDbContext>();

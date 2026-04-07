@@ -33,7 +33,7 @@ namespace SnapSearch.Presentation
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
-            
+
             // Load the icon
             var iconUri = new Uri("pack://application:,,,/Resources/snapsearchlogo.ico", UriKind.Absolute);
 
@@ -65,7 +65,7 @@ namespace SnapSearch.Presentation
         private static void ConfigureServices(IServiceCollection services)
         {
             // Configuration
-            var environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Development";
+            var environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production";
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
@@ -88,7 +88,9 @@ namespace SnapSearch.Presentation
                 () => sp.GetRequiredService<SearchViewModel>(),
                 () => sp.GetRequiredService<UserManagementViewModel>(),
                 () => sp.GetRequiredService<AccessLogViewModel>(),
-                () => sp.GetRequiredService<SettingsViewModel>()
+                () => sp.GetRequiredService<SettingsViewModel>(),
+                () => sp.GetRequiredService<IniEncryptorViewModel>(),
+                () => sp.GetRequiredService<HealthViewModel>()
             ));
 
             // Transient: each navigation creates a fresh VM
@@ -97,6 +99,9 @@ namespace SnapSearch.Presentation
             services.AddTransient<UserManagementViewModel>();
             services.AddTransient<AccessLogViewModel>();
             services.AddTransient<SettingsViewModel>();
+            services.AddTransient<HealthViewModel>();
+            services.AddTransient<IniEncryptorViewModel>(sp =>
+                new IniEncryptorViewModel(sp.GetRequiredService<IConfiguration>()));
 
             // --- Windows ---
             services.AddTransient<LoginWindow>();

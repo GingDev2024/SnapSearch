@@ -13,6 +13,8 @@ namespace SnapSearch.Presentation.ViewModels
         // View factories injected
         private readonly Func<SearchViewModel> _searchVmFactory;
 
+        private readonly Func<HealthViewModel> _healthVmFactory;
+        private readonly Func<IniEncryptorViewModel> _iniEncryptorVmFactory;
         private readonly Func<UserManagementViewModel> _usersVmFactory;
         private readonly Func<AccessLogViewModel> _logsVmFactory;
         private readonly Func<SettingsViewModel> _settingsVmFactory;
@@ -30,18 +32,24 @@ namespace SnapSearch.Presentation.ViewModels
             Func<SearchViewModel> searchVmFactory,
             Func<UserManagementViewModel> usersVmFactory,
             Func<AccessLogViewModel> logsVmFactory,
-            Func<SettingsViewModel> settingsVmFactory)
+            Func<SettingsViewModel> settingsVmFactory,
+            Func<IniEncryptorViewModel> iniEncryptorVmFactory,
+            Func<HealthViewModel> healthVmFactory)
         {
             _authService = authService;
             _searchVmFactory = searchVmFactory;
             _usersVmFactory = usersVmFactory;
             _logsVmFactory = logsVmFactory;
             _settingsVmFactory = settingsVmFactory;
+            _iniEncryptorVmFactory = iniEncryptorVmFactory;
+            _healthVmFactory = healthVmFactory;
 
             NavigateSearchCommand = new RelayCommand(_ => NavigateTo("Search"));
             NavigateUsersCommand = new RelayCommand(_ => NavigateTo("Users"), _ => IsAdmin);
             NavigateLogsCommand = new RelayCommand(_ => NavigateTo("Logs"), _ => IsAdmin);
             NavigateSettingsCommand = new RelayCommand(_ => NavigateTo("Settings"), _ => IsAdmin);
+            NavigateIniEncryptorCommand = new RelayCommand(_ => NavigateTo("IniEncryptor"), _ => IsAdmin);
+            NavigateHealthCommand = new RelayCommand(_ => NavigateTo("Health"), _ => IsAdmin); // ← new
             LogoutCommand = new AsyncRelayCommand(ExecuteLogoutAsync);
         }
 
@@ -80,6 +88,8 @@ namespace SnapSearch.Presentation.ViewModels
         public ICommand NavigateUsersCommand { get; }
         public ICommand NavigateLogsCommand { get; }
         public ICommand NavigateSettingsCommand { get; }
+        public ICommand NavigateIniEncryptorCommand { get; }
+        public ICommand NavigateHealthCommand { get; }
         public ICommand LogoutCommand { get; }
 
         #endregion Properties
@@ -107,6 +117,8 @@ namespace SnapSearch.Presentation.ViewModels
                 "Users" => _usersVmFactory(),
                 "Logs" => _logsVmFactory(),
                 "Settings" => _settingsVmFactory(),
+                "IniEncryptor" => _iniEncryptorVmFactory(),
+                "Health" => _healthVmFactory(),
                 _ => null
             };
         }
