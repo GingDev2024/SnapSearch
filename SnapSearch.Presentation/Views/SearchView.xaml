@@ -12,6 +12,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
+        <!-- Header -->
         <Border Grid.Row="0" Padding="28,20,28,0">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -25,7 +26,6 @@
                            FontWeight="SemiBold"
                            TextWrapping="Wrap"
                            Margin="0,25,0,0" />
-
                 <TextBlock Grid.Column="1" VerticalAlignment="Center"
                            Foreground="{StaticResource TextSecondaryBrush}" FontSize="12">
                     <Run Text="{Binding TotalResults}" />
@@ -34,6 +34,7 @@
             </Grid>
         </Border>
 
+        <!-- Main content -->
         <Grid Grid.Row="1" Margin="28,16,28,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="300" />
@@ -41,6 +42,7 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
+            <!-- Filters panel -->
             <Border Grid.Column="0" Style="{StaticResource Card}" VerticalAlignment="Top">
                 <StackPanel>
                     <TextBlock Text="FILTERS" Style="{StaticResource FormLabel}" />
@@ -48,6 +50,7 @@
                     <TextBlock Text="Keyword" Style="{StaticResource FormLabel}" Margin="0,7,0,4" />
                     <TextBox Style="{StaticResource SearchTextBox}"
                              Text="{Binding Keyword, UpdateSourceTrigger=PropertyChanged}"
+                             PreviewKeyDown="TextBox_PreviewKeyDown"
                              x:Name="KeywordBox" />
 
                     <TextBlock Text="Directory" Style="{StaticResource FormLabel}" Margin="0,12,0,4" />
@@ -58,14 +61,15 @@
                         </Grid.ColumnDefinitions>
                         <TextBox Grid.Column="0" Style="{StaticResource SearchTextBox}"
                                  Text="{Binding SearchDirectory, UpdateSourceTrigger=PropertyChanged}"
-                                 Margin="0,0,6,0" />
+                                 PreviewKeyDown="TextBox_PreviewKeyDown" />
                         <Button Grid.Column="1" Content="💾" Style="{StaticResource PrimaryButton}"
                                 Command="{Binding BrowseDirectoryCommand}" FontWeight="Light" Padding="10,8" />
                     </Grid>
 
                     <TextBlock Text="Extension (e.g. .pdf)" Style="{StaticResource FormLabel}" Margin="0,12,0,4" />
                     <TextBox Style="{StaticResource SearchTextBox}"
-                             Text="{Binding ExtensionFilter, UpdateSourceTrigger=PropertyChanged}" />
+                             Text="{Binding ExtensionFilter, UpdateSourceTrigger=PropertyChanged}"
+                             PreviewKeyDown="TextBox_PreviewKeyDown" />
 
                     <TextBlock Text="Date Modified From" Style="{StaticResource FormLabel}" Margin="0,12,0,4" />
                     <DatePicker Background="{StaticResource SurfaceLightBrush}"
@@ -90,6 +94,7 @@
                 </StackPanel>
             </Border>
 
+            <!-- Results panel -->
             <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
@@ -103,12 +108,12 @@
                               SelectedItem="{Binding SelectedFile}"
                               MouseDoubleClick="DataGrid_MouseDoubleClick">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="File Name"    Binding="{Binding FileName}"    Width="230" CanUserSort="True" />
-                            <DataGridTextColumn Header="Extension"    Binding="{Binding Extension}"   Width="80" CanUserSort="True" />
-                            <DataGridTextColumn Header="Size"         Binding="{Binding SizeDisplay}" Width="80" CanUserSort="True" />
+                            <DataGridTextColumn Header="File Name" Binding="{Binding FileName}" Width="230" CanUserSort="True" />
+                            <DataGridTextColumn Header="Extension" Binding="{Binding Extension}" Width="80" CanUserSort="True" />
+                            <DataGridTextColumn Header="Size" Binding="{Binding SizeDisplay}" Width="80" CanUserSort="True" />
                             <DataGridTextColumn Header="Last Modified" Binding="{Binding LastModified, StringFormat='{}{0:MM/dd/yyyy hh:mm tt}'}" Width="150" CanUserSort="True" />
-                            <DataGridTextColumn Header="Matches"      Binding="{Binding ContentMatchCount}" Width="60" CanUserSort="True" />
-                            <DataGridTextColumn Header="Path"         Binding="{Binding Directory}"   Width="*" CanUserSort="True" />
+                            <DataGridTextColumn Header="Matches" Binding="{Binding ContentMatchCount}" Width="60" CanUserSort="True" />
+                            <DataGridTextColumn Header="Path" Binding="{Binding Directory}" Width="*" CanUserSort="True" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </Border>
@@ -121,6 +126,7 @@
             </Grid>
         </Grid>
 
+        <!-- Footer -->
         <Border Grid.Row="2" Padding="28,8" BorderThickness="0,1,0,0"
                 BorderBrush="{StaticResource BorderBrush}">
             <Grid>

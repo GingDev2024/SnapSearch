@@ -6,15 +6,12 @@ namespace SnapSearch.Presentation.Views
 {
     public partial class SearchView : System.Windows.Controls.UserControl
     {
-        #region Public Constructors
         public SearchView()
         {
             InitializeComponent();
             DataContextChanged += OnDataContextChanged;
         }
-        #endregion Public Constructors
 
-        #region Private Methods
         private void OnDataContextChanged(object sender,
             System.Windows.DependencyPropertyChangedEventArgs e)
         {
@@ -22,14 +19,13 @@ namespace SnapSearch.Presentation.Views
                 vm.OpenPreviewRequested += OnOpenPreviewRequested;
         }
 
-        private void OnOpenPreviewRequested(
-            Application.DTOs.FileResultDto file, string keyword)
+        private void OnOpenPreviewRequested(Application.DTOs.FileResultDto file, string keyword)
         {
             var win = new FilePreviewWindow(file, keyword);
             win.Show();
         }
 
-        private void DataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        private void DataGrid_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             if (sender is DataGrid dg &&
                 dg.SelectedItem is Application.DTOs.FileResultDto file)
@@ -41,6 +37,17 @@ namespace SnapSearch.Presentation.Views
                 }
             }
         }
-        #endregion Private Methods
+
+        private void TextBox_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter && DataContext is SearchViewModel vm)
+            {
+                if (vm.SearchCommand.CanExecute(null))
+                {
+                    vm.SearchCommand.Execute(null);
+                    e.Handled = true;
+                }
+            }
+        }
     }
 }
