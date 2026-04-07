@@ -20,19 +20,14 @@ namespace SnapSearch.Presentation.ViewModels
         private string _searchDirectory = string.Empty;
 
         private string? _extensionFilter;
-
         private DateTime? _dateMin;
-
         private DateTime? _dateMax;
 
         private bool _allowPartialMatch = true;
-
         private bool _searchFileContents;
-
         private bool _searchSubDirectories = true;
 
         private FileResultDto? _selectedFile;
-
         private int _totalResults;
 
         #endregion Fields
