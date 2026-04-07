@@ -9,7 +9,8 @@ namespace SnapSearch.Infrastructure.Data
 
         public AppDbContext(IConfiguration configuration)
         {
-            Connection = new SqlConnection(configuration.GetConnectionString("DefaultConnection")!);
+            var connectionString = SnapSearchIniReader.BuildConnectionString(configuration);
+            Connection = new SqlConnection(connectionString);
         }
 
         #endregion Public Constructors

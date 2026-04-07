@@ -19,7 +19,10 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="Search Files" Style="{StaticResource SectionHeader}" Margin="0" />
+                <TextBlock Grid.Column="0" Text="Search Files"
+                           Style="{StaticResource SectionHeader}"
+                           FontSize="20"
+                           Margin="0" />
                 <TextBlock Grid.Column="0"
                            Text="Locate your files quickly by entering a keyword or using filters such as file name, type, or date. Results are displayed instantly for easy access."
                            FontSize="12"

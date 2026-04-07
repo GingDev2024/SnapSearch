@@ -26,6 +26,12 @@
         <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
             <view:SettingsView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:IniEncryptorViewModel}">
+            <view:IniEncryptorView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:HealthViewModel}">
+            <view:HealthView />
+        </DataTemplate>
     </Window.Resources>
 
     <Border CornerRadius="12" ClipToBounds="True">
@@ -89,13 +95,23 @@
                                 Style="{StaticResource NavButton}"
                                 Command="{Binding NavigateLogsCommand}"
                                 Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}" />
+
+                        <Border Height="1" Background="{StaticResource BorderBrush}" Margin="14,16,14,8" />
+
                         <Button Content="Settings"
+                               Style="{StaticResource NavButton}"
+                               Command="{Binding NavigateSettingsCommand}"
+                               Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}" />
+                        <Button Content="INI Encryptor"
                                 Style="{StaticResource NavButton}"
-                                Command="{Binding NavigateSettingsCommand}"
+                                Command="{Binding NavigateIniEncryptorCommand}"
+                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}" />
+                        <Button Content="Health"
+                                Style="{StaticResource NavButton}"
+                                Command="{Binding NavigateHealthCommand}"
                                 Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}" />
 
                         <!-- Theme Toggle separator -->
-                        <Border Height="1" Background="{StaticResource BorderBrush}" Margin="14,16,14,8" />
 
                         <!-- Theme Toggle Button -->
                         <!--<Button Command="{Binding ToggleThemeCommand}"

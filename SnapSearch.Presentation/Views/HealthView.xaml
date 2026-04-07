@@ -1,0 +1,199 @@
+﻿<UserControl x:Class="SnapSearch.Presentation.Views.HealthView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{StaticResource BackgroundWindowColor}">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="32,28,32,28">
+
+            <!-- ── Page header ─────────────────────────────────────────── -->
+            <Grid Margin="0,0,0,28">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel>
+                    <TextBlock Text="System Health"
+                               FontSize="20" FontWeight="Bold"
+                               Foreground="Black" />
+                    <TextBlock Text="Live · refreshes every 10 seconds"
+                               FontSize="12" Margin="0,4,0,0"
+                               Foreground="Gray" />
+                </StackPanel>
+
+                <!-- Overall status pill -->
+                <Border Grid.Column="1" CornerRadius="10" Padding="16,8"
+                        BorderThickness="1" VerticalAlignment="Center">
+                    <Border.Background>
+                        <SolidColorBrush Color="{Binding OverallStatusColor}" />
+                    </Border.Background>
+                    <Border.BorderBrush>
+                        <SolidColorBrush Color="{Binding OverallStatusColor}" />
+                    </Border.BorderBrush>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding OverallStatusIcon}"
+                                   FontSize="14" FontWeight="Bold"
+                                   Foreground="White" Margin="0,0,8,0" />
+                        <TextBlock Text="{Binding Report.Status, FallbackValue='Checking…'}"
+                                   FontSize="13" FontWeight="Bold"
+                                   Foreground="White" />
+                        <TextBlock Text=" · " Foreground="White" FontSize="13" />
+                        <TextBlock Text="{Binding Report.Duration, FallbackValue=''}"
+                                   FontFamily="Consolas" FontSize="11"
+                                   Foreground="White" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Loading indicator -->
+            <TextBlock Text="Checking…" FontSize="12" Foreground="Gray"
+                       Margin="0,0,0,12"
+                       Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}" />
+
+            <!-- Network error -->
+            <TextBlock Text="{Binding Error}" FontSize="12" Foreground="Red"
+                       TextWrapping="Wrap" Margin="0,0,0,12"
+                       Visibility="{Binding IsError, Converter={StaticResource BoolToVis}}" />
+
+            <!-- ── Check cards ─────────────────────────────────────────── -->
+            <ItemsControl ItemsSource="{Binding Report.Checks}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border CornerRadius="10" Padding="18,14"
+                                Margin="0,0,0,10" BorderThickness="1">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background"   Value="#F0F0F0" />
+                                    <Setter Property="BorderBrush"  Value="#CCCCCC" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Status}"
+                                                     Value="Healthy">
+                                            <Setter Property="Background"  Value="#F0FFF4" />
+                                            <Setter Property="BorderBrush" Value="#A8D5B5" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Status}"
+                                                     Value="Degraded">
+                                            <Setter Property="Background"  Value="#FFFBF0" />
+                                            <Setter Property="BorderBrush" Value="#F0C070" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Status}"
+                                                     Value="Unhealthy">
+                                            <Setter Property="Background"  Value="#FFF0F0" />
+                                            <Setter Property="BorderBrush" Value="#F0A0A0" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="38" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Status icon bubble -->
+                                <Border Grid.Column="0"
+                                        Width="30" Height="30" CornerRadius="15"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#AAAAAA" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Status}"
+                                                             Value="Healthy">
+                                                    <Setter Property="Background" Value="#2ECC71" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Status}"
+                                                             Value="Degraded">
+                                                    <Setter Property="Background" Value="#F39C12" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Status}"
+                                                             Value="Unhealthy">
+                                                    <Setter Property="Background" Value="#E74C3C" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="{Binding StatusIcon}"
+                                               FontSize="13" FontWeight="Bold"
+                                               Foreground="White"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" />
+                                </Border>
+
+                                <!-- Name + description + error -->
+                                <StackPanel Grid.Column="1"
+                                            Margin="14,0,8,0"
+                                            VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Name}"
+                                               FontSize="13" FontWeight="SemiBold"
+                                               Foreground="Black" />
+                                    <TextBlock Text="{Binding Description}"
+                                               FontSize="11" Foreground="#555555"
+                                               TextWrapping="Wrap" Margin="0,3,0,0" />
+                                    <TextBlock Text="{Binding Error}"
+                                               FontSize="11" Foreground="#CC0000"
+                                               TextWrapping="Wrap" Margin="0,3,0,0">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Error}"
+                                                                 Value="{x:Null}">
+                                                        <Setter Property="Visibility"
+                                                                Value="Collapsed" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Error}"
+                                                                 Value="">
+                                                        <Setter Property="Visibility"
+                                                                Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+
+                                <!-- Duration badge -->
+                                <Border Grid.Column="2"
+                                        CornerRadius="6" Padding="10,4"
+                                        Background="White"
+                                        BorderBrush="#CCCCCC" BorderThickness="1"
+                                        VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Duration}"
+                                               FontFamily="Consolas" FontSize="11"
+                                               Foreground="Gray" />
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- ── Footer: timestamp + refresh ────────────────────────── -->
+            <Grid Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock FontSize="11" Foreground="Gray" VerticalAlignment="Center">
+                    <Run Text="Last updated: " />
+                    <Run Text="{Binding Report.Timestamp, FallbackValue='—'}" />
+                </TextBlock>
+
+                <Button Grid.Column="1" Content="↺ Refresh Now"
+                        Padding="14,7"
+                        Style="{StaticResource NavButton}"
+                        Command="{Binding RefreshCommand}" />
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
