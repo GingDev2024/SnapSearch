@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
+	  <ApplicationIcon>Resources\snapsearchlogo.ico</ApplicationIcon>
 	  <UseWindowsForms>true</UseWindowsForms>
 	  <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -59,9 +60,9 @@
   </ItemGroup>
 
   <ItemGroup>
-	<None Update="snapsearch.ini">
-		<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	</None>
+	  <Content Include="snapsearch.ini">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Content>
   </ItemGroup>
 
 </Project>
