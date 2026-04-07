@@ -7,7 +7,6 @@ using SnapSearch.Infrastructure;
 using SnapSearch.Presentation.Common;
 using SnapSearch.Presentation.ViewModels;
 using SnapSearch.Presentation.Views;
-using System.IO;
 using System.Windows;
 using System.Windows.Media.Imaging;
 
@@ -34,17 +33,24 @@ namespace SnapSearch.Presentation
         {
             base.OnStartup(e);
 
-            // Load the icon
+            AppDomain.CurrentDomain.UnhandledException += (s, args) =>
+                System.Windows.MessageBox.Show(
+                    args.ExceptionObject?.ToString() ?? "Unknown error",
+                    "Startup Crash");
+
+            this.DispatcherUnhandledException += (s, args) =>
+            {
+                System.Windows.MessageBox.Show(args.Exception.ToString(), "UI Crash");
+                args.Handled = true;
+            };
+
             var iconUri = new Uri("pack://application:,,,/Resources/snapsearchlogo.ico", UriKind.Absolute);
 
-            // Set the icon for each new window when it's created
             EventManager.RegisterClassHandler(typeof(Window), Window.LoadedEvent,
                 new RoutedEventHandler((sender, args) =>
                 {
                     if (sender is Window window)
-                    {
                         window.Icon = BitmapFrame.Create(iconUri);
-                    }
                 }));
 
             var services = new ServiceCollection();
@@ -66,8 +72,10 @@ namespace SnapSearch.Presentation
         {
             // Configuration
             var environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production";
+            var basePath = AppContext.BaseDirectory;
+
             var configuration = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
+                .SetBasePath(basePath)
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true)
                 .Build();
