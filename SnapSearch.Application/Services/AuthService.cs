@@ -42,6 +42,7 @@ namespace SnapSearch.Application.Services
         {
             var hash = PasswordHelper.Hash(loginDto.Password);
             var user = await _userRepository.AuthenticateAsync(loginDto.Username, hash, cancellationToken);
+
             if (user == null)
                 return null;
 
@@ -60,6 +61,15 @@ namespace SnapSearch.Application.Services
             return CurrentUser;
         }
 
+        /// <summary>
+        /// Restores a previously saved session on app startup — no DB call needed.
+        /// Called only from the Presentation layer (App.cs) after loading the session file.
+        /// </summary>
+        public void RestoreSession(UserDto user)
+        {
+            CurrentUser = user;
+        }
+
         public async Task LogoutAsync(int userId, CancellationToken cancellationToken = default)
         {
             if (CurrentUser != null)
@@ -74,7 +84,11 @@ namespace SnapSearch.Application.Services
                     AccessedAt = TimeHelper.Now
                 }, cancellationToken);
             }
+
             CurrentUser = null;
+            // NOTE: SessionPersistence.Clear() is called by the Presentation layer
+            // (MainShellViewModel) after this returns — NOT here — to avoid a
+            // circular project reference (Application cannot reference Presentation).
         }
 
         public bool HasPermission(string permission)

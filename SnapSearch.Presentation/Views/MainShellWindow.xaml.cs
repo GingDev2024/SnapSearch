@@ -1,4 +1,5 @@
-﻿using SnapSearch.Presentation.ViewModels;
+﻿using SnapSearch.Presentation.Common;
+using SnapSearch.Presentation.ViewModels;
 using System.Windows;
 using System.Windows.Input;
 
@@ -43,6 +44,7 @@ namespace SnapSearch.Presentation.Views
         {
             var login = App.GetService<LoginWindow>();
             System.Windows.Application.Current.MainWindow = login;
+            SessionPersistence.Clear();
             login.Show();
             Close();
         }
