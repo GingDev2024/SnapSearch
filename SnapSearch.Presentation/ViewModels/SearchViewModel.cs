@@ -12,8 +12,7 @@ namespace SnapSearch.Presentation.ViewModels
     {
         #region Fields
 
-        // Pagination
-        private const int PageSize = 500;
+        private int _pageSize = 500;
 
         private readonly ISearchService _searchService;
         private readonly IAccessLogService _accessLogService;
@@ -249,6 +248,7 @@ namespace SnapSearch.Presentation.ViewModels
             var sub = await _settingsService.GetValueAsync("SearchSubDirectoriesByDefault");
             var contents = await _settingsService.GetValueAsync("SearchContentsDefault");
             var partial = await _settingsService.GetValueAsync("AllowPartialMatchDefault");
+            var maxRes = await _settingsService.GetValueAsync("MaxResultsPerPage");
 
             if (sub != null)
                 SearchSubDirectories = sub != "false";
@@ -256,6 +256,9 @@ namespace SnapSearch.Presentation.ViewModels
                 SearchFileContents = contents == "true";
             if (partial != null)
                 AllowPartialMatch = partial != "false";
+
+            if (int.TryParse(maxRes, out var mr) && mr > 0)
+                _pageSize = Math.Clamp(mr, 100, 2000);
         }
 
         private async Task LoadKeywordSuggestionsAsync()
@@ -353,16 +356,16 @@ namespace SnapSearch.Presentation.ViewModels
                 TotalResults = results.Count;
 
                 // Show first page
-                var page = results.Take(PageSize).ToList();
+                var page = results.Take(_pageSize).ToList();
                 foreach (var r in page)
                     SearchResults.Add(r);
 
                 DisplayedResults = SearchResults.Count;
-                HasMoreResults = results.Count > PageSize;
+                HasMoreResults = results.Count > _pageSize;
 
                 StatusMessage = token.IsCancellationRequested
                     ? "Search cancelled."
-                    : $"Found {TotalResults} file(s).{(HasMoreResults ? $" Showing first {PageSize}." : "")}";
+                    : $"Found {TotalResults} file(s).{(HasMoreResults ? $" Showing first {_pageSize}." : "")}";
 
                 // Refresh autocomplete suggestions with the new keyword
                 if (!AllSuggestions.Contains(Keyword, StringComparer.OrdinalIgnoreCase))
@@ -390,7 +393,7 @@ namespace SnapSearch.Presentation.ViewModels
 
         private void ExecuteLoadMore(object? _)
         {
-            var nextPage = _allResults.Skip(DisplayedResults).Take(PageSize).ToList();
+            var nextPage = _allResults.Skip(DisplayedResults).Take(_pageSize).ToList();
             foreach (var r in nextPage)
                 SearchResults.Add(r);
 

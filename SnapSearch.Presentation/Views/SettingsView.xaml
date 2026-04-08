@@ -104,8 +104,9 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="Max Results Per Page" Style="{StaticResource FormLabel}" Margin="0,0,0,4" />
+                                <!-- Bind to string wrapper — prevents FormatException when field is cleared mid-edit -->
                                 <TextBox Style="{StaticResource SearchTextBox}"
-                                         Text="{Binding MaxResultsPerPage, UpdateSourceTrigger=PropertyChanged}" />
+                                         Text="{Binding MaxResultsPerPageText, UpdateSourceTrigger=PropertyChanged}" />
                             </StackPanel>
                         </Grid>
                     </StackPanel>
@@ -127,8 +128,9 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="Timeout (minutes)" Style="{StaticResource FormLabel}" Margin="0,0,0,4" />
+                                <!-- Bind to string wrapper — same reason as above -->
                                 <TextBox Style="{StaticResource SearchTextBox}"
-                                         Text="{Binding SessionTimeoutMinutes, UpdateSourceTrigger=PropertyChanged}"
+                                         Text="{Binding SessionTimeoutMinutesText, UpdateSourceTrigger=PropertyChanged}"
                                          IsEnabled="{Binding EnableSessionTimeout}" />
                             </StackPanel>
                             <TextBlock Grid.Column="1"
