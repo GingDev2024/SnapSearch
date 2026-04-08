@@ -117,7 +117,8 @@ namespace SnapSearch.Presentation.ViewModels
             get => _selectedSheetName;
             set
             {
-                if (_selectedSheetName == value) return;
+                if (_selectedSheetName == value)
+                    return;
                 SetProperty(ref _selectedSheetName, value);
                 if (value != null && CurrentFile != null)
                     _ = LoadXlsxSheetAsync(CurrentFile.FilePath, value);
@@ -271,7 +272,11 @@ namespace SnapSearch.Presentation.ViewModels
                 ".txt" or ".log" or ".md" or ".rtf" or
                 ".csv" or ".json" or ".xml" or ".yaml" or ".yml" or ".toml" or
                 ".ini" or ".cfg" or ".config" or ".env" or ".properties" or
-                ".cs" or ".vb" or ".fs" or ".py" or ".js" or ".ts" or ".java" or
+                ".cs" or ".vb" or ".fs" or ".py" or ".js" or ".ts" or ".java" or ".razor" or
+                ".sln" or ".csproj" or ".bin" or ".obj" or ".user" or ".targets" or ".props" or
+                ".tmp" or ".pubxml" or ".dll" or ".svg" or ".mjs" or ".map" or ".publishSet" or
+                ".sample" or ".manifest" or ".node-version" or ".cmd" or ".ps1" or ".cache" or
+                ".v2" or ".gz" or
                 ".cpp" or ".c" or ".h" or ".go" or ".rs" or ".php" or ".rb" or
                 ".html" or ".htm" or ".css" or ".scss" or ".sql" or
                 ".bat" or ".cmd" or ".ps1" or ".sh";
@@ -294,7 +299,8 @@ namespace SnapSearch.Presentation.ViewModels
         {
             using var doc = WordprocessingDocument.Open(filePath, false);
             var body = doc.MainDocumentPart?.Document?.Body;
-            if (body == null) return string.Empty;
+            if (body == null)
+                return string.Empty;
 
             var sb = new System.Text.StringBuilder();
             foreach (var paragraph in body.Elements<Paragraph>())
@@ -332,10 +338,12 @@ namespace SnapSearch.Presentation.ViewModels
         {
             var table = new DataTable();
             var range = ws.RangeUsed();
-            if (range == null) return table;
+            if (range == null)
+                return table;
 
             var rows = range.RowsUsed().ToList();
-            if (rows.Count == 0) return table;
+            if (rows.Count == 0)
+                return table;
 
             // ── Column headers with duplicate resolution ─────────────────────
             var usedNames = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
@@ -412,7 +420,8 @@ namespace SnapSearch.Presentation.ViewModels
 
         private void GoToNextMatch(object? _)
         {
-            if (CurrentMatchIndex >= TotalMatches - 1) return;
+            if (CurrentMatchIndex >= TotalMatches - 1)
+                return;
             CurrentMatchIndex++;
             SelectedMatch = ContentMatches[CurrentMatchIndex];
             ScrollToLineRequested?.Invoke(ContentMatches[CurrentMatchIndex].LineNumber);
@@ -420,7 +429,8 @@ namespace SnapSearch.Presentation.ViewModels
 
         private void GoToPreviousMatch(object? _)
         {
-            if (CurrentMatchIndex <= 0) return;
+            if (CurrentMatchIndex <= 0)
+                return;
             CurrentMatchIndex--;
             SelectedMatch = ContentMatches[CurrentMatchIndex];
             ScrollToLineRequested?.Invoke(ContentMatches[CurrentMatchIndex].LineNumber);
@@ -428,7 +438,8 @@ namespace SnapSearch.Presentation.ViewModels
 
         private async Task ExecutePrintAsync(object? _)
         {
-            if (CurrentFile == null) return;
+            if (CurrentFile == null)
+                return;
             var userId = SessionContext.Instance.CurrentUser?.Id;
             var username = SessionContext.Instance.CurrentUser?.Username ?? string.Empty;
             await _accessLogService.LogAsync(userId, username, ActionType.PrintFile, CurrentFile.FilePath);
@@ -437,7 +448,8 @@ namespace SnapSearch.Presentation.ViewModels
 
         private async Task ExecuteExportAsync(object? _)
         {
-            if (CurrentFile == null) return;
+            if (CurrentFile == null)
+                return;
 
             // Detect the original extension to pre-select the right filter
             var ext = Path.GetExtension(CurrentFile.FileName)?.ToLower() ?? string.Empty;
@@ -460,7 +472,8 @@ namespace SnapSearch.Presentation.ViewModels
                 Filter = filter
             };
 
-            if (dlg.ShowDialog() != true) return;
+            if (dlg.ShowDialog() != true)
+                return;
 
             // Warn if user changed the extension
             var chosenExt = Path.GetExtension(dlg.FileName)?.ToLower();
@@ -473,7 +486,8 @@ namespace SnapSearch.Presentation.ViewModels
                     System.Windows.MessageBoxButton.YesNo,
                     System.Windows.MessageBoxImage.Warning);
 
-                if (result != System.Windows.MessageBoxResult.Yes) return;
+                if (result != System.Windows.MessageBoxResult.Yes)
+                    return;
             }
 
             File.Copy(CurrentFile.FilePath, dlg.FileName, overwrite: true);
@@ -488,7 +502,8 @@ namespace SnapSearch.Presentation.ViewModels
 
         private void ExecuteCopyPath(object? _)
         {
-            if (CurrentFile == null) return;
+            if (CurrentFile == null)
+                return;
             System.Windows.Clipboard.SetText(CurrentFile.FilePath);
             StatusMessage = "Path copied to clipboard.";
         }
