@@ -19,8 +19,7 @@
 
                 <StackPanel>
                     <TextBlock Text="System Health"
-                               FontSize="20" FontWeight="Bold"
-                               Foreground="Black" />
+                               Style="{StaticResource SectionHeader}" FontSize="20" Margin="0" />
                     <TextBlock Text="Live · refreshes every 10 seconds"
                                FontSize="12" Margin="0,4,0,0"
                                Foreground="Gray" />
@@ -191,7 +190,7 @@
 
                 <Button Grid.Column="1" Content="↺ Refresh Now"
                         Padding="14,7"
-                        Style="{StaticResource NavButton}"
+                        Style="{StaticResource PrimaryButton}"
                         Command="{Binding RefreshCommand}" />
             </Grid>
         </StackPanel>

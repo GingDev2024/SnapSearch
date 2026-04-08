@@ -19,10 +19,8 @@
             </Grid.RowDefinitions>
 
             <Grid Grid.Row="0" Margin="0,0,0,17">
-                <TextBlock Text="User Management" 
-                           Style="{StaticResource SectionHeader}" 
-                           FontSize="20"
-                           Margin="4,0,0,0" />
+                <TextBlock Text="User Management"
+                           Style="{StaticResource SectionHeader}" FontSize="20" Margin="0" />
                 <TextBlock Text="Handle user accounts efficiently by adding new users, editing details, and managing roles and permissions."
                           Margin="4,25,0,0"
                            FontSize="12"
@@ -37,12 +35,12 @@
                           ColumnHeaderStyle="{StaticResource DataGridColumnHeader}"
                           ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser}">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="190" CanUserSort="True"/>
-                        <DataGridTextColumn Header="Role"     Binding="{Binding Role}"     Width="190" CanUserSort="True"/>
+                        <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="190" CanUserSort="True" />
+                        <DataGridTextColumn Header="Role"     Binding="{Binding Role}"     Width="190" CanUserSort="True" />
                         <DataGridCheckBoxColumn Header="Active" Binding="{Binding IsActive}" Width="130" />
                         <DataGridTextColumn Header="Created"
                                             Binding="{Binding CreatedAt, StringFormat='{}{0:MM/dd/yyyy hh:mm tt}'}"
-                                            Width="*" CanUserSort="True"/>
+                                            Width="*" CanUserSort="True" />
                     </DataGrid.Columns>
                 </DataGrid>
             </Border>

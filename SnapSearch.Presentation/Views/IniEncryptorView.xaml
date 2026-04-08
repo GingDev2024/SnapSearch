@@ -9,8 +9,7 @@
             <!-- ── Page header ─────────────────────────────────────────── -->
             <StackPanel Margin="0,0,0,28">
                 <TextBlock Text="INI Credential Encryptor"
-                           FontSize="20" FontWeight="Bold"
-                           Foreground="Black" />
+                           Style="{StaticResource SectionHeader}" FontSize="20" Margin="0" />
                 <TextBlock Text="Generate AES-256 encrypted values for snapsearch.ini"
                            FontSize="12" Margin="0,4,0,0"
                            Foreground="Gray" />
