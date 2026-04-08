@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SnapSearch.Application;
 using SnapSearch.Application.Contracts;
+using SnapSearch.Application.Services;
 using SnapSearch.Infrastructure;
 using SnapSearch.Presentation.Common;
 using SnapSearch.Presentation.ViewModels;
@@ -45,7 +46,6 @@ namespace SnapSearch.Presentation
             };
 
             var iconUri = new Uri("pack://application:,,,/Resources/snapsearchlogo.ico", UriKind.Absolute);
-
             EventManager.RegisterClassHandler(typeof(Window), Window.LoadedEvent,
                 new RoutedEventHandler((sender, args) =>
                 {
@@ -59,9 +59,31 @@ namespace SnapSearch.Presentation
 
             ThemeManager.Apply(AppTheme.Dark);
 
-            // Show login first
-            var loginWindow = _services.GetRequiredService<LoginWindow>();
-            loginWindow.Show();
+            // ----------------------------------------------------------------
+            // AUTO-LOGIN: restore saved session → skip login window entirely.
+            // ----------------------------------------------------------------
+            var savedUser = SessionPersistence.TryLoad();
+            if (savedUser != null)
+            {
+                // Keep in-memory session context in sync.
+                SessionContext.Instance.CurrentUser = savedUser;
+
+                // Keep AuthService.CurrentUser in sync (Presentation knows about
+                // Application, so this cast is fine — no reverse reference).
+                if (_services.GetRequiredService<IAuthService>() is AuthService authService)
+                    authService.RestoreSession(savedUser);
+
+                var shell = _services.GetRequiredService<MainShellWindow>();
+                shell.Initialize();
+                Current.MainWindow = shell;
+                shell.Show();
+            }
+            else
+            {
+                var loginWindow = _services.GetRequiredService<LoginWindow>();
+                Current.MainWindow = loginWindow;
+                loginWindow.Show();
+            }
         }
 
         #endregion Protected Methods
@@ -70,7 +92,6 @@ namespace SnapSearch.Presentation
 
         private static void ConfigureServices(IServiceCollection services)
         {
-            // Configuration
             var environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production";
             var basePath = AppContext.BaseDirectory;
 
@@ -81,15 +102,10 @@ namespace SnapSearch.Presentation
                 .Build();
 
             services.AddSingleton<IConfiguration>(configuration);
-
-            // Application layer (AutoMapper, service implementations)
             services.AddApplication();
-
-            // Infrastructure layer (Dapper repos, FileSearchService)
             services.AddInfrastructure();
 
             // --- ViewModels ---
-            // Singleton: auth state is shared
             services.AddSingleton<LoginViewModel>();
             services.AddSingleton<MainShellViewModel>(sp => new MainShellViewModel(
                 sp.GetRequiredService<IAuthService>(),
@@ -101,7 +117,6 @@ namespace SnapSearch.Presentation
                 () => sp.GetRequiredService<HealthViewModel>()
             ));
 
-            // Transient: each navigation creates a fresh VM
             services.AddTransient<SearchViewModel>();
             services.AddTransient<FilePreviewViewModel>();
             services.AddTransient<UserManagementViewModel>();
@@ -116,7 +131,7 @@ namespace SnapSearch.Presentation
             services.AddTransient<MainShellWindow>();
             services.AddTransient<FilePreviewWindow>();
 
-            // --- Services ---
+            // --- Logging ---
             services.AddLogging(builder =>
             {
                 builder.AddDebug();

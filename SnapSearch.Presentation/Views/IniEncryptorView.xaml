@@ -24,7 +24,7 @@
 
                 <!-- ── INPUT CARD ──────────────────────────────────────── -->
                 <Border Grid.Column="0" Style="{StaticResource Card}"
-                        CornerRadius="10" Padding="24,22"
+                        CornerRadius="10" Padding="24,74"
                         BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
                         VerticalAlignment="Top">
                     <StackPanel>

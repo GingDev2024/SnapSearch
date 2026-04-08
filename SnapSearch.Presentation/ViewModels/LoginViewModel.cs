@@ -10,9 +10,9 @@ namespace SnapSearch.Presentation.ViewModels
         #region Fields
 
         private readonly IAuthService _authService;
-
         private string _username = string.Empty;
         private string _errorMessage = string.Empty;
+        private bool _rememberMe = true; // default ON — most users want this
 
         #endregion Fields
 
@@ -46,6 +46,16 @@ namespace SnapSearch.Presentation.ViewModels
             set => SetProperty(ref _errorMessage, value);
         }
 
+        /// <summary>
+        /// When true, the session is saved to disk so the next launch skips login.
+        /// When false, closing the app always returns to the login screen.
+        /// </summary>
+        public bool RememberMe
+        {
+            get => _rememberMe;
+            set => SetProperty(ref _rememberMe, value);
+        }
+
         public ICommand LoginCommand { get; }
 
         #endregion Properties
@@ -56,7 +66,6 @@ namespace SnapSearch.Presentation.ViewModels
         {
             ErrorMessage = string.Empty;
 
-            // PasswordBox passes password via parameter (CommandParameter binding workaround)
             var password = parameter as string ?? string.Empty;
 
             if (string.IsNullOrWhiteSpace(Username))
@@ -64,6 +73,7 @@ namespace SnapSearch.Presentation.ViewModels
                 ErrorMessage = "Username is required.";
                 return;
             }
+
             if (string.IsNullOrWhiteSpace(password))
             {
                 ErrorMessage = "Password is required.";
@@ -71,6 +81,7 @@ namespace SnapSearch.Presentation.ViewModels
             }
 
             IsBusy = true;
+
             try
             {
                 var user = await _authService.LoginAsync(new LoginDto
@@ -86,6 +97,13 @@ namespace SnapSearch.Presentation.ViewModels
                 }
 
                 SessionContext.Instance.CurrentUser = user;
+
+                // Only persist the session if the user ticked "Remember Me".
+                if (RememberMe)
+                    SessionPersistence.Save(user);
+                else
+                    SessionPersistence.Clear(); // clear any old saved session
+
                 LoginSucceeded?.Invoke(user);
             }
             catch (Exception ex)
