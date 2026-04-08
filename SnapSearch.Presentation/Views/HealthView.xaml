@@ -22,7 +22,8 @@
                                Style="{StaticResource SectionHeader}" FontSize="20" Margin="0" />
                     <TextBlock Text="Live · refreshes every 10 seconds"
                                FontSize="12" Margin="0,4,0,0"
-                               Foreground="Gray" />
+                               Foreground="{StaticResource TextMutedBrush}"
+                               FontWeight="SemiBold" />
                 </StackPanel>
 
                 <!-- Overall status pill -->

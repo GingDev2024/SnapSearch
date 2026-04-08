@@ -32,7 +32,8 @@
                 <TextBlock Grid.Column="0"
                            Text="Locate your files quickly by entering a keyword or using filters such as file name, type, date, or size. Results are displayed instantly for easy access."
                            FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap"
-                           Margin="0,25,0,0" />
+                           Margin="1,35,0,0"
+                           Foreground="{StaticResource TextMutedBrush}"/>
 
                 <!-- Result count + Export -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,0">
@@ -154,7 +155,7 @@
                         </Grid>
 
                         <!-- Buttons -->
-                        <Button Content="🔍 Search" Style="{StaticResource PrimaryButton}"
+                        <Button Content="Search" Style="{StaticResource PrimaryButton}"
                                 Command="{Binding SearchCommand}" Height="36" Margin="0,10,0,0" />
 
                         <Button Content="✕ Cancel Search"

@@ -22,7 +22,8 @@
                 <TextBlock Text="User Management"
                            Style="{StaticResource SectionHeader}" FontSize="20" Margin="0" />
                 <TextBlock Text="Handle user accounts efficiently by adding new users, editing details, and managing roles and permissions."
-                          Margin="4,25,0,0"
+                           Margin="1,35,0,0"
+                           Foreground="{StaticResource TextMutedBrush}"
                            FontSize="12"
                            FontWeight="SemiBold" />
 
