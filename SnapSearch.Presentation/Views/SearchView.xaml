@@ -142,11 +142,11 @@
                                  Text="{Binding SizeMinKb, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
                                  PreviewKeyDown="TextBox_PreviewKeyDown"
                                  Tag="Min KB" />
-                        
+
                         <TextBlock Grid.Column="1" Text="–" VerticalAlignment="Center"
                                    HorizontalAlignment="Center"
                                    Foreground="{StaticResource TextMutedBrush}" />
-                        
+
                         <TextBox Grid.Column="2" Style="{StaticResource SearchTextBox}"
                                  Text="{Binding SizeMaxKb, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
                                  PreviewKeyDown="TextBox_PreviewKeyDown"
@@ -263,11 +263,15 @@
         <Border Grid.Row="2" Margin="0,3,0,0" Padding="28,8" BorderThickness="0,1,0,0"
                 BorderBrush="{StaticResource BorderBrush}">
             <Grid>
-                <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusText}" />
-                <ProgressBar HorizontalAlignment="Right" Width="200" Height="4"
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="109*" />
+                    <ColumnDefinition Width="205*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusText}" Grid.ColumnSpan="2" />
+                <ProgressBar HorizontalAlignment="Left" Width="942"
                              IsIndeterminate="True"
                              Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"
-                             Background="Transparent" Foreground="{StaticResource AccentBrush}" />
+                             Background="Transparent" Foreground="{StaticResource SuccessBrush}" Margin="0,5,0,2" Grid.ColumnSpan="2" />
             </Grid>
         </Border>
     </Grid>
