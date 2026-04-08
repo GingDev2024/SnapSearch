@@ -5,6 +5,23 @@ using System.Windows.Data;
 namespace SnapSearch.Presentation.Common.Converters
 {
     /// <summary>
+    /// Returns Visible when the value is NOT null, Collapsed when it IS null.
+    /// Used to show the selected-file info bar only when a row is selected.
+    /// </summary>
+    public class NullToVisibilityConverter : IValueConverter
+    {
+        #region Public Methods
+
+        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+            => value is null ? Visibility.Collapsed : Visibility.Visible;
+
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+            => throw new NotImplementedException();
+
+        #endregion Public Methods
+    }
+
+    /// <summary>
     /// Converts a non-null/non-empty string to Visible, null/empty to Collapsed.
     /// </summary>
     public class StringToVisibilityConverter : IValueConverter

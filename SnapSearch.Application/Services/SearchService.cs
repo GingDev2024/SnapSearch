@@ -20,7 +20,7 @@ namespace SnapSearch.Application.Services
 
         #endregion Fields
 
-        #region Public Constructors
+        #region Constructor
 
         public SearchService(
             IFileSearchService fileSearchService,
@@ -34,12 +34,13 @@ namespace SnapSearch.Application.Services
             _mapper = mapper;
         }
 
-        #endregion Public Constructors
+        #endregion Constructor
 
         #region Public Methods
 
         public async Task<IEnumerable<FileResultDto>> SearchFilesAsync(
-            FileSearchRequestDto request, int userId, CancellationToken cancellationToken = default)
+            FileSearchRequestDto request, int userId,
+            CancellationToken cancellationToken = default)
         {
             var results = (await _fileSearchService.SearchAsync(request, cancellationToken)).ToList();
 
@@ -62,14 +63,16 @@ namespace SnapSearch.Application.Services
                 IpAddress = NetworkHelper.GetLocalIpAddress(),
                 MacAddress = NetworkHelper.GetMacAddress(),
                 AccessedAt = TimeHelper.Now,
-                Details = $"Directory: {request.SearchDirectory}, Results: {results.Count}"
+                Details = $"Directory: {request.SearchDirectory}, Results: {results.Count}" +
+                               (request.UseRegex ? " [regex]" : "")
             }, cancellationToken);
 
             return results;
         }
 
         public async Task<IEnumerable<ContentMatchDto>> GetContentMatchesAsync(
-            string filePath, string keyword, CancellationToken cancellationToken = default)
+            string filePath, string keyword,
+            CancellationToken cancellationToken = default)
         {
             return await _fileSearchService.SearchFileContentAsync(filePath, keyword, cancellationToken);
         }

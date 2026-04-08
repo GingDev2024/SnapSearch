@@ -1,6 +1,7 @@
 ﻿using SnapSearch.Application.Contracts.Infrastructure;
 using SnapSearch.Application.DTOs;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace SnapSearch.Infrastructure.Services
 {
@@ -12,9 +13,10 @@ namespace SnapSearch.Infrastructure.Services
         {
             ".txt", ".log", ".csv", ".xml", ".json", ".md", ".ini", ".cfg", ".bat", ".ps1",
             ".pdf", ".docx", ".doc", ".xlsx", ".xls", ".pptx", ".ppt",
-            ".cs", ".vb", ".fs", ".py", ".js", ".ts", ".java", ".cpp", ".c", ".h",
-            ".go", ".rs", ".php", ".rb", ".html", ".htm", ".css", ".scss", ".sql",
-            ".yaml", ".yml", ".toml", ".env", ".properties", ".config", ".sh", ".cmd"
+            ".cs",  ".vb",  ".fs",  ".py",  ".js",  ".ts",  ".java",
+            ".cpp", ".c",   ".h",   ".go",  ".rs",  ".php", ".rb",
+            ".html",".htm", ".css", ".scss",".sql",  ".yaml",".yml",
+            ".toml",".env", ".properties",  ".config",".sh", ".cmd"
         };
 
         #endregion Fields
@@ -25,7 +27,6 @@ namespace SnapSearch.Infrastructure.Services
             FileSearchRequestDto request, CancellationToken cancellationToken = default)
         {
             var results = new List<FileResultDto>();
-
             if (!Directory.Exists(request.SearchDirectory))
                 return results;
 
@@ -36,14 +37,24 @@ namespace SnapSearch.Infrastructure.Services
             IEnumerable<string> files;
             try
             {
-                var pattern = string.IsNullOrWhiteSpace(request.ExtensionFilter)
-                    ? "*"
+                var pattern = string.IsNullOrWhiteSpace(request.ExtensionFilter) ? "*"
                     : $"*{request.ExtensionFilter}";
                 files = Directory.EnumerateFiles(request.SearchDirectory, pattern, searchOption);
             }
-            catch (UnauthorizedAccessException)
+            catch (UnauthorizedAccessException) { return results; }
+
+            // Pre-compile regex once if needed
+            Regex? nameRegex = null;
+            Regex? contentRegex = null;
+            if (request.UseRegex && !string.IsNullOrWhiteSpace(request.Keyword))
             {
-                return results;
+                try
+                {
+                    var opts = RegexOptions.IgnoreCase | RegexOptions.Compiled;
+                    nameRegex = new Regex(request.Keyword, opts);
+                    contentRegex = new Regex(request.Keyword, opts);
+                }
+                catch { /* invalid regex — fall back to literal */ }
             }
 
             foreach (var filePath in files)
@@ -53,62 +64,65 @@ namespace SnapSearch.Infrastructure.Services
 
                 try
                 {
-                    var fileInfo = new FileInfo(filePath);
-                    if (!fileInfo.Exists)
+                    var fi = new FileInfo(filePath);
+                    if (!fi.Exists)
                         continue;
 
-                    // Extension filter (double-check — pattern may be broad)
+                    // Extension double-check
                     if (!string.IsNullOrWhiteSpace(request.ExtensionFilter))
                     {
                         var ext = request.ExtensionFilter.StartsWith(".")
                             ? request.ExtensionFilter
                             : $".{request.ExtensionFilter}";
-                        if (!fileInfo.Extension.Equals(ext, StringComparison.OrdinalIgnoreCase))
+                        if (!fi.Extension.Equals(ext, StringComparison.OrdinalIgnoreCase))
                             continue;
                     }
 
                     // Date filter
-                    if (request.DateMin.HasValue && fileInfo.LastWriteTime < request.DateMin.Value)
+                    if (request.DateMin.HasValue && fi.LastWriteTime < request.DateMin.Value)
                         continue;
-                    if (request.DateMax.HasValue && fileInfo.LastWriteTime > request.DateMax.Value)
+                    if (request.DateMax.HasValue && fi.LastWriteTime > request.DateMax.Value)
                         continue;
 
-                    // Size filter
-                    if (request.SizeMin.HasValue && fileInfo.Length < request.SizeMin.Value)
+                    // Size filter (already in bytes in the DTO)
+                    if (request.SizeMin.HasValue && fi.Length < request.SizeMin.Value)
                         continue;
-                    if (request.SizeMax.HasValue && fileInfo.Length > request.SizeMax.Value)
+                    if (request.SizeMax.HasValue && fi.Length > request.SizeMax.Value)
                         continue;
 
                     // Name match
-                    bool nameMatch = request.AllowPartialMatch
-                        ? fileInfo.Name.Contains(request.Keyword, StringComparison.OrdinalIgnoreCase)
-                        : fileInfo.Name.Equals(request.Keyword, StringComparison.OrdinalIgnoreCase);
+                    bool nameMatch;
+                    if (nameRegex != null)
+                        nameMatch = nameRegex.IsMatch(fi.Name);
+                    else if (request.AllowPartialMatch)
+                        nameMatch = fi.Name.Contains(request.Keyword, StringComparison.OrdinalIgnoreCase);
+                    else
+                        nameMatch = fi.Name.Equals(request.Keyword, StringComparison.OrdinalIgnoreCase);
 
-                    // Content match — run when SearchFileContents is on, regardless of nameMatch
-                    // so that ContentMatchCount is always accurate when the file is previewed.
+                    // Content match — always run when SearchFileContents is on
                     bool contentMatch = false;
                     int contentMatchCount = 0;
 
                     if (request.SearchFileContents)
                     {
                         var matchList = (await SearchFileContentAsync(
-                            filePath, request.Keyword, cancellationToken)).ToList();
+                            filePath, request.Keyword, cancellationToken,
+                            contentRegex)).ToList();
                         contentMatch = matchList.Count > 0;
                         contentMatchCount = matchList.Count;
                     }
 
-                    // Include file if it matches by name OR by content
                     if (!nameMatch && !contentMatch)
                         continue;
 
                     results.Add(new FileResultDto
                     {
-                        FileName = fileInfo.Name,
-                        FilePath = fileInfo.FullName,
-                        Extension = fileInfo.Extension,
-                        SizeBytes = fileInfo.Length,
-                        LastModified = fileInfo.LastWriteTime,
-                        CreatedAt = fileInfo.CreationTime,
+                        FileName = fi.Name,
+                        FilePath = fi.FullName,
+                        Extension = fi.Extension,
+                        SizeBytes = fi.Length,
+                        LastModified = fi.LastWriteTime,
+                        CreatedAt = fi.CreationTime,
                         HasContentMatch = contentMatch,
                         ContentMatchCount = contentMatchCount
                     });
@@ -121,7 +135,9 @@ namespace SnapSearch.Infrastructure.Services
         }
 
         public async Task<IEnumerable<ContentMatchDto>> SearchFileContentAsync(
-            string filePath, string keyword, CancellationToken cancellationToken = default)
+            string filePath, string keyword,
+            CancellationToken cancellationToken = default,
+            Regex? precompiledRegex = null)
         {
             var matches = new List<ContentMatchDto>();
             var ext = Path.GetExtension(filePath).ToLowerInvariant();
@@ -129,51 +145,43 @@ namespace SnapSearch.Infrastructure.Services
             try
             {
                 if (ext == ".pdf")
-                    return await SearchPdfContentAsync(filePath, keyword, cancellationToken);
+                    return await SearchPdfContentAsync(filePath, keyword, cancellationToken, precompiledRegex);
 
                 if (ext is ".docx" or ".doc")
-                    return await SearchDocxContentAsync(filePath, keyword, cancellationToken);
+                    return await SearchDocxContentAsync(filePath, keyword, cancellationToken, precompiledRegex);
 
-                // Plain text — use the expanded IsTextFile check
                 if (!IsTextFile(ext))
                     return matches;
 
                 var lines = await File.ReadAllLinesAsync(filePath, Encoding.UTF8, cancellationToken);
                 for (int i = 0; i < lines.Length; i++)
                 {
-                    var cleanedLine = lines[i]
-                    .Replace("\uFEFF", "")   // BOM
-                    .Replace("\u200B", "")   // zero-width space
-                    .Replace("\u00A0", " ")  // non-breaking space → regular space
-                    .Replace("\r", "")       // carriage return
-                    .Trim();
+                    bool hit = precompiledRegex != null
+                        ? precompiledRegex.IsMatch(lines[i])
+                        : lines[i].Contains(keyword, StringComparison.OrdinalIgnoreCase);
 
-                    int idx = 0;
-                    while ((idx = lines[i].IndexOf(keyword, idx, StringComparison.OrdinalIgnoreCase)) >= 0)
+                    if (hit)
                     {
-                        int snippetStart = Math.Max(0, idx - 1);
-                        int snippetEnd = Math.Min(cleanedLine.Length, idx + keyword.Length + 1);
-                        var snippet = cleanedLine.Substring(snippetStart, snippetEnd - snippetStart).Trim();
-
-                        if (snippetStart > 0) snippet = "..." + snippet;
-                        if (snippetEnd < cleanedLine.Length) snippet = snippet + "...";
-
                         matches.Add(new ContentMatchDto
                         {
                             LineNumber = i + 1,
                             MatchIndex = matches.Count + 1,
-                            LineContent = snippet,
+                            LineContent = lines[i].Trim(),
                             Keyword = keyword,
                             PageNumber = 1
                         });
-                        idx += keyword.Length;
                     }
                 }
             }
-            catch { /* unreadable or locked file — silently skip */ }
+            catch { /* unreadable / locked file */ }
 
             return matches;
         }
+
+        // IFileSearchService interface overload without regex param
+        public Task<IEnumerable<ContentMatchDto>> SearchFileContentAsync(
+            string filePath, string keyword, CancellationToken cancellationToken = default)
+            => SearchFileContentAsync(filePath, keyword, cancellationToken, null);
 
         public bool CanPreviewFile(string filePath)
         {
@@ -185,9 +193,6 @@ namespace SnapSearch.Infrastructure.Services
 
         #region Private Methods
 
-        /// <summary>
-        /// Expanded plain-text check — matches every extension the ViewModel treats as text.
-        /// </summary>
         private static bool IsTextFile(string ext) =>
             ext is
                 ".txt" or ".log" or ".md" or ".rtf" or
@@ -198,67 +203,51 @@ namespace SnapSearch.Infrastructure.Services
                 ".html" or ".htm" or ".css" or ".scss" or ".sql" or
                 ".bat" or ".cmd" or ".ps1" or ".sh";
 
+        private static bool IsImage(string ext) =>
+            ext is ".png" or ".jpg" or ".jpeg" or ".bmp" or
+                   ".gif" or ".webp" or ".tiff" or ".tif" or ".ico";
+
         private async Task<IEnumerable<ContentMatchDto>> SearchPdfContentAsync(
-         string filePath, string keyword, CancellationToken cancellationToken)
+            string filePath, string keyword,
+            CancellationToken cancellationToken,
+            Regex? regex)
         {
             var matches = new List<ContentMatchDto>();
-
-            await Task.Run(() =>
+            int matchIndex = 1;
+            try
             {
-                using var doc = PdfiumViewer.PdfDocument.Load(filePath);
-
-                for (int pageIndex = 0; pageIndex < doc.PageCount; pageIndex++)
+                using var doc = UglyToad.PdfPig.PdfDocument.Open(filePath);
+                foreach (var page in doc.GetPages())
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    var pageText = doc.GetPdfText(pageIndex);
-                    if (string.IsNullOrWhiteSpace(pageText)) continue;
-
-                    var cleanedText = pageText
-                        .Replace("\uFEFF", "")
-                        .Replace("\u200B", "")
-                        .Replace("\u00A0", " ")
-                        .Replace("\r", "")
-                        .Trim();
-
-                    // Split into real lines
-                    var lines = cleanedText.Split('\n');
-
+                    if (cancellationToken.IsCancellationRequested)
+                        break;
+                    var lines = page.Text.Split('\n');
                     for (int i = 0; i < lines.Length; i++)
                     {
-                        var cleanedLine = lines[i].Trim();
-                        if (string.IsNullOrWhiteSpace(cleanedLine)) continue;
+                        bool hit = regex != null
+                            ? regex.IsMatch(lines[i])
+                            : lines[i].Contains(keyword, StringComparison.OrdinalIgnoreCase);
 
-                        int idx = 0;
-                        while ((idx = cleanedLine.IndexOf(keyword, idx, StringComparison.OrdinalIgnoreCase)) >= 0)
-                        {
-                            int snippetStart = Math.Max(0, idx - 1);
-                            int snippetEnd = Math.Min(cleanedLine.Length, idx + keyword.Length + 1);
-                            var snippet = cleanedLine.Substring(snippetStart, snippetEnd - snippetStart).Trim();
-
-                            if (snippetStart > 0) snippet = "..." + snippet;
-                            if (snippetEnd < cleanedLine.Length) snippet = snippet + "...";
-
+                        if (hit)
                             matches.Add(new ContentMatchDto
                             {
                                 LineNumber = i + 1,
-                                MatchIndex = matches.Count + 1,
-                                LineContent = snippet,   // ✅ only the relevant part
+                                MatchIndex = matchIndex++,
+                                LineContent = lines[i].Trim(),
                                 Keyword = keyword,
-                                PageNumber = pageIndex + 1
+                                PageNumber = page.Number
                             });
-
-                            idx += keyword.Length;
-                        }
                     }
                 }
-            }, cancellationToken);
-
-            return matches;
+            }
+            catch { }
+            return await Task.FromResult(matches);
         }
 
         private async Task<IEnumerable<ContentMatchDto>> SearchDocxContentAsync(
-            string filePath, string keyword, CancellationToken cancellationToken)
+            string filePath, string keyword,
+            CancellationToken cancellationToken,
+            Regex? regex)
         {
             var matches = new List<ContentMatchDto>();
             int lineNumber = 1;
@@ -275,8 +264,12 @@ namespace SnapSearch.Infrastructure.Services
                     if (cancellationToken.IsCancellationRequested)
                         break;
                     var text = para.InnerText;
-                    if (text.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-                    {
+
+                    bool hit = regex != null
+                        ? regex.IsMatch(text)
+                        : text.Contains(keyword, StringComparison.OrdinalIgnoreCase);
+
+                    if (hit)
                         matches.Add(new ContentMatchDto
                         {
                             LineNumber = lineNumber,
@@ -285,11 +278,11 @@ namespace SnapSearch.Infrastructure.Services
                             Keyword = keyword,
                             PageNumber = 1
                         });
-                    }
+
                     lineNumber++;
                 }
             }
-            catch { /* invalid docx */ }
+            catch { }
             return await Task.FromResult(matches);
         }
 
