@@ -8,6 +8,7 @@
         Width="1300" Height="800"
         MinWidth="1000" MinHeight="600"
         WindowStartupLocation="CenterScreen"
+        WindowState="Maximized"
         WindowStyle="SingleBorderWindow"
         AllowsTransparency="False"
         Background="{StaticResource BackgroundWindowColor}">
