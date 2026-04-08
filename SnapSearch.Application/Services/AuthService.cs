@@ -61,10 +61,6 @@ namespace SnapSearch.Application.Services
             return CurrentUser;
         }
 
-        /// <summary>
-        /// Restores a previously saved session on app startup — no DB call needed.
-        /// Called only from the Presentation layer (App.cs) after loading the session file.
-        /// </summary>
         public void RestoreSession(UserDto user)
         {
             CurrentUser = user;
@@ -86,9 +82,6 @@ namespace SnapSearch.Application.Services
             }
 
             CurrentUser = null;
-            // NOTE: SessionPersistence.Clear() is called by the Presentation layer
-            // (MainShellViewModel) after this returns — NOT here — to avoid a
-            // circular project reference (Application cannot reference Presentation).
         }
 
         public bool HasPermission(string permission)

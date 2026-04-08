@@ -12,7 +12,7 @@ namespace SnapSearch.Presentation.ViewModels
         private readonly IAuthService _authService;
         private string _username = string.Empty;
         private string _errorMessage = string.Empty;
-        private bool _rememberMe = true; // default ON — most users want this
+        private bool _rememberMe = true;
 
         #endregion Fields
 
@@ -46,10 +46,6 @@ namespace SnapSearch.Presentation.ViewModels
             set => SetProperty(ref _errorMessage, value);
         }
 
-        /// <summary>
-        /// When true, the session is saved to disk so the next launch skips login.
-        /// When false, closing the app always returns to the login screen.
-        /// </summary>
         public bool RememberMe
         {
             get => _rememberMe;
@@ -98,11 +94,10 @@ namespace SnapSearch.Presentation.ViewModels
 
                 SessionContext.Instance.CurrentUser = user;
 
-                // Only persist the session if the user ticked "Remember Me".
                 if (RememberMe)
                     SessionPersistence.Save(user);
                 else
-                    SessionPersistence.Clear(); // clear any old saved session
+                    SessionPersistence.Clear();
 
                 LoginSucceeded?.Invoke(user);
             }
