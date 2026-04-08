@@ -61,11 +61,20 @@
                         <StackPanel Orientation="Horizontal" Margin="16,0" VerticalAlignment="Center">
                             <Border Width="32" Height="32" CornerRadius="50">
                                 <Image Source="pack://application:,,,/Resources/snapsearch.png"
-                                       Stretch="Uniform" Margin="2,1,0,0" />
+                                       Stretch="Uniform" Margin="2,1,-12,-8" RenderTransformOrigin="0.5,0.5" >
+                                    <Image.RenderTransform>
+                                        <TransformGroup>
+                                            <ScaleTransform/>
+                                            <SkewTransform/>
+                                            <RotateTransform Angle="-0.632"/>
+                                            <TranslateTransform/>
+                                        </TransformGroup>
+                                    </Image.RenderTransform>
+                                </Image>
                             </Border>
-                            <TextBlock Text="SnapSearch" Foreground="Black"
+                            <TextBlock Text="SNAPSEARCH" Foreground="Black"
                                        FontSize="16" FontWeight="Bold"
-                                       VerticalAlignment="Center" Margin="10,0,0,0" />
+                                       VerticalAlignment="Center" Margin="20,2,0,0" />
                         </StackPanel>
                         <!-- Window buttons -->
                         <!--<StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
@@ -83,9 +92,6 @@
 
                     <!-- Navigation -->
                     <StackPanel Grid.Row="1" Margin="0,16,0,0">
-                        <TextBlock Text="NAVIGATION" Foreground="Black"
-                                   FontSize="15" FontWeight="Bold" Margin="22,0,0,16" />
-
                         <Border Height="1" Background="{StaticResource BorderBrush}" Margin="14,0,14,8" />
 
                         <Button Content="Search Files"
