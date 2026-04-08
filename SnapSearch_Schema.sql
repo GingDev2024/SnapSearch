@@ -70,7 +70,7 @@ GO
 IF NOT EXISTS (SELECT 1 FROM Users WHERE Username = 'admin')
     -- Password: Admin@123  (SHA256 hash)
     INSERT INTO Users (Username, PasswordHash, Role, IsActive, CreatedAt)
-    VALUES ('admin', 'jGl25bVBBBW96Qi9Te4V37Fnqchz/Eu4qB9vKrRIqRg=', 'Admin', 1, GETUTCDATE());
+    VALUES ('admin', '6G94qKPK8LYNjnTllCqm2G3BUM08AzOK7yW30tfjrMc=', 'Admin', 1, GETUTCDATE());
 GO
 
 -- =============================================
