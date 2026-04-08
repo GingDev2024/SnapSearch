@@ -59,17 +59,11 @@ namespace SnapSearch.Presentation
 
             ThemeManager.Apply(AppTheme.Dark);
 
-            // ----------------------------------------------------------------
-            // AUTO-LOGIN: restore saved session → skip login window entirely.
-            // ----------------------------------------------------------------
             var savedUser = SessionPersistence.TryLoad();
             if (savedUser != null)
             {
-                // Keep in-memory session context in sync.
                 SessionContext.Instance.CurrentUser = savedUser;
 
-                // Keep AuthService.CurrentUser in sync (Presentation knows about
-                // Application, so this cast is fine — no reverse reference).
                 if (_services.GetRequiredService<IAuthService>() is AuthService authService)
                     authService.RestoreSession(savedUser);
 
