@@ -15,6 +15,13 @@
         public bool SearchFileContents { get; set; } = false;
         public bool SearchSubDirectories { get; set; } = true;
 
+        /// <summary>
+        /// When true the Keyword is treated as a .NET regular expression.
+        /// FileSearchService pre-compiles the pattern once and applies it
+        /// to both file names and file content.
+        /// </summary>
+        public bool UseRegex { get; set; } = false;
+
         #endregion Properties
     }
 }

@@ -11,23 +11,23 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="Settings" Style="{StaticResource SectionHeader}"/>
-        <TextBlock Grid.Column="0"
-                   Text="Customize your search settings, choose a default directory, and view application information to enhance your workflow."
-                   FontSize="12"
-                   FontWeight="SemiBold"
-                   TextWrapping="Wrap"
-                   Margin="0,25,0,20"/>
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <StackPanel MaxWidth="600" HorizontalAlignment="Left">
+        <!-- Page header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,20">
+            <TextBlock Text="Settings" Style="{StaticResource SectionHeader}" FontSize="20" />
+            <TextBlock Text="Customize your search defaults, result limits, security settings, and more."
+                       FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,6,0,0" />
+        </StackPanel>
 
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel MaxWidth="640" HorizontalAlignment="Left">
+
+                <!-- ── DEFAULT DIRECTORY ──────────────────────────────── -->
                 <Border Style="{StaticResource Card}" Margin="0,0,0,16">
                     <StackPanel>
                         <TextBlock Text="DEFAULT SEARCH DIRECTORY" Style="{StaticResource FormLabel}" />
                         <TextBlock Text="The folder SnapSearch opens by default when searching."
                                    Foreground="{StaticResource TextMutedBrush}"
-                                   FontWeight="SemiBold"
-                                   FontSize="11" Margin="0,0,0,10" />
+                                   FontWeight="SemiBold" FontSize="11" Margin="0,0,0,10" />
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -42,9 +42,11 @@
                     </StackPanel>
                 </Border>
 
+                <!-- ── SEARCH DEFAULTS ────────────────────────────────── -->
                 <Border Style="{StaticResource Card}" Margin="0,0,0,16">
                     <StackPanel>
                         <TextBlock Text="SEARCH DEFAULTS" Style="{StaticResource FormLabel}" Margin="0,0,0,12" />
+
                         <CheckBox Content="Search subdirectories by default"
                                   Style="{StaticResource StyledCheckBox}"
                                   IsChecked="{Binding SearchSubDirectoriesByDefault}" Margin="0,0,0,10" />
@@ -53,16 +55,100 @@
                                   IsChecked="{Binding SearchContentsDefault}" Margin="0,0,0,10" />
                         <CheckBox Content="Allow partial keyword matching by default"
                                   Style="{StaticResource StyledCheckBox}"
-                                  IsChecked="{Binding AllowPartialMatchDefault}" />
+                                  IsChecked="{Binding AllowPartialMatchDefault}" Margin="0,0,0,10" />
+                        <CheckBox Content="Use regex keyword matching by default"
+                                  Style="{StaticResource StyledCheckBox}"
+                                  IsChecked="{Binding UseRegexDefault}" />
                     </StackPanel>
                 </Border>
 
+                <!-- ── SIZE FILTER DEFAULTS ───────────────────────────── -->
+                <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="DEFAULT FILE SIZE FILTER (KB)"
+                                   Style="{StaticResource FormLabel}" Margin="0,0,0,4" />
+                        <TextBlock Text="Leave blank for no limit. Example: min=100, max=10240 (10 MB)."
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   FontWeight="SemiBold" FontSize="11" Margin="0,0,0,12" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Min KB" Style="{StaticResource FormLabel}" Margin="0,0,0,4" />
+                                <TextBox Style="{StaticResource SearchTextBox}"
+                                         Text="{Binding SizeMinKbDefault, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Max KB" Style="{StaticResource FormLabel}" Margin="0,0,0,4" />
+                                <TextBox Style="{StaticResource SearchTextBox}"
+                                         Text="{Binding SizeMaxKbDefault, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- ── RESULTS ────────────────────────────────────────── -->
+                <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="RESULT DISPLAY" Style="{StaticResource FormLabel}" Margin="0,0,0,4" />
+                        <TextBlock Text="Results beyond this limit require clicking 'Load More'."
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   FontWeight="SemiBold" FontSize="11" Margin="0,0,0,12" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="160" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Max Results Per Page" Style="{StaticResource FormLabel}" Margin="0,0,0,4" />
+                                <TextBox Style="{StaticResource SearchTextBox}"
+                                         Text="{Binding MaxResultsPerPage, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- ── SESSION SECURITY ───────────────────────────────── -->
+                <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="SESSION SECURITY" Style="{StaticResource FormLabel}" Margin="0,0,0,12" />
+
+                        <CheckBox Content="Enable auto-logout on inactivity"
+                                  Style="{StaticResource StyledCheckBox}"
+                                  IsChecked="{Binding EnableSessionTimeout}" Margin="0,0,0,10" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="200" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Timeout (minutes)" Style="{StaticResource FormLabel}" Margin="0,0,0,4" />
+                                <TextBox Style="{StaticResource SearchTextBox}"
+                                         Text="{Binding SessionTimeoutMinutes, UpdateSourceTrigger=PropertyChanged}"
+                                         IsEnabled="{Binding EnableSessionTimeout}" />
+                            </StackPanel>
+                            <TextBlock Grid.Column="1"
+                                       Text="Set to 0 to disable. Users will be logged out after this many minutes of inactivity."
+                                       Foreground="{StaticResource TextMutedBrush}"
+                                       FontSize="11" FontWeight="SemiBold"
+                                       TextWrapping="Wrap"
+                                       VerticalAlignment="Bottom"
+                                       Margin="12,0,0,2" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- ── APPLICATION INFO ───────────────────────────────── -->
                 <Border Style="{StaticResource Card}" Margin="0,0,0,16">
                     <StackPanel>
                         <TextBlock Text="APPLICATION INFO" Style="{StaticResource FormLabel}" Margin="0,0,0,12" />
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="120" />
+                                <ColumnDefinition Width="140" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
@@ -71,21 +157,25 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Application"
-                                       Foreground="{StaticResource TextMutedBrush}" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,6" />
+                                       Foreground="{StaticResource TextMutedBrush}"
+                                       FontWeight="SemiBold" FontSize="12" Margin="0,0,0,6" />
                             <TextBlock Grid.Row="0" Grid.Column="1" Text="BABSLAI SnapSearch"
-                                       Foreground="Black" FontSize="12" Margin="0,0,0,6" FontWeight="SemiBold"   />
+                                       Foreground="Black" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,6" />
                             <TextBlock Grid.Row="1" Grid.Column="0" Text="Release"
-                                       Foreground="{StaticResource TextMutedBrush}" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,6" />
+                                       Foreground="{StaticResource TextMutedBrush}"
+                                       FontWeight="SemiBold" FontSize="12" Margin="0,0,0,6" />
                             <TextBlock Grid.Row="1" Grid.Column="1" Text="1.0"
-                                       Foreground="Black" FontSize="12" Margin="0,0,0,6" FontWeight="SemiBold"/>
+                                       Foreground="Black" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,6" />
                             <TextBlock Grid.Row="2" Grid.Column="0" Text="Platform"
-                                       Foreground="{StaticResource TextMutedBrush}" FontWeight="SemiBold" FontSize="12" />
+                                       Foreground="{StaticResource TextMutedBrush}"
+                                       FontWeight="SemiBold" FontSize="12" />
                             <TextBlock Grid.Row="2" Grid.Column="1" Text=".NET 8 / WPF"
-                                       Foreground="Black" FontSize="12" FontWeight="SemiBold"/>
+                                       Foreground="Black" FontSize="12" FontWeight="SemiBold" />
                         </Grid>
                     </StackPanel>
                 </Border>
 
+                <!-- ── SAVE ───────────────────────────────────────────── -->
                 <StackPanel Orientation="Horizontal">
                     <Button Content="Save Settings" Style="{StaticResource PrimaryButton}"
                             Command="{Binding SaveSettingsCommand}" Padding="20,10" />
