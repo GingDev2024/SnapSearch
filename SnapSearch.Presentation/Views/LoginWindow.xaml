@@ -114,10 +114,10 @@
                         Click="LoginButton_Click" />
 
                 <ProgressBar IsIndeterminate="True"
-                             Height="4"
+                             Height="7"
                              Margin="0,40,0,0"
                              Background="Transparent"
-                             Foreground="LightGreen"
+                             Foreground="{StaticResource SuccessBrush}"
                              Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}" />
 
                 <TextBlock Text="BABSLAI Release 1.0"

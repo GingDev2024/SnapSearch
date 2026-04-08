@@ -16,7 +16,7 @@
         <Grid Grid.Row="0" Margin="0,0,0,16">
             <TextBlock Text="Access Logs" Style="{StaticResource SectionHeader}"
                        Margin="0"
-                       FontSize="20"/>
+                       FontSize="20" />
             <TextBlock Text="Monitor and review user activity within the system. Track login history, access times, and actions to ensure security and accountability."
                        TextWrapping="Wrap"
                        FontSize="12"
@@ -79,10 +79,10 @@
         <Border Grid.Row="3" Padding="0,8,0,0">
             <Grid>
                 <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusText}" />
-                <ProgressBar HorizontalAlignment="Right" Width="200" Height="4"
+                <ProgressBar HorizontalAlignment="Center" Width="728"
                              IsIndeterminate="True"
                              Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"
-                             Background="Transparent" Foreground="{StaticResource AccentBrush}" />
+                             Background="Transparent" Foreground="{StaticResource SuccessBrush}" Margin="0,-153,0,160" />
             </Grid>
         </Border>
     </Grid>

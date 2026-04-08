@@ -22,6 +22,20 @@
             <StackPanel MaxWidth="640" HorizontalAlignment="Left">
 
                 <!-- ── DEFAULT DIRECTORY ──────────────────────────────── -->
+                <ProgressBar Height="8" IsIndeterminate="True"
+                             Background="Transparent" Foreground="{StaticResource SuccessBrush}"
+                             Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}" Width="605" RenderTransformOrigin="0.5,0.5">
+                    <ProgressBar.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform />
+                            <SkewTransform />
+                            <RotateTransform Angle="-0.055" />
+                            <TranslateTransform />
+                        </TransformGroup>
+                    </ProgressBar.RenderTransform>
+                </ProgressBar>
+
+                <!-- ── DEFAULT DIRECTORY ──────────────────────────────── -->
                 <Border Style="{StaticResource Card}" Margin="0,0,0,16">
                     <StackPanel>
                         <TextBlock Text="DEFAULT SEARCH DIRECTORY" Style="{StaticResource FormLabel}" />
@@ -104,9 +118,8 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="Max Results Per Page" Style="{StaticResource FormLabel}" Margin="0,0,0,4" />
-                                <!-- Bind to string wrapper — prevents FormatException when field is cleared mid-edit -->
                                 <TextBox Style="{StaticResource SearchTextBox}"
-                                         Text="{Binding MaxResultsPerPageText, UpdateSourceTrigger=PropertyChanged}" />
+                                         Text="{Binding MaxResultsPerPage, UpdateSourceTrigger=PropertyChanged}" />
                             </StackPanel>
                         </Grid>
                     </StackPanel>
@@ -128,9 +141,8 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="Timeout (minutes)" Style="{StaticResource FormLabel}" Margin="0,0,0,4" />
-                                <!-- Bind to string wrapper — same reason as above -->
                                 <TextBox Style="{StaticResource SearchTextBox}"
-                                         Text="{Binding SessionTimeoutMinutesText, UpdateSourceTrigger=PropertyChanged}"
+                                         Text="{Binding SessionTimeoutMinutes, UpdateSourceTrigger=PropertyChanged}"
                                          IsEnabled="{Binding EnableSessionTimeout}" />
                             </StackPanel>
                             <TextBlock Grid.Column="1"
@@ -185,10 +197,6 @@
                                Foreground="{StaticResource SuccessBrush}"
                                VerticalAlignment="Center" Margin="16,0,0,0" FontSize="12" />
                 </StackPanel>
-
-                <ProgressBar Height="4" Margin="0,12,0,0" IsIndeterminate="True"
-                             Background="Transparent" Foreground="{StaticResource SuccessBrush}"
-                             Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}" />
             </StackPanel>
         </ScrollViewer>
     </Grid>
