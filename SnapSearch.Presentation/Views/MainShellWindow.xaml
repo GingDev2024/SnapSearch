@@ -83,7 +83,10 @@
                     <!-- Navigation -->
                     <StackPanel Grid.Row="1" Margin="0,16,0,0">
                         <TextBlock Text="NAVIGATION" Foreground="Black"
-                                   FontSize="15" FontWeight="Bold" Margin="57,0,0,16" />
+                                   FontSize="15" FontWeight="Bold" Margin="22,0,0,16" />
+
+                        <Border Height="1" Background="{StaticResource BorderBrush}" Margin="14,0,14,8" />
+
                         <Button Content="Search Files"
                                 Style="{Binding IsSearchActive, Converter={StaticResource NavStyleConverter}}"
                                 Command="{Binding NavigateSearchCommand}" />
