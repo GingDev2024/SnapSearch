@@ -814,7 +814,7 @@ namespace SnapSearch.Presentation.ViewModels
                 // IList<HSLFSlide> GetSlides()
                 var getSlides = showType.GetMethod("GetSlides")
                                 ?? throw new InvalidOperationException("GetSlides not found.");
-                var slides = (System.Collections.IEnumerable) getSlides.Invoke(show, null)!;
+                var slides = (System.Collections.IEnumerable)getSlides.Invoke(show, null)!;
 
                 int i = 1;
                 foreach (var slide in slides)
