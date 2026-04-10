@@ -3,8 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:SnapSearch.Presentation.Views"
         Title="File Preview"
-        Width="1100" Height="720"
+        Width="1100" Height="690"
         WindowStartupLocation="CenterScreen"
+        WindowState="Maximized"
         WindowStyle="None"
         AllowsTransparency="False"
         Background="{StaticResource BackgroundWindowColor}">
@@ -21,20 +22,19 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- Title bar -->
-            <Border Grid.Row="0" Background="#FF252C40"
-                    MouseLeftButtonDown="TitleBar_MouseDown">
+            <!-- ═══ Title bar ═══ -->
+            <Border Grid.Row="0" Background="#FF252C40" MouseLeftButtonDown="TitleBar_MouseDown">
                 <Grid Margin="16,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="{Binding CurrentFile.FileName}"
-                                   Foreground="White" FontSize="13" FontWeight="SemiBold"
-                                   VerticalAlignment="Center" />
+                                   Foreground="White" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
                         <TextBlock Text=" — " Foreground="White" VerticalAlignment="Center" />
                         <TextBlock Text="{Binding CurrentFile.SizeDisplay}"
                                    Foreground="White" FontSize="12" VerticalAlignment="Center" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <Border Background="#BBE2FC" CornerRadius="6" Padding="8,4" Margin="0,0,12,0">
+                        <Border Background="#BBE2FC" CornerRadius="6" Padding="8,4" Margin="0,0,12,0"
+                                Visibility="{Binding HasMatches, Converter={StaticResource BoolToVis}}">
                             <StackPanel Orientation="Horizontal">
                                 <Button Content="Prev" Style="{StaticResource PrimaryButton}"
                                         Command="{Binding PreviousMatchCommand}" Padding="8,2" FontSize="11" />
@@ -44,14 +44,14 @@
                                         Command="{Binding NextMatchCommand}" Padding="8,2" FontSize="11" />
                             </StackPanel>
                         </Border>
-                        <Button Content="Print" Style="{StaticResource PrimaryButton}"
-                                Command="{Binding PrintCommand}" Padding="10,4" Margin="0,0,6,0"
+                        <Button Content="Print"     Style="{StaticResource PrimaryButton}" Command="{Binding PrintCommand}"
+                                Padding="10,4" Margin="0,0,6,0"
                                 Visibility="{Binding CanPrint, Converter={StaticResource BoolToVis}}" />
-                        <Button Content="Export" Style="{StaticResource PrimaryButton}"
-                                Command="{Binding ExportCommand}" Padding="10,4" Margin="0,0,6,0"
+                        <Button Content="Export"    Style="{StaticResource PrimaryButton}" Command="{Binding ExportCommand}"
+                                Padding="10,4" Margin="0,0,6,0"
                                 Visibility="{Binding CanExport, Converter={StaticResource BoolToVis}}" />
-                        <Button Content="Copy Path" Style="{StaticResource PrimaryButton}"
-                                Command="{Binding CopyPathCommand}" Padding="10,4" Margin="0,0,12,0"
+                        <Button Content="Copy Path" Style="{StaticResource PrimaryButton}" Command="{Binding CopyPathCommand}"
+                                Padding="10,4" Margin="0,0,12,0"
                                 Visibility="{Binding CanCopy, Converter={StaticResource BoolToVis}}" />
                         <Button Content="X" Width="28" Height="28" FontSize="12"
                                 Background="#FF252C40" BorderThickness="0"
@@ -61,215 +61,149 @@
                 </Grid>
             </Border>
 
-            <!-- Content area — must stretch to fill Row 1 -->
+            <!-- ═══ Content area ═══ -->
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="220" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Left: file viewers — stretch vertically -->
-                <Border Grid.Column="0"
-                        Background="{StaticResource BackgroundWindowColor}"
-                        VerticalAlignment="Stretch">
-                    <Grid VerticalAlignment="Stretch">
+                <!-- ── LEFT viewers ── -->
+                <Border Grid.Column="0" Background="{StaticResource BackgroundWindowColor}" VerticalAlignment="Stretch">
+                    <Grid>
 
-                        <!-- 1. Text / code files -->
-                        <ScrollViewer x:Name="TextScrollViewer"
-                                      Visibility="{Binding IsTextFile, Converter={StaticResource BoolToVis}}"
-                                      HorizontalScrollBarVisibility="Auto"
-                                      VerticalScrollBarVisibility="Auto"
+                        <!-- 1. Plain text / code -->
+                        <ScrollViewer Visibility="{Binding IsTextFile, Converter={StaticResource BoolToVis}}"
+                                      HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
                                       Background="{StaticResource BackgroundWindowColor}">
                             <RichTextBox x:Name="ContentRichTextBox"
                                          Background="{StaticResource BackgroundWindowColor}"
-                                         Foreground="Black"
-                                         FontFamily="Consolas"
-                                         FontSize="13"
-                                         IsReadOnly="True"
-                                         BorderThickness="0"
-                                         Padding="16"
-                                         AcceptsReturn="True">
+                                         Foreground="black"
+                                         FontFamily="Consolas" FontSize="13"
+                                         IsReadOnly="True" BorderThickness="0" Padding="16">
                                 <RichTextBox.Document>
-                                    <FlowDocument PagePadding="4,0,4,0"
-                                                  PageWidth="10000"
-                                                  TextAlignment="Left"
-                                                  FontFamily="Consolas"
-                                                  FontSize="13" />
+                                    <FlowDocument PagePadding="4,0,4,0" PageWidth="10000"
+                                                  TextAlignment="Left" FontFamily="Consolas" FontSize="13" />
                                 </RichTextBox.Document>
                             </RichTextBox>
                         </ScrollViewer>
 
-                        <!-- 2. PDF files -->
+                        <!-- 2. PDF -->
                         <views:PdfViewerControl x:Name="PdfViewer"
                                                 Visibility="{Binding IsPdfFile, Converter={StaticResource BoolToVis}}" />
 
-                        <!-- 3. Image files -->
+                        <!-- 3. Images -->
                         <ScrollViewer Visibility="{Binding IsImageFile, Converter={StaticResource BoolToVis}}"
-                                      HorizontalScrollBarVisibility="Auto"
-                                      VerticalScrollBarVisibility="Auto">
-                            <Image x:Name="PreviewImage"
-                                   Stretch="Uniform" Margin="16"
+                                      HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                            <Image x:Name="PreviewImage" Stretch="Uniform" Margin="16"
                                    RenderOptions.BitmapScalingMode="HighQuality" />
                         </ScrollViewer>
 
-                        <!-- 4. DOCX files -->
-                        <Grid Visibility="{Binding IsDocxFile, Converter={StaticResource BoolToVis}}">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="40" />
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
-
-                            <!-- DOCX header bar -->
-                            <Border Grid.Row="0" Background="{StaticResource SurfaceLightBrush}"
-                                    Padding="16,8" BorderThickness="0,0,0,1"
-                                    BorderBrush="{StaticResource BorderBrush}">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="📄" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="White" />
-                                    <TextBlock Text="Word Document Preview"
-                                               FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextSecondaryBrush}"
-                                               VerticalAlignment="Center" />
+                        <!-- 4. RTF — WPF RichTextBox loads RTF natively via the code-behind -->
+                        <DockPanel Visibility="{Binding IsRtfFile, Converter={StaticResource BoolToVis}}" Background="White">
+                            <Border DockPanel.Dock="Top" Background="{StaticResource SurfaceLightBrush}"
+                                    Padding="16,8" Height="40" BorderThickness="0,0,0,1" BorderBrush="{StaticResource BorderBrush}">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="📝" FontSize="14" Foreground="White" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="Rich Text Document Preview" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" />
                                 </StackPanel>
                             </Border>
+                            <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Background="White">
+                                <RichTextBox x:Name="RtfRichTextBox"
+                                             Background="White" Foreground="Black"
+                                             FontFamily="Segoe UI" FontSize="13"
+                                             IsReadOnly="True" BorderThickness="0" Padding="32,24" />
+                            </ScrollViewer>
+                        </DockPanel>
 
-                            <!-- DOCX text content -->
-                            <ScrollViewer Grid.Row="1"
-                                          HorizontalScrollBarVisibility="Disabled"
-                                          VerticalScrollBarVisibility="Auto"
-                                          Background="White">
+                        <!-- 5. DOCX / DOC / ODT — all use IsAnyWordDoc -->
+                        <DockPanel Visibility="{Binding IsAnyWordDoc, Converter={StaticResource BoolToVis}}" Background="White">
+                            <Border DockPanel.Dock="Top" Background="{StaticResource SurfaceLightBrush}"
+                                    Padding="16,8" Height="40" BorderThickness="0,0,0,1" BorderBrush="{StaticResource BorderBrush}">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="📄" FontSize="14" Foreground="White" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="Word Document Preview" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                    <!-- Format badge -->
+                                    <Border Background="#2A3A5C" CornerRadius="4" Padding="6,2" Margin="8,0,0,0">
+                                        <TextBlock Text="{Binding CurrentFile.Extension}" FontSize="10"
+                                                   Foreground="#90CAF9" FontWeight="SemiBold" />
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                            <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Background="White">
                                 <RichTextBox x:Name="DocxRichTextBox"
-                                             Background="White"
-                                             Foreground="Black"
-                                             FontFamily="Segoe UI"
-                                             FontSize="13"
-                                             IsReadOnly="True"
-                                             BorderThickness="0"
-                                             Padding="32,24"
-                                             AcceptsReturn="True">
+                                             Background="White" Foreground="Black"
+                                             FontFamily="Segoe UI" FontSize="13"
+                                             IsReadOnly="True" BorderThickness="0" Padding="32,24">
                                     <RichTextBox.Document>
-                                        <FlowDocument PagePadding="4,0,4,0"
-                                                      TextAlignment="Left"
-                                                      FontFamily="Segoe UI"
-                                                      FontSize="13" />
+                                        <FlowDocument PagePadding="4,0,4,0" TextAlignment="Left"
+                                                      FontFamily="Segoe UI" FontSize="13" Foreground="Black" />
                                     </RichTextBox.Document>
                                 </RichTextBox>
                             </ScrollViewer>
-                        </Grid>
+                        </DockPanel>
 
-                        <!-- 5. XLSX files -->
-                        <Grid Visibility="{Binding IsXlsxFile, Converter={StaticResource BoolToVis}}">
+                        <!-- 6. XLSX / XLSM / XLS / XLSB / ODS — all use IsAnySpreadsheet -->
+                        <Grid Visibility="{Binding IsAnySpreadsheet, Converter={StaticResource BoolToVis}}">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="40" />
-                                <!-- Row 0: header bar — fixed -->
                                 <RowDefinition Height="36" />
-                                <!-- Row 1: sheet tabs — fixed -->
                                 <RowDefinition Height="*" />
-                                <!-- Row 2: DataGrid — fills rest -->
                             </Grid.RowDefinitions>
-
-                            <!-- XLSX header bar -->
-                            <Border Grid.Row="0"
-                                    Background="{StaticResource SurfaceLightBrush}"
-                                    Padding="16,8"
-                                    BorderThickness="0,0,0,1"
-                                    BorderBrush="{StaticResource BorderBrush}">
+                            <Border Grid.Row="0" Background="{StaticResource SurfaceLightBrush}"
+                                    Padding="16,8" BorderThickness="0,0,0,1" BorderBrush="{StaticResource BorderBrush}">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="📊"
-                                               FontSize="14"
-                                               Foreground="White"
-                                               VerticalAlignment="Center"
-                                               Margin="0,0,8,0" />
-                                    <TextBlock Text="Spreadsheet Preview"
-                                               FontSize="12"
-                                               FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextSecondaryBrush}"
-                                               VerticalAlignment="Center" />
+                                    <TextBlock Text="📊" FontSize="14" Foreground="White" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="Spreadsheet Preview" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                    <Border Background="#2A3A5C" CornerRadius="4" Padding="6,2" Margin="8,0,0,0">
+                                        <TextBlock Text="{Binding CurrentFile.Extension}" FontSize="10"
+                                                   Foreground="#90CAF9" FontWeight="SemiBold" />
+                                    </Border>
                                 </StackPanel>
                             </Border>
-                            <ScrollViewer Grid.Row="1"
-                                          HorizontalScrollBarVisibility="Auto"
-                                          VerticalScrollBarVisibility="Disabled"
-                                          Background="{StaticResource SurfaceLightBrush}">
+                            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto"
+                                          VerticalScrollBarVisibility="Disabled" Background="{StaticResource SurfaceLightBrush}">
                                 <ItemsControl ItemsSource="{Binding XlsxSheetNames}">
-
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Horizontal"
-                                                        VerticalAlignment="Center" />
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" />
                                         </ItemsPanelTemplate>
                                     </ItemsControl.ItemsPanel>
-
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-
                                             <Button Content="{Binding}"
-                                                    Command="{Binding DataContext.SelectSheetCommand,
-                                                                      RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    Command="{Binding DataContext.SelectSheetCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}"
                                                     Style="{StaticResource PrimaryButton}"
-                                                    Padding="14,4"
-                                                    Margin="2,2,0,2"
-                                                    FontSize="11" />
+                                                    Padding="14,4" Margin="2,2,0,2" FontSize="11" />
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
                             </ScrollViewer>
-
-                            <!-- XLSX DataGrid — fills all remaining height -->
-
-                            <DataGrid Grid.Row="2"
-                                      x:Name="XlsxDataGrid"
-
-                                      AutoGenerateColumns="True"
-                                      AutoGeneratingColumn="XlsxDataGrid_AutoGeneratingColumn"
-
-                                      IsReadOnly="True"
-                                      CanUserAddRows="False"
-                                      CanUserDeleteRows="False"
-                                      CanUserResizeColumns="True"
-                                      CanUserResizeRows="True"
-                                      CanUserSortColumns="True"
-
-                                      SelectionMode="Extended"
-                                      SelectionUnit="Cell"
-
-                                      GridLinesVisibility="All"
-                                      HorizontalGridLinesBrush="#E0E0E0"
-                                      VerticalGridLinesBrush="#E0E0E0"
-
-                                      HorizontalScrollBarVisibility="Auto"
-                                      VerticalScrollBarVisibility="Auto"
-
-                                      EnableColumnVirtualization="True"
-                                      EnableRowVirtualization="True"
-
-                                      Background="White"
-                                      RowBackground="White"
-                                      AlternatingRowBackground="#F5F8FF"
-                                      BorderThickness="0"
-
-                                      FontSize="12"
-                                      FontFamily="Segoe UI"
-                                      RowHeight="28"
-                                      ColumnHeaderHeight="32"
-
+                            <DataGrid Grid.Row="2" x:Name="XlsxDataGrid"
+                                      AutoGenerateColumns="True" AutoGeneratingColumn="XlsxDataGrid_AutoGeneratingColumn"
+                                      IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False"
+                                      CanUserResizeColumns="True" CanUserSortColumns="True"
+                                      SelectionMode="Extended" SelectionUnit="Cell"
+                                      GridLinesVisibility="All" HorizontalGridLinesBrush="#E0E0E0" VerticalGridLinesBrush="#E0E0E0"
+                                      HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
+                                      EnableColumnVirtualization="True" EnableRowVirtualization="True"
+                                      Background="White" RowBackground="White" AlternatingRowBackground="#F5F8FF"
+                                      BorderThickness="0" FontSize="12" FontFamily="Segoe UI" RowHeight="28" ColumnHeaderHeight="32"
                                       ColumnHeaderStyle="{StaticResource DataGridColumnHeader}"
                                       Style="{StaticResource StyledDataGrid}">
-
-                                <!-- ── Row appearance ────────────────────────────────── -->
                                 <DataGrid.RowStyle>
                                     <Style TargetType="DataGridRow">
-                                        <Setter Property="FontSize"   Value="12" />
+                                        <Setter Property="FontSize" Value="12" />
                                         <Setter Property="FontFamily" Value="Segoe UI" />
-
                                         <Style.Triggers>
-                                            <!-- Selected row: blue highlight, keep text readable -->
                                             <Trigger Property="IsSelected" Value="True">
                                                 <Setter Property="Background" Value="#CCE5FF" />
                                                 <Setter Property="Foreground" Value="Black" />
                                             </Trigger>
-
-                                            <!-- Hover row: subtle highlight -->
                                             <Trigger Property="IsMouseOver" Value="True">
                                                 <Setter Property="Background" Value="#EAF4FF" />
                                             </Trigger>
@@ -279,7 +213,151 @@
                             </DataGrid>
                         </Grid>
 
-                        <!-- 6. Unsupported files -->
+                        <!-- 7. PPTX / PPT / ODP — all use IsAnyPresentation -->
+                        <DockPanel Visibility="{Binding IsAnyPresentation, Converter={StaticResource BoolToVis}}" Background="White">
+                            <Border DockPanel.Dock="Top" Background="{StaticResource SurfaceLightBrush}"
+                                    Padding="16,8" Height="40" BorderThickness="0,0,0,1" BorderBrush="{StaticResource BorderBrush}">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="📊" FontSize="14" Foreground="White" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="Presentation Preview" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                    <TextBlock Text=" — " Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding PptxSlideInfo}" FontSize="11"
+                                               Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                                    <Border Background="#2A3A5C" CornerRadius="4" Padding="6,2" Margin="8,0,0,0">
+                                        <TextBlock Text="{Binding CurrentFile.Extension}" FontSize="10"
+                                                   Foreground="#90CAF9" FontWeight="SemiBold" />
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="White">
+                                <ItemsControl x:Name="PptxSlideList" ItemsSource="{Binding PptxSlides}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="16,12" BorderBrush="#CCCCCC" BorderThickness="1" Background="White">
+                                                <StackPanel>
+                                                    <Border Background="{StaticResource SurfaceLightBrush}" Padding="12,6">
+                                                        <TextBlock Text="{Binding Header}" FontSize="11" FontWeight="SemiBold"
+                                                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                                                    </Border>
+                                                    <TextBlock Text="{Binding Content}" FontSize="13"
+                                                               Foreground="Black" Padding="16,12"
+                                                               TextWrapping="Wrap" />
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </DockPanel>
+
+                        <!-- 8. Video -->
+                        <Grid Visibility="{Binding IsVideoFile, Converter={StaticResource BoolToVis}}" Background="Black">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <MediaElement x:Name="VideoPlayer" Grid.Row="0"
+                                          LoadedBehavior="Manual" UnloadedBehavior="Stop"
+                                          Stretch="Uniform"
+                                          MediaOpened="MediaPlayer_MediaOpened"
+                                          MediaFailed="MediaPlayer_MediaFailed" />
+                            <Border Grid.Row="1" Background="#CC000000" Padding="12,8">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Button Content="⏮" Style="{StaticResource PrimaryButton}"
+                                            Click="MediaRestart_Click" Padding="10,4" Margin="0,0,6,0" />
+                                    <Button x:Name="PlayPauseButton" Content="▶ Play"
+                                            Style="{StaticResource PrimaryButton}"
+                                            Click="PlayPause_Click" Padding="10,4" Margin="0,0,6,0" />
+                                    <Button Content="⏹" Style="{StaticResource PrimaryButton}"
+                                            Click="MediaStop_Click" Padding="10,4" Margin="0,0,12,0" />
+                                    <TextBlock Text="🔊" Foreground="White" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                    <Slider x:Name="VolumeSlider" Width="80" Minimum="0" Maximum="1" Value="0.5"
+                                            VerticalAlignment="Center" ValueChanged="VolumeSlider_ValueChanged" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <!-- 9. Audio -->
+                        <Grid Visibility="{Binding IsAudioFile, Converter={StaticResource BoolToVis}}"
+                              Background="{StaticResource BackgroundWindowColor}">
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <TextBlock Text="🎵" FontSize="64" HorizontalAlignment="Center"
+                                           Foreground="{StaticResource AccentBrush}" />
+                                <TextBlock Text="{Binding CurrentFile.FileName}" FontSize="16" FontWeight="SemiBold"
+                                           HorizontalAlignment="Center" Margin="0,12,0,4"
+                                           Foreground="{StaticResource TextPrimaryBrush}" />
+                                <TextBlock Text="{Binding CurrentFile.SizeDisplay}" FontSize="12"
+                                           HorizontalAlignment="Center" Foreground="{StaticResource TextMutedBrush}" />
+                                <MediaElement x:Name="AudioPlayer" Width="0" Height="0"
+                                              LoadedBehavior="Manual" UnloadedBehavior="Stop"
+                                              MediaOpened="MediaPlayer_MediaOpened"
+                                              MediaFailed="MediaPlayer_MediaFailed" />
+                                <Border Background="{StaticResource SurfaceLightBrush}"
+                                        CornerRadius="8" Padding="24,16" Margin="0,24,0,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Content="⏮" Style="{StaticResource PrimaryButton}"
+                                                Click="MediaRestart_Click" Padding="10,4" Margin="0,0,6,0" />
+                                        <Button x:Name="AudioPlayPauseButton" Content="▶ Play"
+                                                Style="{StaticResource PrimaryButton}"
+                                                Click="PlayPause_Click" Padding="10,4" Margin="0,0,6,0" />
+                                        <Button Content="⏹" Style="{StaticResource PrimaryButton}"
+                                                Click="MediaStop_Click" Padding="10,4" Margin="0,0,12,0" />
+                                        <TextBlock Text="🔊" Foreground="{StaticResource TextPrimaryBrush}"
+                                                   VerticalAlignment="Center" Margin="0,0,6,0" />
+                                        <Slider x:Name="AudioVolumeSlider" Width="80" Minimum="0" Maximum="1" Value="0.5"
+                                                VerticalAlignment="Center" ValueChanged="VolumeSlider_ValueChanged" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- 10. ZIP archive contents -->
+                        <Grid Visibility="{Binding IsZipFile, Converter={StaticResource BoolToVis}}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="40" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <Border Grid.Row="0" Background="{StaticResource SurfaceLightBrush}"
+                                    Padding="16,8" BorderThickness="0,0,0,1" BorderBrush="{StaticResource BorderBrush}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="🗜" FontSize="14" Foreground="White" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="Archive Contents" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                    <TextBlock Text=" — " Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding ZipEntryCount}" FontSize="11"
+                                               Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+                            <DataGrid Grid.Row="1" ItemsSource="{Binding ZipEntries}"
+                                      IsReadOnly="True" CanUserAddRows="False" AutoGenerateColumns="False"
+                                      Background="White" RowBackground="White" AlternatingRowBackground="#F5F8FF"
+                                      BorderThickness="0" FontSize="12"
+                                      ColumnHeaderStyle="{StaticResource DataGridColumnHeader}"
+                                      Style="{StaticResource StyledDataGrid}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Name"       Binding="{Binding Name}"               Width="*" />
+                                    <DataGridTextColumn Header="Size"       Binding="{Binding SizeDisplay}"        Width="90" />
+                                    <DataGridTextColumn Header="Compressed" Binding="{Binding CompressedDisplay}"  Width="90" />
+                                    <DataGridTextColumn Header="Modified"   Binding="{Binding LastModified, StringFormat='{}{0:MM/dd/yyyy}'}" Width="100" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+
+                        <!-- 11. HTML in-browser -->
+                        <DockPanel Visibility="{Binding IsHtmlFile, Converter={StaticResource BoolToVis}}">
+                            <Border DockPanel.Dock="Top" Background="{StaticResource SurfaceLightBrush}"
+                                    Padding="16,8" Height="40" BorderThickness="0,0,0,1" BorderBrush="{StaticResource BorderBrush}">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="🌐" FontSize="14" Foreground="White" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="HTML Preview" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+                            <WebBrowser x:Name="HtmlBrowser" />
+                        </DockPanel>
+
+                        <!-- 12. Unsupported -->
                         <StackPanel Visibility="{Binding IsUnsupportedFile, Converter={StaticResource BoolToVis}}"
                                     VerticalAlignment="Center" HorizontalAlignment="Center">
                             <TextBlock Text="⚠" FontSize="48" HorizontalAlignment="Center"
@@ -298,7 +376,7 @@
                     </Grid>
                 </Border>
 
-                <!-- Right: matches panel -->
+                <!-- ── RIGHT: matches panel ── -->
                 <Border Grid.Column="1" Background="{StaticResource PrimaryLightBrush}"
                         BorderThickness="1,0,0,0" BorderBrush="{StaticResource BorderBrush}">
                     <Grid>
@@ -309,8 +387,7 @@
                         <Border Grid.Row="0" Padding="12,10"
                                 BorderThickness="0,0,0,1" BorderBrush="#FF252C40" Background="#FF252C40">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="MATCHES " Foreground="White"
-                                           FontSize="11" FontWeight="SemiBold" />
+                                <TextBlock Text="MATCHES " Foreground="White" FontSize="11" FontWeight="SemiBold" />
                                 <TextBlock Text="{Binding TotalMatches}"
                                            Foreground="{StaticResource AccentBrush}"
                                            FontSize="12" FontWeight="Bold" Margin="4,0,0,0" />
@@ -330,15 +407,10 @@
                                                            Foreground="{StaticResource AccentBrush}" FontWeight="Bold" />
                                                 <TextBlock Text="{Binding LineNumber}" FontSize="10"
                                                            Foreground="{StaticResource AccentBrush}" FontWeight="Bold" />
-                                                <TextBlock Text="  Pg " FontSize="10"
-                                                           Foreground="{StaticResource TextMutedBrush}" />
-                                                <TextBlock Text="{Binding PageNumber}" FontSize="10"
-                                                           Foreground="{StaticResource TextMutedBrush}" />
                                             </StackPanel>
                                             <TextBlock Text="{Binding LineContent}"
                                                        Foreground="{StaticResource TextSecondaryBrush}"
-                                                       FontSize="11" TextTrimming="CharacterEllipsis"
-                                                       Margin="0,2,0,0" />
+                                                       FontSize="11" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
                                         </StackPanel>
                                     </Border>
                                 </DataTemplate>
@@ -348,15 +420,13 @@
                 </Border>
             </Grid>
 
-            <!-- Status bar -->
+            <!-- ═══ Status bar ═══ -->
             <Border Grid.Row="2" Padding="16,6" BorderThickness="0,1,0,0"
-                    BorderBrush="{StaticResource BorderBrush}"
-                    Background="{StaticResource BackgroundWindowColor}">
+                    BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource BackgroundWindowColor}">
                 <Grid>
                     <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource StatusText}" />
                     <TextBlock HorizontalAlignment="Right" Foreground="{StaticResource TextMutedBrush}"
-                               FontSize="12" Text="{Binding CurrentFile.FilePath}"
-                               TextTrimming="CharacterEllipsis" />
+                               FontSize="12" Text="{Binding CurrentFile.FilePath}" TextTrimming="CharacterEllipsis" />
                 </Grid>
             </Border>
         </Grid>
