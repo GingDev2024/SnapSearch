@@ -5,8 +5,7 @@
         Title="File Preview"
         Width="1100" Height="690"
         WindowStartupLocation="CenterScreen"
-        WindowState="Maximized"
-        WindowStyle="None"
+        WindowStyle="SingleBorderWindow"
         AllowsTransparency="False"
         Background="{StaticResource BackgroundWindowColor}">
 
