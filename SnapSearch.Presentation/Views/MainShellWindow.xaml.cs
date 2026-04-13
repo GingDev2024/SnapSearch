@@ -42,6 +42,11 @@ namespace SnapSearch.Presentation.Views
 
         private void OnLogoutRequested()
         {
+            foreach (Window w in System.Windows.Application.Current.Windows
+                             .OfType<FilePreviewWindow>().ToList())
+            {
+                w.Close();
+            }
             var login = App.GetService<LoginWindow>();
             System.Windows.Application.Current.MainWindow = login;
             SessionPersistence.Clear();

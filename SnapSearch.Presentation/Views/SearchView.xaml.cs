@@ -6,6 +6,12 @@ namespace SnapSearch.Presentation.Views
 {
     public partial class SearchView : System.Windows.Controls.UserControl
     {
+        #region Fields
+
+        private FilePreviewWindow? _previewWindow;
+
+        #endregion Fields
+
         #region Constructor
 
         public SearchView()
@@ -27,8 +33,15 @@ namespace SnapSearch.Presentation.Views
 
         private void OnOpenPreviewRequested(Application.DTOs.FileResultDto file, string keyword)
         {
-            var win = new FilePreviewWindow(file, keyword);
-            win.Show();
+            if (_previewWindow != null)
+            {
+                _previewWindow.Close();
+                _previewWindow = null;
+            }
+
+            _previewWindow = new FilePreviewWindow(file, keyword);
+            _previewWindow.Closed += (s, e) => _previewWindow = null;
+            _previewWindow.Show();
         }
 
         #endregion Private Methods — DataContext
@@ -62,7 +75,6 @@ namespace SnapSearch.Presentation.Views
 
         private void KeywordBox_LostFocus(object sender, System.Windows.RoutedEventArgs e)
         {
-            // Delay hiding so a click on a suggestion item is processed first
             Dispatcher.BeginInvoke(new Action(() =>
             {
                 if (DataContext is SearchViewModel vm)
@@ -73,7 +85,6 @@ namespace SnapSearch.Presentation.Views
         private void SuggestionsList_PreviewMouseDown(object sender,
             System.Windows.Input.MouseButtonEventArgs e)
         {
-            // Allow the ListBox selection to process before LostFocus hides it
             e.Handled = false;
         }
 
@@ -87,7 +98,6 @@ namespace SnapSearch.Presentation.Views
             if (DataContext is not SearchViewModel vm)
                 return;
 
-            // Enter → run search
             if (e.Key == Key.Enter)
             {
                 vm.ShowSuggestions = false;
@@ -99,7 +109,6 @@ namespace SnapSearch.Presentation.Views
                 return;
             }
 
-            // Escape → dismiss suggestions
             if (e.Key == Key.Escape)
             {
                 vm.ShowSuggestions = false;
@@ -107,7 +116,6 @@ namespace SnapSearch.Presentation.Views
                 return;
             }
 
-            // Down arrow → move focus into suggestion list
             if (e.Key == Key.Down && vm.ShowSuggestions && SuggestionsListBox.Items.Count > 0)
             {
                 SuggestionsListBox.Focus();
