@@ -45,7 +45,7 @@ namespace SnapSearch.Presentation.Views
             _vm.FileLoaded += OnFileLoaded;
 
             Loaded += OnWindowLoaded;
-            Closing += OnWindowClosing;
+            //  Closing += OnWindowClosing;
         }
 
         #endregion Constructor
@@ -59,10 +59,10 @@ namespace SnapSearch.Presentation.Views
             await _vm.LoadFileAsync(_pendingFile, _pendingKeyword);
         }
 
-        private void OnWindowClosing(object? sender, System.ComponentModel.CancelEventArgs e)
-        {
-            _activeMedia?.Stop();
-        }
+        //private void OnWindowClosing(object? sender, System.ComponentModel.CancelEventArgs e)
+        //{
+        //    _activeMedia?.Stop();
+        //}
 
         #endregion Window Lifecycle
 

@@ -52,10 +52,6 @@
                         <Button Content="Copy Path" Style="{StaticResource PrimaryButton}" Command="{Binding CopyPathCommand}"
                                 Padding="10,4" Margin="0,0,12,0"
                                 Visibility="{Binding CanCopy, Converter={StaticResource BoolToVis}}" />
-                        <Button Content="X" Width="28" Height="28" FontSize="12"
-                                Background="#FF252C40" BorderThickness="0"
-                                Foreground="{StaticResource DangerBrush}" Cursor="Hand"
-                                Click="CloseButton_Click" FontWeight="Bold" />
                     </StackPanel>
                 </Grid>
             </Border>
