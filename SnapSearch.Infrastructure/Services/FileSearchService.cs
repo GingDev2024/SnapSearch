@@ -203,9 +203,9 @@ namespace SnapSearch.Infrastructure.Services
                 ".html" or ".htm" or ".css" or ".scss" or ".sql" or
                 ".bat" or ".cmd" or ".ps1" or ".sh";
 
-        private static bool IsImage(string ext) =>
-            ext is ".png" or ".jpg" or ".jpeg" or ".bmp" or
-                   ".gif" or ".webp" or ".tiff" or ".tif" or ".ico";
+        //private static bool IsImage(string ext) =>
+        //    ext is ".png" or ".jpg" or ".jpeg" or ".bmp" or
+        //           ".gif" or ".webp" or ".tiff" or ".tif" or ".ico";
 
         private async Task<IEnumerable<ContentMatchDto>> SearchPdfContentAsync(
             string filePath, string keyword,

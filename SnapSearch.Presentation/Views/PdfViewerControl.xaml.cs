@@ -1,4 +1,5 @@
 ﻿using PdfiumViewer;
+using SnapSearch.Application.DTOs;
 
 namespace SnapSearch.Presentation.Views
 {
@@ -6,125 +7,119 @@ namespace SnapSearch.Presentation.Views
     {
         #region Fields
 
-        // The Windows Forms PDF viewer control (PdfiumViewer uses WinForms internally)
         private PdfViewer? _pdfViewer;
-
-        // The currently loaded PDF document — we keep a reference so we can
-        // render pages to bitmaps when printing
         private PdfDocument? _currentDocument;
-
-        // We also store the file path so we can re-open the document for printing
-        // (PdfDocument is sometimes already disposed by the time print is called)
         private string? _currentFilePath;
+        private PdfSearchManager? _searchManager;
+        private int _currentMatchIndex = -1;
+        private int _totalMatches;
 
         #endregion Fields
 
-        #region Constructor
+        #region Public Constructors
 
         public PdfViewerControl()
         {
             InitializeComponent();
 
-            // Create the WinForms PdfViewer and host it inside the WPF WindowsFormsHost
             _pdfViewer = new PdfViewer
             {
-                Dock = DockStyle.Fill,
-                ShowToolbar  = false,   // hide the built-in toolbar — we have our own
-                ShowBookmarks = false,  // hide the bookmarks panel
+                Dock = System.Windows.Forms.DockStyle.Fill,
+                ShowToolbar = false,
+                ShowBookmarks = false,
             };
 
-            // FormsHost is the <WindowsFormsHost> declared in the XAML of this UserControl
             FormsHost.Child = _pdfViewer;
-
-            // When this control is removed from the visual tree, free resources
             Unloaded += (_, _) => CleanUp();
         }
 
-        #endregion Constructor
+        #endregion Public Constructors
 
         #region Public Methods
 
-        /// <summary>
-        /// Loads a PDF file from disk and shows it in the viewer.
-        /// Call this from the code-behind after the window has loaded.
-        /// </summary>
         public void LoadPdf(string filePath)
         {
             if (_pdfViewer == null) return;
-
-            // Dispose the previous document before loading a new one
             CleanUp();
 
             try
             {
                 _currentFilePath = filePath;
-                _currentDocument  = PdfDocument.Load(filePath);
+                _currentDocument = PdfDocument.Load(filePath);
                 _pdfViewer.Document = _currentDocument;
+
+                _searchManager = new PdfSearchManager(_pdfViewer.Renderer)
+                {
+                    HighlightAllMatches = true,
+                    MatchCase = false,
+                    MatchWholeWord = false,
+                };
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[PdfViewerControl] PDF load error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[PdfViewerControl] Load error: {ex.Message}");
             }
         }
 
-        public void PrintAllPages(System.Windows.Controls.PrintDialog pd, string title)
+        // Called from FilePreviewWindow after LoadPdf
+        public void SetKeyword(string keyword)
         {
-            // We need a file path to re-open the document for rendering
-            if (string.IsNullOrEmpty(_currentFilePath))
+            if (_searchManager == null || string.IsNullOrWhiteSpace(keyword)) return;
+
+            // Search() highlights all matches in yellow automatically via PdfRenderer.Markers
+            bool found = _searchManager.Search(keyword);
+
+            if (found)
             {
-                System.Diagnostics.Debug.WriteLine("[PdfViewerControl] No file loaded — cannot print.");
-                return;
+                _totalMatches = _searchManager
+                    .GetType()
+                    .GetField("_matches", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                    ?.GetValue(_searchManager) is PdfMatches m ? m.Items.Count : 0;
+
+                _currentMatchIndex = 0;
+                // Scroll to and blue-highlight the first match
+                _searchManager.FindNext(forward: true);
             }
+        }
 
-            // Open a fresh copy of the PDF just for rendering/printing
-            // (avoids issues if the viewer's own document is in a certain state)
-            using var printDoc = PdfDocument.Load(_currentFilePath);
+        // Called when user clicks a match in the right-side list
+        public void GoToMatch(int index)
+        {
+            if (_searchManager == null) return;
+            if (index < 0) return;
 
-            // How big is the printable area on the selected paper/printer?
-            // These are in WPF device-independent units (1 unit = 1/96 inch)
-            double pageWidthWpf  = pd.PrintableAreaWidth;
-            double pageHeightWpf = pd.PrintableAreaHeight;
+            bool forward = index >= _currentMatchIndex;
+            int steps = Math.Abs(index - _currentMatchIndex);
 
-            // We will render at 200 DPI for crisp output.
-            // WPF device-independent units are at 96 DPI, so:
-            //   physical pixels = wpf units * (renderDpi / 96)
-            const int renderDpi = 200;
-            int renderWidthPx  = (int)(pageWidthWpf  * renderDpi / 96.0);
-            int renderHeightPx = (int)(pageHeightWpf * renderDpi / 96.0);
+            for (int i = 0; i < steps; i++)
+                _searchManager.FindNext(forward: forward);
 
-            int totalPages = printDoc.PageCount;
+            _currentMatchIndex = index;
+        }
 
-            for (int pageIndex = 0; pageIndex < totalPages; pageIndex++)
+        public void PrintPdfPages(System.Windows.Controls.PrintDialog pd, string title)
+        {
+            if (string.IsNullOrEmpty(_currentFilePath)) return;
+
+            using var doc = PdfDocument.Load(_currentFilePath);
+            const int dpi = 200;
+            int pw = (int)(pd.PrintableAreaWidth * dpi / 96.0);
+            int ph = (int)(pd.PrintableAreaHeight * dpi / 96.0);
+
+            for (int i = 0; i < doc.PageCount; i++)
             {
-                // ── Step 1: Render this PDF page into a GDI+ Bitmap ──────────
-                // RenderPage returns a System.Drawing.Image (GDI+)
-                using System.Drawing.Image gdiImage = printDoc.Render(
-                    pageIndex,
-                    renderWidthPx,
-                    renderHeightPx,
-                    renderDpi,
-                    renderDpi,
-                    false   // false = normal orientation (not rotated)
-                );
-
-                // ── Step 2: Convert GDI+ Bitmap → WPF BitmapSource ───────────
-                // WPF cannot use System.Drawing.Bitmap directly, so we convert it.
-                var wpfBitmap = ConvertGdiBitmapToWpf((System.Drawing.Bitmap)gdiImage);
-
-                // ── Step 3: Put the bitmap into a WPF Image control ───────────
-                var imageControl = new System.Windows.Controls.Image
+                using System.Drawing.Image img = doc.Render(i, pw, ph, dpi, dpi, false);
+                var bmp = ConvertToWpfBitmap((System.Drawing.Bitmap)img);
+                var ctrl = new System.Windows.Controls.Image
                 {
-                    Source  = wpfBitmap,
-                    Stretch = System.Windows.Media.Stretch.Uniform // keep aspect ratio
+                    Source = bmp,
+                    Stretch = System.Windows.Media.Stretch.Uniform
                 };
-
-                var pageSize = new System.Windows.Size(pageWidthWpf, pageHeightWpf);
-                imageControl.Measure(pageSize);
-                imageControl.Arrange(new System.Windows.Rect(pageSize));
-                imageControl.UpdateLayout();
-
-                // ── Step 5: Send this page to the printer ─────────────────────
-                pd.PrintVisual(imageControl, $"{title} — Page {pageIndex + 1} of {totalPages}");
+                var size = new System.Windows.Size(pd.PrintableAreaWidth, pd.PrintableAreaHeight);
+                ctrl.Measure(size);
+                ctrl.Arrange(new System.Windows.Rect(size));
+                ctrl.UpdateLayout();
+                pd.PrintVisual(ctrl, $"{title} — Page {i + 1} of {doc.PageCount}");
             }
         }
 
@@ -132,51 +127,36 @@ namespace SnapSearch.Presentation.Views
 
         #region Private Methods
 
-        /// <summary>
-        /// Converts a System.Drawing.Bitmap (GDI+) into a WPF BitmapSource.
-        /// This is necessary because WPF's Image control cannot consume GDI+ bitmaps directly.
-        /// </summary>
-        private static System.Windows.Media.Imaging.BitmapSource ConvertGdiBitmapToWpf(
-            System.Drawing.Bitmap gdiBitmap)
+        private static System.Windows.Media.Imaging.BitmapSource ConvertToWpfBitmap(
+            System.Drawing.Bitmap bmp)
         {
-            // Get a native handle (HBITMAP) for the GDI+ bitmap
-            var hBitmap = gdiBitmap.GetHbitmap();
-
+            var h = bmp.GetHbitmap();
             try
             {
-                // CreateBitmapSourceFromHBitmap wraps the native bitmap into a WPF BitmapSource
                 return System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(
-                    hBitmap,
-                    IntPtr.Zero,
+                    h, IntPtr.Zero,
                     System.Windows.Int32Rect.Empty,
                     System.Windows.Media.Imaging.BitmapSizeOptions.FromEmptyOptions());
             }
-            finally
-            {
-                // Always delete the native GDI object to avoid a memory leak
-                DeleteObject(hBitmap);
-            }
+            finally { DeleteObject(h); }
         }
 
-        /// <summary>
-        /// Win32 API call to free a native GDI bitmap handle.
-        /// Required after calling GetHbitmap() to avoid memory leaks.
-        /// </summary>
         [System.Runtime.InteropServices.DllImport("gdi32.dll")]
-        private static extern bool DeleteObject(IntPtr hObject);
+        private static extern bool DeleteObject(IntPtr h);
 
-        /// <summary>
-        /// Releases the PDF document and clears the viewer.
-        /// Called when a new file is loaded or when the control is unloaded.
-        /// </summary>
         private void CleanUp()
         {
+            _searchManager?.Reset();
+            _searchManager = null;
+            _currentMatchIndex = -1;
+            _totalMatches = 0;
+
             if (_pdfViewer != null)
-                _pdfViewer.Document = null; // detach first so PdfiumViewer releases its lock
+                _pdfViewer.Document = null;
 
             _currentDocument?.Dispose();
-            _currentDocument  = null;
-            _currentFilePath  = null;
+            _currentDocument = null;
+            _currentFilePath = null;
         }
 
         #endregion Private Methods
