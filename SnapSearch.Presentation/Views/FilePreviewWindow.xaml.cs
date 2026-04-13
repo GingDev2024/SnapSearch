@@ -84,7 +84,12 @@ namespace SnapSearch.Presentation.Views
                 await Dispatcher.InvokeAsync(() =>
                 {
                     try
-                    { PdfViewer.LoadPdf(_vm.CurrentFile.FilePath); }
+                    {
+                        PdfViewer.LoadPdf(_vm.CurrentFile.FilePath);
+
+                        if (!string.IsNullOrWhiteSpace(_vm.Keyword))
+                            PdfViewer.SetKeyword(_vm.Keyword);
+                    }
                     catch (Exception ex) { _vm.StatusMessage = $"PDF error: {ex.Message}"; }
                 }, DispatcherPriority.Background);
                 return;
@@ -407,53 +412,97 @@ namespace SnapSearch.Presentation.Views
         #region Print
 
         private static FlowDocument BuildXlsxFlowDocument(
-            System.Data.DataTable table, string fileName)
+       System.Data.DataTable table, string fileName)
         {
             var doc = new FlowDocument
             {
                 FontFamily = new System.Windows.Media.FontFamily("Segoe UI"),
-                FontSize = 11,
+                FontSize = 9,
                 PagePadding = new Thickness(40),
-                ColumnWidth = double.PositiveInfinity
+                ColumnWidth = double.PositiveInfinity,
+                PageWidth = 1122,  // A4 landscape in 96dpi WPF units (297mm → ~1122px)
+                PageHeight = 793,   // A4 landscape height  (210mm → ~793px)
             };
 
+            // ── Title ────────────────────────────────────────────────────
             doc.Blocks.Add(new Paragraph(new Run(fileName))
             {
-                FontSize = 14,
+                FontSize = 11,
                 FontWeight = FontWeights.Bold,
-                Margin = new Thickness(0, 0, 0, 10)
+                Margin = new Thickness(0, 0, 0, 6),
+                Foreground = System.Windows.Media.Brushes.Black,
             });
 
-            var flowTable = new Table();
+            // ── Table ────────────────────────────────────────────────────
+            var flowTable = new Table
+            {
+                CellSpacing = 0,
+                BorderBrush = System.Windows.Media.Brushes.Black,
+                BorderThickness = new Thickness(1),
+            };
             doc.Blocks.Add(flowTable);
 
+            // Equal-width star columns — fills the page width
             for (int i = 0; i < table.Columns.Count; i++)
                 flowTable.Columns.Add(new TableColumn
-                { Width = new GridLength(1, GridUnitType.Star) });
-
-            var hGroup = new TableRowGroup();
-            flowTable.RowGroups.Add(hGroup);
-            var hRow = new TableRow();
-            hGroup.Rows.Add(hRow);
-            foreach (System.Data.DataColumn col in table.Columns)
-                hRow.Cells.Add(new TableCell(new Paragraph(new Run(col.ColumnName)))
                 {
-                    FontWeight = FontWeights.Bold,
-                    Padding = new Thickness(4, 2, 4, 2),
-                    BorderThickness = new Thickness(0, 0, 0, 1),
-                    BorderBrush = System.Windows.Media.Brushes.Black
+                    Width = new GridLength(1, GridUnitType.Star)
                 });
 
+            // ── Header row ───────────────────────────────────────────────
+            var hGroup = new TableRowGroup();
+            flowTable.RowGroups.Add(hGroup);
+
+            var hRow = new TableRow
+            {
+                Background = System.Windows.Media.Brushes.LightSteelBlue
+            };
+            hGroup.Rows.Add(hRow);
+
+            foreach (System.Data.DataColumn col in table.Columns)
+            {
+                hRow.Cells.Add(new TableCell(
+                    new Paragraph(new Run(col.ColumnName))
+                    {
+                        TextAlignment = TextAlignment.Left,
+                    })
+                {
+                    FontWeight = FontWeights.Bold,
+                    Padding = new Thickness(4, 3, 4, 3),
+                    BorderThickness = new Thickness(0, 0, 1, 1),
+                    BorderBrush = System.Windows.Media.Brushes.Gray,
+                });
+            }
+            // ── Data rows ────────────────────────────────────────────────
             var dGroup = new TableRowGroup();
             flowTable.RowGroups.Add(dGroup);
+
+            bool alternate = false;
             foreach (System.Data.DataRow row in table.Rows)
             {
-                var tr = new TableRow();
+                var tr = new TableRow
+                {
+                    Background = alternate
+                        ? new System.Windows.Media.SolidColorBrush(
+                              System.Windows.Media.Color.FromRgb(240, 244, 250))
+                        : System.Windows.Media.Brushes.White
+                };
+                alternate = !alternate;
                 dGroup.Rows.Add(tr);
+
                 foreach (var cell in row.ItemArray)
+                {
                     tr.Cells.Add(new TableCell(
-                        new Paragraph(new Run(cell?.ToString() ?? "")))
-                    { Padding = new Thickness(5) });
+                        new Paragraph(new Run(cell?.ToString() ?? ""))
+                        {
+                            TextAlignment = TextAlignment.Left,
+                        })
+                    {
+                        Padding = new Thickness(4, 2, 4, 2),
+                        BorderThickness = new Thickness(0, 0, 1, 1),
+                        BorderBrush = System.Windows.Media.Brushes.LightGray,
+                    });
+                }
             }
 
             return doc;
@@ -472,34 +521,43 @@ namespace SnapSearch.Presentation.Views
                 if (_vm.IsPdfFile)
                 {
                     _vm.StatusMessage = "Printing PDF...";
-                    PdfViewer.PrintAllPages(pd, fileName);
+                    PdfViewer.PrintPdfPages(pd, fileName);
                     _vm.StatusMessage = "PDF sent to printer.";
                 }
                 else if (_vm.IsAnyWordDoc)
                 {
                     pd.PrintDocument(
-                        ((IDocumentPaginatorSource) DocxRichTextBox.Document).DocumentPaginator,
+                        ((IDocumentPaginatorSource)DocxRichTextBox.Document).DocumentPaginator,
                         fileName);
                 }
                 else if (_vm.IsRtfFile)
                 {
                     pd.PrintDocument(
-                        ((IDocumentPaginatorSource) RtfRichTextBox.Document).DocumentPaginator,
+                        ((IDocumentPaginatorSource)RtfRichTextBox.Document).DocumentPaginator,
                         fileName);
                 }
                 else if (_vm.IsAnySpreadsheet && _vm.XlsxData != null)
                 {
                     var doc = BuildXlsxFlowDocument(_vm.XlsxData, fileName);
+
+                    // Fit to the actual printable area reported by the printer
                     doc.PageWidth = pd.PrintableAreaWidth;
                     doc.PageHeight = pd.PrintableAreaHeight;
+
+                    // Shrink font if there are many columns so everything fits on one page width
+                    if (_vm.XlsxData.Columns.Count > 10)
+                        doc.FontSize = 7;
+                    else if (_vm.XlsxData.Columns.Count > 6)
+                        doc.FontSize = 8;
+
                     pd.PrintDocument(
-                        ((IDocumentPaginatorSource) doc).DocumentPaginator, fileName);
+                        ((IDocumentPaginatorSource)doc).DocumentPaginator, fileName);
                     _vm.StatusMessage = "Spreadsheet sent to printer.";
                 }
                 else
                 {
                     pd.PrintDocument(
-                        ((IDocumentPaginatorSource) ContentRichTextBox.Document).DocumentPaginator,
+                        ((IDocumentPaginatorSource)ContentRichTextBox.Document).DocumentPaginator,
                         fileName);
                 }
             }
@@ -527,8 +585,16 @@ namespace SnapSearch.Presentation.Views
 
         private void MatchList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (_vm.SelectedMatch != null)
-                ScrollToLine(_vm.SelectedMatch.LineNumber);
+            if (_vm.SelectedMatch == null) return;
+
+            if (_vm.IsPdfFile)
+            {
+                var idx = _vm.ContentMatches.IndexOf(_vm.SelectedMatch);
+                if (idx >= 0) PdfViewer.GoToMatch(idx);
+                return;
+            }
+
+            ScrollToLine(_vm.SelectedMatch.LineNumber);
         }
 
         private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e)

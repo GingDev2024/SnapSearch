@@ -388,9 +388,9 @@
                                 BorderThickness="0,0,0,1" BorderBrush="#FF252C40" Background="#FF252C40">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="MATCHES " Foreground="White" FontSize="11" FontWeight="SemiBold" />
-                                <TextBlock Text="{Binding TotalMatches}"
+                                <!--<TextBlock Text="{Binding TotalMatches}"
                                            Foreground="{StaticResource AccentBrush}"
-                                           FontSize="12" FontWeight="Bold" Margin="4,0,0,0" />
+                                           FontSize="12" FontWeight="Bold" Margin="4,0,0,0" />-->
                             </StackPanel>
                         </Border>
                         <ListBox Grid.Row="1" ItemsSource="{Binding ContentMatches}"
@@ -408,7 +408,7 @@
                                                 <TextBlock Text="{Binding LineNumber}" FontSize="10"
                                                            Foreground="{StaticResource AccentBrush}" FontWeight="Bold" />
                                             </StackPanel>
-                                            <TextBlock Text="{Binding LineContent}"
+                                            <TextBlock Text="{Binding Keyword}"
                                                        Foreground="{StaticResource TextSecondaryBrush}"
                                                        FontSize="11" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
                                         </StackPanel>
