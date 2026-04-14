@@ -126,12 +126,11 @@
                         <!-- Date range -->
                         <TextBlock Text="Date Modified From" Style="{StaticResource FormLabel}" Margin="0,12,0,4" />
                         <DatePicker Background="{StaticResource SurfaceLightBrush}"
-                            Foreground="Black" SelectedDate="{Binding DateMin}" />
+                            Foreground="Black" SelectedDate="{Binding DateMin}" Cursor="Hand" />
 
                         <TextBlock Text="Date Modified To" Style="{StaticResource FormLabel}" Margin="0,8,0,4" />
                         <DatePicker Background="{StaticResource SurfaceLightBrush}"
-                            Foreground="Black" SelectedDate="{Binding DateMax}" />
-
+                            Foreground="Black" SelectedDate="{Binding DateMax}" Cursor="Hand" />
                         <!-- Size range -->
                         <TextBlock Text="Size Filter (KB) Min KB - Max Kb" Style="{StaticResource FormLabel}" Margin="0,12,0,4" />
                         <Grid>
