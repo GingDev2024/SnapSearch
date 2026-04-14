@@ -297,7 +297,7 @@ namespace SnapSearch.Presentation.ViewModels
         public bool IsHtmlFile => CurrentFile != null && IsHtml(CurrentFile.Extension);
 
         // Logical groups — used by XAML Visibility bindings
-        public bool IsAnyWordDoc => IsDocxFile || IsDocFile || IsOdtFile;
+        public bool IsAnyWordDoc => IsDocxFile || IsOdtFile;
 
         public bool IsAnySpreadsheet => IsXlsxFile || IsXlsFile || IsXlsbFile || IsOdsFile;
 
@@ -488,48 +488,7 @@ namespace SnapSearch.Presentation.ViewModels
         /// </summary>
         private static string ExtractDocText(string filePath)
         {
-            try
-            {
-                // Late-bind to NPOI.HWPF — works if the type exists in ANY loaded NPOI assembly
-                var hwpfType = AppDomain.CurrentDomain.GetAssemblies()
-                    .SelectMany(a => { try { return a.GetTypes(); } catch { return Array.Empty<Type>(); } })
-                    .FirstOrDefault(t => t.FullName == "NPOI.HWPF.HWPFDocument");
-
-                var extractorType = AppDomain.CurrentDomain.GetAssemblies()
-                    .SelectMany(a => { try { return a.GetTypes(); } catch { return Array.Empty<Type>(); } })
-                    .FirstOrDefault(t => t.FullName == "NPOI.HWPF.Extractor.WordExtractor");
-
-                if (hwpfType == null || extractorType == null)
-                    return "[.doc preview not available: NPOI HWPF assembly not loaded. " +
-                           "Convert the file to .docx for full support.]";
-
-                using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-                var hwpf = Activator.CreateInstance(hwpfType, fs)!;
-                var extractor = Activator.CreateInstance(extractorType, hwpf)!;
-
-                var paragraphsProp = extractorType.GetProperty("ParagraphText")
-                                  ?? extractorType.GetProperty("Text");
-
-                if (paragraphsProp?.GetValue(extractor) is string[] paragraphs)
-                {
-                    var sb = new StringBuilder();
-                    foreach (var para in paragraphs)
-                        sb.AppendLine(para.TrimEnd('\r', '\n', '\x07'));
-                    return sb.ToString().Trim();
-                }
-
-                // Fallback: getText() method
-                var getText = extractorType.GetMethod("GetText")
-                           ?? extractorType.GetMethod("getText");
-                if (getText != null)
-                    return getText.Invoke(extractor, null) as string ?? string.Empty;
-
-                return "[Could not extract text from .doc file.]";
-            }
-            catch (Exception ex)
-            {
-                return $"[Could not read .doc file: {ex.Message}]";
-            }
+            return "[.doc files are not supported. Please convert the file to .docx.]";
         }
 
         /// <summary>ODT — ZIP + content.xml (no extra library needed).</summary>
