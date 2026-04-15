@@ -141,7 +141,8 @@
                                 <TextBlock FontFamily="Consolas" FontSize="11"
                                            Foreground="Black"
                                            TextWrapping="Wrap" LineHeight="18">
-                                    <Run Text="[Machine_" /><Run Text="{Binding MachineName, Mode=OneWay}" /><Run Text="]" /><LineBreak />
+                                    <Run Text="; All client PCs use this section" Foreground="Gray" /><LineBreak />
+                                    <Run Text="[Default]" /><LineBreak />
                                     <Run Text="Server=" /><Run Text="YOUR-SERVER\INSTANCE" Foreground="Gray" /><LineBreak />
                                     <Run Text="Database=" /><Run Text="SnapSearchDb" Foreground="Gray" /><LineBreak />
                                     <Run Text="User=" /><Run Text="{Binding EncryptedUser, Mode=OneWay}" Foreground="Blue" /><LineBreak />
