@@ -26,37 +26,47 @@ namespace SnapSearch.Infrastructure.Data
             var machine = Environment.MachineName;
             var section = $"Machine_{machine}";
 
-            if (config[$"{section}:Server"] is null)
+            // ── Resolve which section to use ─────────────────────────────────
+            // Priority: [Machine_PCNAME]  →  [Default]  →  appsettings fallback
+            string ResolveValue(string key)
+            {
+                return config[$"{section}:{key}"]       // per-machine override
+                    ?? config[$"Default:{key}"];        // shared default
+            }
+
+            var server = ResolveValue("Server");
+
+            if (server is null)
             {
                 var fallback = appSettings.GetConnectionString("DefaultConnection");
                 if (!string.IsNullOrWhiteSpace(fallback))
                     return fallback;
 
                 throw new InvalidOperationException(
-                    $"snapsearch.ini has no [Machine_{machine}] section and " +
-                    $"appsettings.json has no DefaultConnection. " +
+                    $"snapsearch.ini has no [Machine_{machine}] section, no [Default] section, " +
+                    $"and appsettings.json has no DefaultConnection.\n" +
                     $"Expected ini at: {BasePath}\\snapsearch.ini");
             }
 
-            var server = config[$"{section}:Server"]!;
-
-            var database = config[$"{section}:Database"]
+            var database = ResolveValue("Database")
                 ?? throw new InvalidOperationException(
-                    $"snapsearch.ini is missing [Machine_{machine}]:Database");
+                    "snapsearch.ini is missing Database in both " +
+                    $"[Machine_{machine}] and [Default]");
 
             var encKey = appSettings["EncryptionKey"]
                 ?? throw new InvalidOperationException(
                     "EncryptionKey is missing from appsettings.json");
 
-            var rawUser = config[$"{section}:User"]
+            var rawUser = ResolveValue("User")
                 ?? throw new InvalidOperationException(
-                    $"snapsearch.ini is missing [Machine_{machine}]:User");
+                    "snapsearch.ini is missing User in both " +
+                    $"[Machine_{machine}] and [Default]");
 
-            var rawPass = config[$"{section}:Password"]
+            var rawPass = ResolveValue("Password")
                 ?? throw new InvalidOperationException(
-                    $"snapsearch.ini is missing [Machine_{machine}]:Password");
+                    "snapsearch.ini is missing Password in both " +
+                    $"[Machine_{machine}] and [Default]");
 
-            // Decrypt — wrap so a key mismatch gives an actionable message
             string user, password;
             try
             {
@@ -66,15 +76,13 @@ namespace SnapSearch.Infrastructure.Data
             catch (Exception ex)
             {
                 throw new InvalidOperationException(
-                    $"Failed to decrypt credentials for [Machine_{machine}]. " +
-                    $"The EncryptionKey in appsettings.json does not match the key " +
-                    $"that was used to encrypt the values in snapsearch.ini. " +
-                    $"Re-generate the encrypted values using the INI Encryptor with " +
-                    $"the current key and update snapsearch.ini.", ex);
+                    $"Failed to decrypt credentials. " +
+                    $"The EncryptionKey in appsettings.json does not match the key used to " +
+                    $"encrypt the values in snapsearch.ini. Re-generate using the INI Encryptor.", ex);
             }
 
-            var encrypt = config[$"{section}:Encrypt"] ?? "true";
-            var trust = config[$"{section}:TrustServerCertificate"] ?? "true";
+            var encrypt = ResolveValue("Encrypt") ?? "true";
+            var trust = ResolveValue("TrustServerCertificate") ?? "true";
 
             return $"Data Source={server};Database={database};" +
                    $"User Id={user};Password={password};" +
