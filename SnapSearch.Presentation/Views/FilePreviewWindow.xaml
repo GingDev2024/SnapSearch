@@ -144,7 +144,7 @@
                         <Grid Visibility="{Binding IsAnySpreadsheet, Converter={StaticResource BoolToVis}}">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="40" />
-                                <RowDefinition Height="36" />
+                                <RowDefinition Height="50" />
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
                             <Border Grid.Row="0" Background="{StaticResource SurfaceLightBrush}"
