@@ -22,12 +22,31 @@ namespace SnapSearch.Presentation.Views
         {
             InitializeComponent();
 
-            _pdfViewer = new PdfViewer
+            try
             {
-                Dock = System.Windows.Forms.DockStyle.Fill,
-                ShowToolbar = false,
-                ShowBookmarks = false,
-            };
+                _pdfViewer = new PdfViewer
+                {
+                    Dock = System.Windows.Forms.DockStyle.Fill,
+                    ShowToolbar = false,
+                    ShowBookmarks = false,
+                };
+                FormsHost.Child = _pdfViewer;
+            }
+            catch (DllNotFoundException)
+            {
+                // pdfium.dll missing — show a friendly message instead of crashing
+                var label = new System.Windows.Controls.TextBlock
+                {
+                    Text = "PDF viewer unavailable: pdfium.dll not found next to the exe.",
+                    Foreground = System.Windows.Media.Brushes.Gray,
+                    HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                    VerticalAlignment = System.Windows.VerticalAlignment.Center,
+                    TextWrapping = System.Windows.TextWrapping.Wrap,
+                    Margin = new System.Windows.Thickness(24)
+                };
+                Content = label;
+                return;
+            }
 
             FormsHost.Child = _pdfViewer;
             Unloaded += (_, _) => CleanUp();

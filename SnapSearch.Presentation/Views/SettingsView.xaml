@@ -9,8 +9,8 @@
     <Grid Background="{StaticResource BackgroundWindowColor}">
 
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
         <!-- Header -->
@@ -23,8 +23,8 @@
                        FontSize="12"
                        FontWeight="SemiBold"
                        TextWrapping="Wrap"
-                       Margin="0,0,0,20" 
-                       Foreground="{StaticResource TextMutedBrush}"/>
+                       Margin="0,0,0,20"
+                       Foreground="{StaticResource TextMutedBrush}" />
         </StackPanel>
 
         <!-- Scrollable Body -->
@@ -41,7 +41,7 @@
                              Background="Transparent"
                              Foreground="{StaticResource SuccessBrush}"
                              Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"
-                             Margin="0,0,0,16"/>
+                             Margin="0,0,0,16" />
 
                 <!-- DEFAULT DIRECTORY -->
                 <Border Style="{StaticResource Card}" Margin="0,0,0,16">
@@ -53,13 +53,13 @@
                                    Foreground="{StaticResource TextMutedBrush}"
                                    FontWeight="SemiBold"
                                    FontSize="11"
-                                   Margin="0,0,0,10"/>
+                                   Margin="0,0,0,10" />
 
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="8"/>
-                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
                             <TextBox Grid.Column="0"
@@ -70,7 +70,7 @@
                                     Content="Browse"
                                     Style="{StaticResource PrimaryButton}"
                                     Command="{Binding BrowseDirectoryCommand}"
-                                    Padding="14,8"/>
+                                    Padding="14,8" />
                         </Grid>
                     </StackPanel>
                 </Border>
@@ -80,26 +80,26 @@
                     <StackPanel>
                         <TextBlock Text="SEARCH DEFAULTS"
                                    Style="{StaticResource FormLabel}"
-                                   Margin="0,0,0,12"/>
+                                   Margin="0,0,0,12" />
 
                         <CheckBox Content="Search subdirectories by default"
                                   Style="{StaticResource StyledCheckBox}"
                                   IsChecked="{Binding SearchSubDirectoriesByDefault}"
-                                  Margin="0,0,0,10"/>
+                                  Margin="0,0,0,10" />
 
                         <CheckBox Content="Search file contents by default"
                                   Style="{StaticResource StyledCheckBox}"
                                   IsChecked="{Binding SearchContentsDefault}"
-                                  Margin="0,0,0,10"/>
+                                  Margin="0,0,0,10" />
 
                         <CheckBox Content="Allow partial keyword matching by default"
                                   Style="{StaticResource StyledCheckBox}"
                                   IsChecked="{Binding AllowPartialMatchDefault}"
-                                  Margin="0,0,0,10"/>
+                                  Margin="0,0,0,10" />
 
                         <CheckBox Content="Use regex keyword matching by default"
                                   Style="{StaticResource StyledCheckBox}"
-                                  IsChecked="{Binding UseRegexDefault}"/>
+                                  IsChecked="{Binding UseRegexDefault}" />
                     </StackPanel>
                 </Border>
 
@@ -109,25 +109,25 @@
 
                         <TextBlock Text="DEFAULT FILE SIZE FILTER (KB)"
                                    Style="{StaticResource FormLabel}"
-                                   Margin="0,0,0,4"/>
+                                   Margin="0,0,0,4" />
 
                         <TextBlock Text="Leave blank for no limit. Example: min=100, max=10240 (10 MB)."
                                    Foreground="{StaticResource TextMutedBrush}"
                                    FontWeight="SemiBold"
                                    FontSize="11"
-                                   Margin="0,0,0,12"/>
+                                   Margin="0,0,0,12" />
 
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="12"/>
-                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="Min KB"
                                            Style="{StaticResource FormLabel}"
-                                           Margin="0,0,0,4"/>
+                                           Margin="0,0,0,4" />
 
                                 <TextBox Style="{StaticResource SearchTextBox}"
                                          Text="{Binding SizeMinKbDefault}" />
@@ -136,14 +136,12 @@
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="Max KB"
                                            Style="{StaticResource FormLabel}"
-                                           Margin="0,0,0,4"/>
+                                           Margin="0,0,0,4" />
 
                                 <TextBox Style="{StaticResource SearchTextBox}"
                                          Text="{Binding SizeMaxKbDefault}" />
                             </StackPanel>
-
                         </Grid>
-
                     </StackPanel>
                 </Border>
 
@@ -153,12 +151,11 @@
 
                         <TextBlock Text="RESULT DISPLAY"
                                    Style="{StaticResource FormLabel}"
-                                   Margin="0,0,0,4"/>
+                                   Margin="0,0,0,4" />
 
                         <TextBox Style="{StaticResource SearchTextBox}"
                                  Width="200"
                                  Text="{Binding MaxResultsPerPage}" />
-
                     </StackPanel>
                 </Border>
 
@@ -168,17 +165,16 @@
 
                         <TextBlock Text="SESSION SECURITY"
                                    Style="{StaticResource FormLabel}"
-                                   Margin="0,0,0,12"/>
+                                   Margin="0,0,0,12" />
 
                         <CheckBox Content="Enable auto-logout"
                                   Style="{StaticResource StyledCheckBox}"
                                   IsChecked="{Binding EnableSessionTimeout}"
-                                  Margin="0,0,0,10"/>
+                                  Margin="0,0,0,10" Cursor="Hand" />
 
                         <TextBox Style="{StaticResource SearchTextBox}"
                                  Width="200"
                                  Text="{Binding SessionTimeoutMinutes}" />
-
                     </StackPanel>
                 </Border>
 
@@ -187,18 +183,14 @@
                     <Button Content="Save Settings"
                             Style="{StaticResource PrimaryButton}"
                             Command="{Binding SaveSettingsCommand}"
-                            Padding="20,10"/>
+                            Padding="20,10" />
 
                     <TextBlock Text="{Binding StatusMessage}"
                                Foreground="{StaticResource SuccessBrush}"
                                VerticalAlignment="Center"
-                               Margin="16,0,0,0"/>
+                               Margin="16,0,0,0" />
                 </StackPanel>
-
             </StackPanel>
-
         </ScrollViewer>
-
     </Grid>
-
 </UserControl>
