@@ -92,13 +92,19 @@ namespace SnapSearch.Infrastructure.Services
                     .AddIniFile(IniPath, optional: true)
                     .Build();
 
-                if (config[$"{section}:Server"] is null)
-                    return Task.FromResult(Entry("INI File", HealthStatus.Degraded,
-                        $"File found but no [Machine_{machine}] section.",
-                        $"Add a [{section}] block to {IniPath}", sw));
+                var hasMachineSection = config[$"{section}:Server"] is not null;
+                var hasDefaultSection = config["Default:Server"] is not null;
+
+                if (!hasMachineSection && !hasDefaultSection)
+                    return Task.FromResult(Entry("INI File", HealthStatus.Unhealthy,
+                        "File found but no usable section.",
+                        $"Add a [Default] or [{section}] block to {IniPath}", sw));
+
+                var activeSection = hasMachineSection ? $"[{section}]" : "[Default]";
 
                 return Task.FromResult(Entry("INI File", HealthStatus.Healthy,
-                    $"[Machine_{machine}] section found.", null, sw));
+                    $"Using {activeSection} → Server: {config[$"{(hasMachineSection ? section : "Default")}:Server"]}",
+                    null, sw));
             }
             catch (Exception ex)
             {
