@@ -426,7 +426,7 @@ namespace SnapSearch.Presentation.ViewModels
         private static bool IsPlainText(string ext) =>
             ext.ToLower() is
                 ".txt" or ".log" or ".csv" or ".xml" or ".bat" or ".sh"
-            or ".ps1" or ".dot" or ".doc" or ".docm";
+            or ".ps1" or ".dot" or ".doc" or ".docm" or ".odt" or ".ods" or ".wpd";
 
         private static bool IsImage(string ext) =>
             ext.ToLower() is ".png" or ".jpg" or ".jpeg" or ".bmp" or
@@ -769,7 +769,7 @@ namespace SnapSearch.Presentation.ViewModels
                 // IList<HSLFSlide> GetSlides()
                 var getSlides = showType.GetMethod("GetSlides")
                                 ?? throw new InvalidOperationException("GetSlides not found.");
-                var slides = (System.Collections.IEnumerable) getSlides.Invoke(show, null)!;
+                var slides = (System.Collections.IEnumerable)getSlides.Invoke(show, null)!;
 
                 int i = 1;
                 foreach (var slide in slides)
