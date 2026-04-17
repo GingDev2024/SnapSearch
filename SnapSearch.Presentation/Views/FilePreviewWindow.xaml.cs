@@ -279,8 +279,10 @@ namespace SnapSearch.Presentation.Views
             var doc = DocxRichTextBox.Document;
             doc.Blocks.Clear();
             doc.Foreground = System.Windows.Media.Brushes.Black;
+            doc.Background = System.Windows.Media.Brushes.White;
 
-            foreach (var line in _vm.DocxText.Split('\n'))
+            var lines = _vm.DocxText.Split('\n');
+            foreach (var line in lines)
             {
                 var para = new Paragraph
                 {
