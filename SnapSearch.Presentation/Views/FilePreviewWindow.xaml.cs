@@ -10,8 +10,6 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 
-// Explicitly alias to resolve the DataFormats ambiguity between
-// System.Windows.DataFormats and System.Windows.Forms.DataFormats
 using WpfDataFormats = System.Windows.DataFormats;
 
 namespace SnapSearch.Presentation.Views
@@ -32,16 +30,19 @@ namespace SnapSearch.Presentation.Views
 
         #endregion Fields
 
-        #region Constructor
+        #region Constructors
 
-        public FilePreviewWindow(FileResultDto file, string keyword)
+        // ── Main constructor — receives the full list from SearchView ──
+        public FilePreviewWindow(
+            IReadOnlyList<FileResultDto> files, int index, string keyword)
         {
             InitializeComponent();
 
-            _pendingFile = file;
+            _pendingFile = files[index];
             _pendingKeyword = keyword;
 
             _vm = App.GetService<FilePreviewViewModel>();
+            _vm.SetFileList(files, index);
             DataContext = _vm;
 
             _vm.ScrollToLineRequested += ScrollToLine;
@@ -50,9 +51,14 @@ namespace SnapSearch.Presentation.Views
 
             Loaded += OnWindowLoaded;
             Closing += OnWindowClosing;
+            PreviewKeyDown += OnPreviewKeyDown;
         }
 
-        #endregion Constructor
+        // ── Convenience overload — single file, no list navigation ──
+        public FilePreviewWindow(FileResultDto file, string keyword)
+            : this(new List<FileResultDto> { file }, 0, keyword) { }
+
+        #endregion Constructors
 
         #region Window Lifecycle
 
@@ -65,13 +71,49 @@ namespace SnapSearch.Presentation.Views
 
         private void OnWindowClosing(object? sender, System.ComponentModel.CancelEventArgs e)
         {
+            StopAndDisposeMedia();
+        }
+
+        // Stops and disposes any active media so navigation between files is clean
+        private void StopAndDisposeMedia()
+        {
             _vlcPlayer?.Stop();
             _vlcPlayer?.Dispose();
+            _vlcPlayer = null;
             _libVlc?.Dispose();
+            _libVlc = null;
             _activeMedia?.Stop();
+            _activeMedia = null;
+            _isPlaying = false;
         }
 
         #endregion Window Lifecycle
+
+        #region Keyboard Navigation
+
+        private void OnPreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            // Don't intercept arrow keys when user is typing in a text control
+            if (Keyboard.FocusedElement is System.Windows.Forms.TextBoxBase or System.Windows.Forms.WebBrowser)
+                return;
+
+            if (e.Key == Key.Right || e.Key == Key.Left)
+            {
+                var cmd = e.Key == Key.Right
+                    ? _vm.NextFileCommand
+                    : _vm.PreviousFileCommand;
+
+                if (cmd.CanExecute(null))
+                {
+                    // Stop any playing media before switching files
+                    StopAndDisposeMedia();
+                    cmd.Execute(null);
+                    e.Handled = true;
+                }
+            }
+        }
+
+        #endregion Keyboard Navigation
 
         #region FileLoaded → RenderContent
 
@@ -93,7 +135,6 @@ namespace SnapSearch.Presentation.Views
                     try
                     {
                         PdfViewer.LoadPdf(_vm.CurrentFile.FilePath);
-
                         if (!string.IsNullOrWhiteSpace(_vm.Keyword))
                             PdfViewer.SetKeyword(_vm.Keyword);
                     }
@@ -106,7 +147,7 @@ namespace SnapSearch.Presentation.Views
             if (_vm.IsImageFile)
             { LoadImage(_vm.CurrentFile.FilePath); return; }
 
-            // ── RTF — WPF RichTextBox loads RTF natively ─────────────────────
+            // ── RTF ──────────────────────────────────────────────────────────
             if (_vm.IsRtfFile)
             { LoadRtf(_vm.CurrentFile.FilePath); return; }
 
@@ -120,7 +161,7 @@ namespace SnapSearch.Presentation.Views
                 return;
             }
 
-            // ── Word family: DOCX, DOC, ODT ──────────────────────────────────
+            // ── Word family ──────────────────────────────────────────────────
             if (_vm.IsAnyWordDoc)
             {
                 if (string.IsNullOrEmpty(_vm.DocxText))
@@ -130,7 +171,7 @@ namespace SnapSearch.Presentation.Views
                 return;
             }
 
-            // ── Spreadsheet family: XLSX, XLSM, XLS, XLSB, ODS ──────────────
+            // ── Spreadsheet family ───────────────────────────────────────────
             if (_vm.IsAnySpreadsheet)
             {
                 if (_vm.XlsxData == null)
@@ -142,22 +183,20 @@ namespace SnapSearch.Presentation.Views
                 return;
             }
 
-            // ── Presentation family: PPTX, PPT, ODP — bound via PptxSlides ──
+            // ── Presentation family — bound via PptxSlides ───────────────────
             if (_vm.IsAnyPresentation)
                 return;
 
             // ── Video ────────────────────────────────────────────────────────
             if (_vm.IsVideoFile)
             {
+                StopAndDisposeMedia();
                 Core.Initialize();
                 _libVlc = new LibVLC();
                 _vlcPlayer = new LibVLCSharp.Shared.MediaPlayer(_libVlc);
                 VideoView.MediaPlayer = _vlcPlayer;
 
-                var media = new LibVLCSharp.Shared.Media(
-                    _libVlc,
-                    new Uri(_vm.CurrentFile.FilePath));
-
+                var media = new LibVLCSharp.Shared.Media(_libVlc, new Uri(_vm.CurrentFile.FilePath));
                 _vlcPlayer.Media = media;
                 _vlcPlayer.Volume = (int) (VolumeSlider.Value * 100);
                 _vlcPlayer.Play();
@@ -169,6 +208,7 @@ namespace SnapSearch.Presentation.Views
             // ── Audio ────────────────────────────────────────────────────────
             if (_vm.IsAudioFile)
             {
+                StopAndDisposeMedia();
                 _activeMedia = AudioPlayer;
                 AudioPlayer.Source = new Uri(_vm.CurrentFile.FilePath);
                 AudioPlayer.Volume = AudioVolumeSlider.Value;
@@ -178,7 +218,7 @@ namespace SnapSearch.Presentation.Views
                 return;
             }
 
-            // ── ZIP — entries already bound ──────────────────────────────────
+            // ── ZIP ──────────────────────────────────────────────────────────
             if (_vm.IsZipFile)
                 return;
 
@@ -191,8 +231,7 @@ namespace SnapSearch.Presentation.Views
 
         #region Rendering Helpers
 
-        private static void AppendHighlightedLine(
-            Paragraph para, string line, string keyword)
+        private static void AppendHighlightedLine(Paragraph para, string line, string keyword)
         {
             if (string.IsNullOrWhiteSpace(keyword))
             { para.Inlines.Add(new Run(line)); return; }
@@ -203,20 +242,16 @@ namespace SnapSearch.Presentation.Views
                 int idx = line.IndexOf(keyword, last, StringComparison.OrdinalIgnoreCase);
                 if (idx < 0)
                     break;
-
                 if (idx > last)
                     para.Inlines.Add(new Run(line[last..idx]));
-
                 para.Inlines.Add(new Run(line.Substring(idx, keyword.Length))
                 {
                     Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(79, 142, 247)),
                     Foreground = System.Windows.Media.Brushes.White,
                     FontWeight = FontWeights.Bold
                 });
-
                 last = idx + keyword.Length;
             }
-
             if (last < line.Length)
                 para.Inlines.Add(new Run(line[last..]));
         }
@@ -237,10 +272,6 @@ namespace SnapSearch.Presentation.Views
             catch (Exception ex) { _vm.StatusMessage = $"Could not load image: {ex.Message}"; }
         }
 
-        /// <summary>
-        /// Loads an RTF file into WPF's RichTextBox using the built-in RTF data format.
-        /// Uses the WpfDataFormats alias to avoid ambiguity with System.Windows.Forms.DataFormats.
-        /// </summary>
         private void LoadRtf(string filePath)
         {
             try
@@ -281,8 +312,7 @@ namespace SnapSearch.Presentation.Views
             doc.Foreground = System.Windows.Media.Brushes.Black;
             doc.Background = System.Windows.Media.Brushes.White;
 
-            var lines = _vm.DocxText.Split('\n');
-            foreach (var line in lines)
+            foreach (var line in _vm.DocxText.Split('\n'))
             {
                 var para = new Paragraph
                 {
@@ -295,7 +325,6 @@ namespace SnapSearch.Presentation.Views
                 AppendHighlightedLine(para, line, _vm.Keyword);
                 doc.Blocks.Add(para);
             }
-
             DocxRichTextBox.ScrollToHome();
         }
 
@@ -324,12 +353,9 @@ namespace SnapSearch.Presentation.Views
             {
                 Setters =
                 {
-                    new Setter(TextBlock.PaddingProperty,
-                               new Thickness(8, 4, 8, 4)),
-                    new Setter(TextBlock.VerticalAlignmentProperty,
-                               VerticalAlignment.Center),
-                    new Setter(TextBlock.TextTrimmingProperty,
-                               TextTrimming.CharacterEllipsis)
+                    new Setter(TextBlock.PaddingProperty,          new Thickness(8, 4, 8, 4)),
+                    new Setter(TextBlock.VerticalAlignmentProperty, VerticalAlignment.Center),
+                    new Setter(TextBlock.TextTrimmingProperty,      TextTrimming.CharacterEllipsis)
                 }
             };
         }
@@ -349,12 +375,10 @@ namespace SnapSearch.Presentation.Views
                 if (total < available)
                     foreach (var col in XlsxDataGrid.Columns)
                         col.Width = new DataGridLength(
-                            col.ActualWidth > 0 ? col.ActualWidth : 1,
-                            DataGridLengthUnitType.Star);
+                            col.ActualWidth > 0 ? col.ActualWidth : 1, DataGridLengthUnitType.Star);
                 else
                     foreach (var col in XlsxDataGrid.Columns)
-                        col.Width = new DataGridLength(1,
-                            DataGridLengthUnitType.SizeToCells);
+                        col.Width = new DataGridLength(1, DataGridLengthUnitType.SizeToCells);
             };
             XlsxDataGrid.LayoutUpdated += handler;
         }
@@ -373,36 +397,22 @@ namespace SnapSearch.Presentation.Views
         {
             if (_vm.IsAudioFile)
             {
-                // Audio uses WPF MediaElement
                 if (_activeMedia is null)
                     return;
                 if (_isPlaying)
-                {
-                    _activeMedia.Pause();
-                    AudioPlayPauseButton.Content = "▶ Play";
-                }
+                { _activeMedia.Pause(); AudioPlayPauseButton.Content = "▶ Play"; }
                 else
-                {
-                    _activeMedia.Play();
-                    AudioPlayPauseButton.Content = "⏸ Pause";
-                }
+                { _activeMedia.Play(); AudioPlayPauseButton.Content = "⏸ Pause"; }
                 _isPlaying = !_isPlaying;
             }
             else
             {
-                // Video uses LibVLC
                 if (_vlcPlayer is null)
                     return;
                 if (_isPlaying)
-                {
-                    _vlcPlayer.Pause();
-                    PlayPauseButton.Content = "▶ Play";
-                }
+                { _vlcPlayer.Pause(); PlayPauseButton.Content = "▶ Play"; }
                 else
-                {
-                    _vlcPlayer.Play();
-                    PlayPauseButton.Content = "⏸ Pause";
-                }
+                { _vlcPlayer.Play(); PlayPauseButton.Content = "⏸ Pause"; }
                 _isPlaying = !_isPlaying;
             }
         }
@@ -410,15 +420,9 @@ namespace SnapSearch.Presentation.Views
         private void MediaStop_Click(object sender, RoutedEventArgs e)
         {
             if (_vm.IsAudioFile)
-            {
-                _activeMedia?.Stop();
-                AudioPlayPauseButton.Content = "▶ Play";
-            }
+            { _activeMedia?.Stop(); AudioPlayPauseButton.Content = "▶ Play"; }
             else
-            {
-                _vlcPlayer?.Stop();
-                PlayPauseButton.Content = "▶ Play";
-            }
+            { _vlcPlayer?.Stop(); PlayPauseButton.Content = "▶ Play"; }
             _isPlaying = false;
         }
 
@@ -443,7 +447,8 @@ namespace SnapSearch.Presentation.Views
             _isPlaying = true;
         }
 
-        private void VolumeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        private void VolumeSlider_ValueChanged(
+            object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (_vlcPlayer is not null)
                 _vlcPlayer.Volume = (int) (e.NewValue * 100);
@@ -467,7 +472,6 @@ namespace SnapSearch.Presentation.Views
                 PageWidth = 1122,
                 PageHeight = 793,
             };
-
             doc.Blocks.Add(new Paragraph(new Run(fileName))
             {
                 FontSize = 11,
@@ -485,38 +489,25 @@ namespace SnapSearch.Presentation.Views
             doc.Blocks.Add(flowTable);
 
             for (int i = 0; i < table.Columns.Count; i++)
-                flowTable.Columns.Add(new TableColumn
-                {
-                    Width = new GridLength(1, GridUnitType.Star)
-                });
+                flowTable.Columns.Add(new TableColumn { Width = new GridLength(1, GridUnitType.Star) });
 
             var hGroup = new TableRowGroup();
             flowTable.RowGroups.Add(hGroup);
-
-            var hRow = new TableRow
-            {
-                Background = System.Windows.Media.Brushes.LightSteelBlue
-            };
+            var hRow = new TableRow { Background = System.Windows.Media.Brushes.LightSteelBlue };
             hGroup.Rows.Add(hRow);
 
             foreach (System.Data.DataColumn col in table.Columns)
-            {
-                hRow.Cells.Add(new TableCell(
-                    new Paragraph(new Run(col.ColumnName))
-                    {
-                        TextAlignment = TextAlignment.Left,
-                    })
+                hRow.Cells.Add(new TableCell(new Paragraph(new Run(col.ColumnName))
+                { TextAlignment = TextAlignment.Left })
                 {
                     FontWeight = FontWeights.Bold,
                     Padding = new Thickness(4, 3, 4, 3),
                     BorderThickness = new Thickness(0, 0, 1, 1),
                     BorderBrush = System.Windows.Media.Brushes.Gray,
                 });
-            }
 
             var dGroup = new TableRowGroup();
             flowTable.RowGroups.Add(dGroup);
-
             bool alternate = false;
             foreach (System.Data.DataRow row in table.Rows)
             {
@@ -529,22 +520,15 @@ namespace SnapSearch.Presentation.Views
                 };
                 alternate = !alternate;
                 dGroup.Rows.Add(tr);
-
                 foreach (var cell in row.ItemArray)
-                {
-                    tr.Cells.Add(new TableCell(
-                        new Paragraph(new Run(cell?.ToString() ?? ""))
-                        {
-                            TextAlignment = TextAlignment.Left,
-                        })
+                    tr.Cells.Add(new TableCell(new Paragraph(new Run(cell?.ToString() ?? ""))
+                    { TextAlignment = TextAlignment.Left })
                     {
                         Padding = new Thickness(4, 2, 4, 2),
                         BorderThickness = new Thickness(0, 0, 1, 1),
                         BorderBrush = System.Windows.Media.Brushes.LightGray,
                     });
-                }
             }
-
             return doc;
         }
 
@@ -553,9 +537,7 @@ namespace SnapSearch.Presentation.Views
             var pd = new System.Windows.Controls.PrintDialog();
             if (pd.ShowDialog() != true)
                 return;
-
             var fileName = _vm.CurrentFile?.FileName ?? "SnapSearch Print";
-
             try
             {
                 if (_vm.IsPdfFile)
@@ -565,39 +547,23 @@ namespace SnapSearch.Presentation.Views
                     _vm.StatusMessage = "PDF sent to printer.";
                 }
                 else if (_vm.IsAnyWordDoc)
-                {
-                    pd.PrintDocument(
-                        ((IDocumentPaginatorSource) DocxRichTextBox.Document).DocumentPaginator,
-                        fileName);
-                }
+                    pd.PrintDocument(((IDocumentPaginatorSource) DocxRichTextBox.Document).DocumentPaginator, fileName);
                 else if (_vm.IsRtfFile)
-                {
-                    pd.PrintDocument(
-                        ((IDocumentPaginatorSource) RtfRichTextBox.Document).DocumentPaginator,
-                        fileName);
-                }
+                    pd.PrintDocument(((IDocumentPaginatorSource) RtfRichTextBox.Document).DocumentPaginator, fileName);
                 else if (_vm.IsAnySpreadsheet && _vm.XlsxData != null)
                 {
                     var doc = BuildXlsxFlowDocument(_vm.XlsxData, fileName);
-
                     doc.PageWidth = pd.PrintableAreaWidth;
                     doc.PageHeight = pd.PrintableAreaHeight;
-
                     if (_vm.XlsxData.Columns.Count > 10)
                         doc.FontSize = 7;
                     else if (_vm.XlsxData.Columns.Count > 6)
                         doc.FontSize = 8;
-
-                    pd.PrintDocument(
-                        ((IDocumentPaginatorSource) doc).DocumentPaginator, fileName);
+                    pd.PrintDocument(((IDocumentPaginatorSource) doc).DocumentPaginator, fileName);
                     _vm.StatusMessage = "Spreadsheet sent to printer.";
                 }
                 else
-                {
-                    pd.PrintDocument(
-                        ((IDocumentPaginatorSource) ContentRichTextBox.Document).DocumentPaginator,
-                        fileName);
-                }
+                    pd.PrintDocument(((IDocumentPaginatorSource) ContentRichTextBox.Document).DocumentPaginator, fileName);
             }
             catch (Exception ex) { _vm.StatusMessage = $"Print error: {ex.Message}"; }
         }
@@ -625,7 +591,6 @@ namespace SnapSearch.Presentation.Views
         {
             if (_vm.SelectedMatch == null)
                 return;
-
             if (_vm.IsPdfFile)
             {
                 var idx = _vm.ContentMatches.IndexOf(_vm.SelectedMatch);
@@ -633,7 +598,6 @@ namespace SnapSearch.Presentation.Views
                     PdfViewer.GoToMatch(idx);
                 return;
             }
-
             ScrollToLine(_vm.SelectedMatch.LineNumber);
         }
 

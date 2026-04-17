@@ -32,7 +32,33 @@
                         <TextBlock Text="{Binding CurrentFile.SizeDisplay}"
                                    Foreground="White" FontSize="12" VerticalAlignment="Center" />
                     </StackPanel>
+
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+
+                        <!-- ── File navigation pill (hidden when only 1 file) ── -->
+                        <Border Background="#2A3A5C" CornerRadius="6" Padding="4,4" Margin="0,0,12,0"
+                                Visibility="{Binding HasNextFile, Converter={StaticResource BoolToVis}}">
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="◀"
+                                        Style="{StaticResource PrimaryButton}"
+                                        Command="{Binding PreviousFileCommand}"
+                                        Padding="8,2" FontSize="12"
+                                        ToolTip="Previous file  (← Left arrow key)"
+                                        IsEnabled="{Binding HasPreviousFile}" />
+                                <TextBlock Text="{Binding FilePositionDisplay}"
+                                           Foreground="White" FontSize="11"
+                                           VerticalAlignment="Center" Margin="8,0"
+                                           MinWidth="40" TextAlignment="Center" />
+                                <Button Content="▶"
+                                        Style="{StaticResource PrimaryButton}"
+                                        Command="{Binding NextFileCommand}"
+                                        Padding="8,2" FontSize="12"
+                                        ToolTip="Next file  (→ Right arrow key)"
+                                        IsEnabled="{Binding HasNextFile}" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- ── Content match navigation ── -->
                         <Border Background="#BBE2FC" CornerRadius="6" Padding="8,4" Margin="0,0,12,0"
                                 Visibility="{Binding HasMatches, Converter={StaticResource BoolToVis}}">
                             <StackPanel Orientation="Horizontal">
@@ -44,6 +70,7 @@
                                         Command="{Binding NextMatchCommand}" Padding="8,2" FontSize="11" />
                             </StackPanel>
                         </Border>
+
                         <Button Content="Print"     Style="{StaticResource PrimaryButton}" Command="{Binding PrintCommand}"
                                 Padding="10,4" Margin="0,0,6,0"
                                 Visibility="{Binding CanPrint, Converter={StaticResource BoolToVis}}" />

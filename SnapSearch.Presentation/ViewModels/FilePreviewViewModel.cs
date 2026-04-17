@@ -59,6 +59,11 @@ namespace SnapSearch.Presentation.ViewModels
         private string _pptxSlideInfo = string.Empty;
         private string _zipEntryCount = string.Empty;
 
+        // ── File navigation ──────────────────────────────────────────
+        private IReadOnlyList<FileResultDto> _fileList = Array.Empty<FileResultDto>();
+
+        private int _fileIndex;
+
         #endregion Fields
 
         #region Constructor
@@ -68,7 +73,6 @@ namespace SnapSearch.Presentation.ViewModels
             _searchService = searchService;
             _accessLogService = accessLogService;
 
-            // Required for ExcelDataReader to handle legacy code-pages (.xls / .ods)
             System.Text.Encoding.RegisterProvider(
                 System.Text.CodePagesEncodingProvider.Instance);
 
@@ -80,6 +84,12 @@ namespace SnapSearch.Presentation.ViewModels
             ExportCommand = new AsyncRelayCommand(ExecuteExportAsync, _ => CanExport);
             CopyPathCommand = new RelayCommand(ExecuteCopyPath);
             SelectSheetCommand = new RelayCommand(ExecuteSelectSheet);
+
+            // File navigation commands
+            PreviousFileCommand = new RelayCommand(
+                _ => NavigateFile(-1), _ => HasPreviousFile);
+            NextFileCommand = new RelayCommand(
+                _ => NavigateFile(+1), _ => HasNextFile);
         }
 
         #endregion Constructor
@@ -93,6 +103,43 @@ namespace SnapSearch.Presentation.ViewModels
         public event Action? PrintRequested;
 
         #endregion Events
+
+        #region Properties — File Navigation
+
+        public bool HasPreviousFile => _fileIndex > 0;
+        public bool HasNextFile => _fileIndex < _fileList.Count - 1;
+
+        public string FilePositionDisplay =>
+            _fileList.Count > 1 ? $"{_fileIndex + 1} / {_fileList.Count}" : string.Empty;
+
+        public ICommand PreviousFileCommand { get; }
+        public ICommand NextFileCommand { get; }
+
+        public void SetFileList(IReadOnlyList<FileResultDto> files, int index)
+        {
+            _fileList = files;
+            _fileIndex = index;
+            RefreshFileNavProps();
+        }
+
+        private void NavigateFile(int delta)
+        {
+            int next = _fileIndex + delta;
+            if (next < 0 || next >= _fileList.Count)
+                return;
+            _fileIndex = next;
+            RefreshFileNavProps();
+            _ = LoadFileAsync(_fileList[_fileIndex], Keyword);
+        }
+
+        private void RefreshFileNavProps()
+        {
+            OnPropertyChanged(nameof(HasPreviousFile));
+            OnPropertyChanged(nameof(HasNextFile));
+            OnPropertyChanged(nameof(FilePositionDisplay));
+        }
+
+        #endregion Properties — File Navigation
 
         #region Properties — Current file & text
 
@@ -258,60 +305,34 @@ namespace SnapSearch.Presentation.ViewModels
         #region File-Type Flags
 
         public bool IsTextFile => CurrentFile != null && IsPlainText(CurrentFile.Extension);
-
         public bool IsRtfFile => Ext(".rtf");
-
         public bool IsPdfFile => Ext(".pdf");
-
         public bool IsImageFile => CurrentFile != null && IsImage(CurrentFile.Extension);
-
-        // Word family
         public bool IsDocxFile => Ext(".docx");
-
         public bool IsDocFile => Ext(".doc");
         public bool IsDocmFile => Ext(".docm");
-
         public bool IsOdtFile => Ext(".odt");
-
-        // Excel family
         public bool IsXlsxFile => Ext(".xlsx") || Ext(".xlsm");
-
         public bool IsXlsFile => Ext(".xls");
-
         public bool IsXlsbFile => Ext(".xlsb");
-
         public bool IsOdsFile => Ext(".ods");
-
-        // PowerPoint family
         public bool IsPptxFile => Ext(".pptx");
-
         public bool IsPptFile => Ext(".ppt");
-
         public bool IsOdpFile => Ext(".odp");
-
-        // Media / other
         public bool IsVideoFile => CurrentFile != null && IsVideo(CurrentFile.Extension);
-
         public bool IsAudioFile => CurrentFile != null && IsAudio(CurrentFile.Extension);
-
         public bool IsZipFile => CurrentFile != null && IsZip(CurrentFile.Extension);
-
         public bool IsHtmlFile => CurrentFile != null && IsHtml(CurrentFile.Extension);
-
-        // Logical groups — used by XAML Visibility bindings
         public bool IsAnyWordDoc => IsDocxFile || IsDocFile || IsOdtFile || IsDocmFile;
-
         public bool IsAnySpreadsheet => IsXlsxFile || IsXlsFile || IsXlsbFile || IsOdsFile;
-
         public bool IsAnyPresentation => IsPptxFile || IsPptFile || IsOdpFile;
 
         public bool IsUnsupportedFile =>
-                    CurrentFile != null &&
-                    !IsTextFile && !IsRtfFile && !IsPdfFile && !IsImageFile &&
-                    !IsAnyWordDoc && !IsAnySpreadsheet && !IsAnyPresentation &&
-                    !IsVideoFile && !IsAudioFile && !IsZipFile && !IsHtmlFile;
+            CurrentFile != null &&
+            !IsTextFile && !IsRtfFile && !IsPdfFile && !IsImageFile &&
+            !IsAnyWordDoc && !IsAnySpreadsheet && !IsAnyPresentation &&
+            !IsVideoFile && !IsAudioFile && !IsZipFile && !IsHtmlFile;
 
-        // Helper: case-insensitive extension check
         private bool Ext(string ext) =>
             CurrentFile?.Extension.Equals(ext, StringComparison.OrdinalIgnoreCase) == true;
 
@@ -321,7 +342,6 @@ namespace SnapSearch.Presentation.ViewModels
 
         public async Task LoadFileAsync(FileResultDto file, string keyword)
         {
-            // Reset state
             FileContent = string.Empty;
             DocxText = string.Empty;
             XlsxData = null;
@@ -348,7 +368,6 @@ namespace SnapSearch.Presentation.ViewModels
                 {
                     FileContent = await File.ReadAllTextAsync(file.FilePath);
                 }
-                // RTF is rendered directly in the view — nothing to pre-load here
                 else if (IsAnyWordDoc)
                 {
                     DocxText = await Task.Run(() => ExtractWordText(file.FilePath));
@@ -376,7 +395,6 @@ namespace SnapSearch.Presentation.ViewModels
                         ZipEntries.Add(z);
                     ZipEntryCount = $"{ZipEntries.Count} file(s)";
                 }
-                // PDF / Image / Video / Audio / HTML / RTF → handled in the view
 
                 if (!string.IsNullOrWhiteSpace(keyword))
                 {
@@ -426,9 +444,8 @@ namespace SnapSearch.Presentation.ViewModels
         #region File-Type Static Helpers
 
         private static bool IsPlainText(string ext) =>
-            ext.ToLower() is
-                ".txt" or ".log" or ".csv" or ".xml" or ".bat" or ".sh"
-            or ".ps1" or ".dot";
+            ext.ToLower() is ".txt" or ".log" or ".csv" or ".xml" or ".bat" or ".sh"
+                          or ".ps1" or ".dot";
 
         private static bool IsImage(string ext) =>
             ext.ToLower() is ".png" or ".jpg" or ".jpeg" or ".bmp" or
@@ -483,20 +500,12 @@ namespace SnapSearch.Presentation.ViewModels
                 : $"[Preview limited — .docm format has partial support.]\n\n{text}";
         }
 
-        /// <summary>
-        /// DOC (Word 97-2003) — extracted via ZIP/XML fallback.
-        /// NPOI's .NET port does not include HWPF; convert to .docx for full fidelity.
-        /// </summary>
         private static string ExtractDocText(string filePath)
         {
-            // .doc is a binary OLE2 compound file — there is no pure-.NET NPOI HWPF port.
-            // We attempt a best-effort raw text scrape from the binary stream,
-            // which captures plain ASCII runs but loses formatting and Unicode content.
             try
             {
                 var bytes = File.ReadAllBytes(filePath);
                 var sb = new StringBuilder();
-                // Walk bytes: collect printable ASCII runs of 4+ chars (heuristic word-doc scrape)
                 int run = 0;
                 for (int i = 0; i < bytes.Length; i++)
                 {
@@ -510,7 +519,6 @@ namespace SnapSearch.Presentation.ViewModels
                     {
                         if (run < 4)
                         {
-                            // Discard short noise runs
                             if (sb.Length >= run)
                                 sb.Remove(sb.Length - run, run);
                         }
@@ -532,7 +540,6 @@ namespace SnapSearch.Presentation.ViewModels
             }
         }
 
-        /// <summary>ODT — ZIP + content.xml (no extra library needed).</summary>
         private static string ExtractOdtText(string filePath)
         {
             using var zip = ZipFile.OpenRead(filePath);
@@ -583,7 +590,6 @@ namespace SnapSearch.Presentation.ViewModels
         {
             var result = new List<string>();
             var table = new DataTable();
-
             try
             {
                 using var zip = ZipFile.OpenRead(filePath);
@@ -593,14 +599,10 @@ namespace SnapSearch.Presentation.ViewModels
 
                 using var stream = entry.Open();
                 var xdoc = System.Xml.Linq.XDocument.Load(stream);
-
                 const string tableNs = "urn:oasis:names:tc:opendocument:xmlns:table:1.0";
                 const string textNs = "urn:oasis:names:tc:opendocument:xmlns:text:1.0";
 
-                var sheets = xdoc
-                    .Descendants(System.Xml.Linq.XName.Get("table", tableNs))
-                    .ToList();
-
+                var sheets = xdoc.Descendants(System.Xml.Linq.XName.Get("table", tableNs)).ToList();
                 if (sheets.Count == 0)
                     return (result, table);
 
@@ -615,40 +617,27 @@ namespace SnapSearch.Presentation.ViewModels
             {
                 System.Diagnostics.Debug.WriteLine($"[ODS] Load error: {ex.Message}");
             }
-
             return (result, table);
         }
 
         private static DataTable BuildTableFromOdsSheet(
-            System.Xml.Linq.XElement sheet,
-            string tableNs,
-            string textNs)
+            System.Xml.Linq.XElement sheet, string tableNs, string textNs)
         {
             var dt = new DataTable();
-            var rows = sheet
-                .Elements(System.Xml.Linq.XName.Get("table-row", tableNs))
-                .ToList();
-
+            var rows = sheet.Elements(System.Xml.Linq.XName.Get("table-row", tableNs)).ToList();
             if (rows.Count == 0)
                 return dt;
 
-            // Helper: expand repeated cells
-            static List<string> ExpandRow(
-                System.Xml.Linq.XElement row,
-                string tNs, string txNs)
+            static List<string> ExpandRow(System.Xml.Linq.XElement row, string tNs, string txNs)
             {
                 var cells = new List<string>();
-                foreach (var cell in row.Elements(
-                    System.Xml.Linq.XName.Get("table-cell", tNs)))
+                foreach (var cell in row.Elements(System.Xml.Linq.XName.Get("table-cell", tNs)))
                 {
                     int repeat = int.TryParse(
-                        cell.Attribute(System.Xml.Linq.XName.Get(
-                            "number-columns-repeated", tNs))?.Value, out int r) ? r : 1;
-
-                    var text = cell
-                        .Descendants(System.Xml.Linq.XName.Get("p", txNs))
+                        cell.Attribute(System.Xml.Linq.XName.Get("number-columns-repeated", tNs))?.Value,
+                        out int r) ? r : 1;
+                    var text = cell.Descendants(System.Xml.Linq.XName.Get("p", txNs))
                         .FirstOrDefault()?.Value ?? string.Empty;
-
                     for (int i = 0; i < repeat; i++)
                         cells.Add(text);
                 }
@@ -661,15 +650,13 @@ namespace SnapSearch.Presentation.ViewModels
             var used = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             foreach (var h in headers)
             {
-                var col = string.IsNullOrWhiteSpace(h)
-                    ? $"Column {dt.Columns.Count + 1}" : h;
+                var col = string.IsNullOrWhiteSpace(h) ? $"Column {dt.Columns.Count + 1}" : h;
                 if (used.TryGetValue(col, out int cnt))
                 { used[col] = cnt + 1; col = $"{col} ({cnt + 1})"; }
                 else
                     used[col] = 1;
                 dt.Columns.Add(col);
             }
-
             foreach (var row in rows.Skip(1))
             {
                 var cells = ExpandRow(row, tableNs, textNs);
@@ -680,7 +667,6 @@ namespace SnapSearch.Presentation.ViewModels
                     dr[i] = cells[i];
                 dt.Rows.Add(dr);
             }
-
             return dt;
         }
 
@@ -688,11 +674,8 @@ namespace SnapSearch.Presentation.ViewModels
         {
             using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
             IWorkbook wb = new HSSFWorkbook(fs);
-            var names = Enumerable.Range(0, wb.NumberOfSheets)
-                .Select(i => wb.GetSheetName(i)).ToList();
-            var table = names.Count > 0
-                ? BuildTableNpoi(wb.GetSheetAt(0))
-                : new DataTable();
+            var names = Enumerable.Range(0, wb.NumberOfSheets).Select(i => wb.GetSheetName(i)).ToList();
+            var table = names.Count > 0 ? BuildTableNpoi(wb.GetSheetAt(0)) : new DataTable();
             return (names, table);
         }
 
@@ -715,7 +698,6 @@ namespace SnapSearch.Presentation.ViewModels
             var range = ws.RangeUsed();
             if (range == null)
                 return table;
-
             var rows = range.RowsUsed().ToList();
             if (rows.Count == 0)
                 return table;
@@ -732,7 +714,6 @@ namespace SnapSearch.Presentation.ViewModels
                     used[raw] = 1;
                 table.Columns.Add(raw);
             }
-
             foreach (var row in rows.Skip(1))
             {
                 var dr = table.NewRow();
@@ -749,7 +730,6 @@ namespace SnapSearch.Presentation.ViewModels
             var table = new DataTable();
             if (sheet == null)
                 return table;
-
             var headerRow = sheet.GetRow(sheet.FirstRowNum);
             if (headerRow == null)
                 return table;
@@ -766,7 +746,6 @@ namespace SnapSearch.Presentation.ViewModels
                     used[raw] = 1;
                 table.Columns.Add(raw);
             }
-
             for (int r = sheet.FirstRowNum + 1; r <= sheet.LastRowNum; r++)
             {
                 var row = sheet.GetRow(r);
@@ -792,16 +771,13 @@ namespace SnapSearch.Presentation.ViewModels
                     DateUtil.IsCellDateFormatted(cell)
                         ? string.Format(inv, "{0:yyyy-MM-dd}", cell.DateCellValue)
                         : Convert.ToString(cell.NumericCellValue, inv),
-
                 NPOI.SS.UserModel.CellType.Boolean => cell.BooleanCellValue.ToString(),
-
                 NPOI.SS.UserModel.CellType.Formula => cell.CachedFormulaResultType switch
                 {
                     NPOI.SS.UserModel.CellType.Numeric => Convert.ToString(cell.NumericCellValue, inv),
                     NPOI.SS.UserModel.CellType.String => cell.StringCellValue,
                     _ => cell.ToString() ?? string.Empty
                 },
-
                 _ => cell.ToString() ?? string.Empty
             };
         }
@@ -849,8 +825,7 @@ namespace SnapSearch.Presentation.ViewModels
                         using var r = ExcelReaderFactory.CreateReader(fs);
                         var ds = r.AsDataSet(new ExcelDataSetConfiguration
                         {
-                            ConfigureDataTable = _ =>
-                                new ExcelDataTableConfiguration { UseHeaderRow = true }
+                            ConfigureDataTable = _ => new ExcelDataTableConfiguration { UseHeaderRow = true }
                         });
                         return ds.Tables[sheetName] ?? new DataTable();
                     })
@@ -876,119 +851,75 @@ namespace SnapSearch.Presentation.ViewModels
                 ".odp" => ExtractOdpSlides(filePath),
                 _ => new List<PptxSlideData>
                 {
-                    new() { Header = "Unsupported",
-                            Content = "Cannot preview this presentation format." }
+                    new() { Header = "Unsupported", Content = "Cannot preview this presentation format." }
                 }
             };
 
         private static List<PptxSlideData> ExtractPptxSlides(string filePath)
         {
             var result = new List<PptxSlideData>();
-
             if (!File.Exists(filePath))
-            {
-                return new List<PptxSlideData>
-        {
-            new()
-            {
-                Header = "Error",
-                Content = "File not found."
-            }
-        };
-            }
+                return new List<PptxSlideData> { new() { Header = "Error", Content = "File not found." } };
 
             try
             {
                 using var pres = PresentationDocument.Open(filePath, false);
-
                 var presPart = pres.PresentationPart;
                 if (presPart == null)
                     return result;
 
                 int index = 1;
-
                 foreach (var slidePart in presPart.SlideParts)
                 {
                     var sb = new StringBuilder();
-
                     foreach (var para in slidePart.Slide
                         .Descendants<DocumentFormat.OpenXml.Drawing.Paragraph>())
                     {
                         var line = para.InnerText.Trim();
-
                         if (!string.IsNullOrWhiteSpace(line))
                             sb.AppendLine(line);
                     }
-
                     result.Add(new PptxSlideData
                     {
                         Header = $"Slide {index}",
-                        Content = sb.Length > 0
-                            ? sb.ToString().Trim()
-                            : "(No text content)"
+                        Content = sb.Length > 0 ? sb.ToString().Trim() : "(No text content)"
                     });
-
                     index++;
                 }
             }
             catch (OpenXmlPackageException)
             {
-                result.Add(new PptxSlideData
-                {
-                    Header = "Error",
-                    Content = "Invalid or corrupted PPTX file."
-                });
+                result.Add(new PptxSlideData { Header = "Error", Content = "Invalid or corrupted PPTX file." });
             }
             catch (Exception ex)
             {
-                result.Add(new PptxSlideData
-                {
-                    Header = "Error",
-                    Content = ex.Message
-                });
+                result.Add(new PptxSlideData { Header = "Error", Content = ex.Message });
             }
-
             return result;
         }
 
-        /// <summary>
-        /// PPT (binary PowerPoint 97-2003) — best-effort text scrape.
-        /// NPOI's .NET port does not include HSLF; convert to .pptx for full fidelity.
-        /// </summary>
         private static List<PptxSlideData> ExtractPptSlides(string filePath)
         {
-            // .ppt is a binary OLE2 compound file. NPOI's C# port does not expose HSLF.
-            // We do a best-effort ASCII scrape to surface readable text runs.
             var result = new List<PptxSlideData>();
             try
             {
                 var bytes = File.ReadAllBytes(filePath);
                 var sb = new StringBuilder();
                 int run = 0;
-
                 for (int i = 0; i < bytes.Length; i++)
                 {
                     byte b = bytes[i];
                     if (b >= 0x20 && b < 0x7F)
-                    {
-                        sb.Append((char) b);
-                        run++;
-                    }
+                    { sb.Append((char) b); run++; }
                     else
                     {
                         if (run < 4)
-                        {
-                            if (sb.Length >= run)
-                                sb.Remove(sb.Length - run, run);
-                        }
+                        { if (sb.Length >= run) sb.Remove(sb.Length - run, run); }
                         else
-                        {
                             sb.Append(' ');
-                        }
                         run = 0;
                     }
                 }
-
                 var text = sb.ToString().Trim();
                 result.Add(new PptxSlideData
                 {
@@ -1009,7 +940,6 @@ namespace SnapSearch.Presentation.ViewModels
             return result;
         }
 
-        /// <summary>ODP (OpenDocument Presentation) — ZIP + content.xml.</summary>
         private static List<PptxSlideData> ExtractOdpSlides(string filePath)
         {
             var result = new List<PptxSlideData>();
@@ -1019,35 +949,26 @@ namespace SnapSearch.Presentation.ViewModels
                 var entry = zip.GetEntry("content.xml");
                 if (entry == null)
                 {
-                    result.Add(new PptxSlideData
-                    { Header = "Error", Content = "Could not read ODP content." });
+                    result.Add(new PptxSlideData { Header = "Error", Content = "Could not read ODP content." });
                     return result;
                 }
-
                 using var stream = entry.Open();
                 var xdoc = System.Xml.Linq.XDocument.Load(stream);
+                const string drawNs = "urn:oasis:names:tc:opendocument:xmlns:drawing:1.0";
+                const string textNs = "urn:oasis:names:tc:opendocument:xmlns:text:1.0";
 
-                const string drawNs =
-                    "urn:oasis:names:tc:opendocument:xmlns:drawing:1.0";
-                const string textNs =
-                    "urn:oasis:names:tc:opendocument:xmlns:text:1.0";
-
-                var slides = xdoc
-                    .Descendants(System.Xml.Linq.XName.Get("page", drawNs))
-                    .ToList();
-
+                var slides = xdoc.Descendants(System.Xml.Linq.XName.Get("page", drawNs)).ToList();
                 for (int i = 0; i < slides.Count; i++)
                 {
                     var texts = slides[i]
                         .Descendants(System.Xml.Linq.XName.Get("p", textNs))
                         .Select(p => p.Value.Trim())
                         .Where(t => !string.IsNullOrWhiteSpace(t));
-
                     result.Add(new PptxSlideData
                     {
                         Header = $"Slide {i + 1}",
-                        Content = string.Join(Environment.NewLine, texts) is
-                        { Length: > 0 } c ? c : "(No text content)"
+                        Content = string.Join(Environment.NewLine, texts) is { Length: > 0 } c
+                            ? c : "(No text content)"
                     });
                 }
             }
@@ -1114,8 +1035,7 @@ namespace SnapSearch.Presentation.ViewModels
                 return;
             var userId = SessionContext.Instance.CurrentUser?.Id;
             var username = SessionContext.Instance.CurrentUser?.Username ?? string.Empty;
-            await _accessLogService.LogAsync(
-                userId, username, ActionType.PrintFile, CurrentFile.FilePath);
+            await _accessLogService.LogAsync(userId, username, ActionType.PrintFile, CurrentFile.FilePath);
             PrintRequested?.Invoke();
         }
 
@@ -1163,8 +1083,7 @@ namespace SnapSearch.Presentation.ViewModels
             if (!string.IsNullOrEmpty(chosen) && chosen != ext)
             {
                 var r = System.Windows.MessageBox.Show(
-                    $"Original is '{ext}', saving as '{chosen}'.\n" +
-                    "File will be copied as-is. Continue?",
+                    $"Original is '{ext}', saving as '{chosen}'.\nFile will be copied as-is. Continue?",
                     "Extension Mismatch",
                     System.Windows.MessageBoxButton.YesNo,
                     System.Windows.MessageBoxImage.Warning);
@@ -1176,9 +1095,8 @@ namespace SnapSearch.Presentation.ViewModels
 
             var userId = SessionContext.Instance.CurrentUser?.Id;
             var username = SessionContext.Instance.CurrentUser?.Username ?? string.Empty;
-            await _accessLogService.LogAsync(
-                userId, username, ActionType.ExportFile, CurrentFile.FilePath,
-                details: $"Exported to: {dlg.FileName}");
+            await _accessLogService.LogAsync(userId, username, ActionType.ExportFile,
+                CurrentFile.FilePath, details: $"Exported to: {dlg.FileName}");
 
             StatusMessage = "File exported successfully.";
         }

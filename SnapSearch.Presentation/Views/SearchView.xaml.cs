@@ -12,7 +12,7 @@ namespace SnapSearch.Presentation.Views
 
         #endregion Fields
 
-        #region Constructor
+        #region Public Constructors
 
         public SearchView()
         {
@@ -20,60 +20,60 @@ namespace SnapSearch.Presentation.Views
             DataContextChanged += OnDataContextChanged;
         }
 
-        #endregion Constructor
+        #endregion Public Constructors
 
-        #region Private Methods — DataContext
+        #region Private Methods
 
         private void OnDataContextChanged(object sender,
             System.Windows.DependencyPropertyChangedEventArgs e)
         {
+            if (e.OldValue is SearchViewModel oldVm)
+                oldVm.OpenPreviewRequested -= OnOpenPreviewRequested;
+
             if (e.NewValue is SearchViewModel vm)
                 vm.OpenPreviewRequested += OnOpenPreviewRequested;
         }
 
         private void OnOpenPreviewRequested(Application.DTOs.FileResultDto file, string keyword)
         {
-            if (_previewWindow != null)
-            {
-                _previewWindow.Close();
-                _previewWindow = null;
-            }
+            if (DataContext is not SearchViewModel vm)
+                return;
 
-            _previewWindow = new FilePreviewWindow(file, keyword);
+            var files = vm.SearchResults.ToList();
+            int index = files.IndexOf(file);
+
+            if (index < 0)
+                index = 0;
+
+            _previewWindow?.Close();
+
+            _previewWindow = new FilePreviewWindow(files, index, keyword);
             _previewWindow.Closed += (s, e) => _previewWindow = null;
             _previewWindow.Show();
         }
 
-        #endregion Private Methods — DataContext
-
-        #region Private Methods — DataGrid
-
         private void DataGrid_MouseDoubleClick(object sender,
-            System.Windows.Input.MouseButtonEventArgs e)
+            MouseButtonEventArgs e)
         {
             if (sender is DataGrid dg &&
-                dg.SelectedItem is Application.DTOs.FileResultDto file)
+                dg.SelectedItem is Application.DTOs.FileResultDto file &&
+                DataContext is SearchViewModel vm &&
+                vm.OpenFilePreviewCommand.CanExecute(file))
             {
-                if (DataContext is SearchViewModel vm &&
-                    vm.OpenFilePreviewCommand.CanExecute(file))
-                {
-                    vm.OpenFilePreviewCommand.Execute(file);
-                }
+                vm.OpenFilePreviewCommand.Execute(file);
             }
         }
 
-        #endregion Private Methods — DataGrid
-
-        #region Private Methods — Autocomplete
-
-        private void KeywordBox_GotFocus(object sender, System.Windows.RoutedEventArgs e)
+        private void KeywordBox_GotFocus(object sender,
+            System.Windows.RoutedEventArgs e)
         {
             if (DataContext is SearchViewModel vm)
                 vm.ShowSuggestions = vm.FilteredSuggestions.Count > 0
                                   && !string.IsNullOrWhiteSpace(vm.Keyword);
         }
 
-        private void KeywordBox_LostFocus(object sender, System.Windows.RoutedEventArgs e)
+        private void KeywordBox_LostFocus(object sender,
+            System.Windows.RoutedEventArgs e)
         {
             Dispatcher.BeginInvoke(new Action(() =>
             {
@@ -83,14 +83,10 @@ namespace SnapSearch.Presentation.Views
         }
 
         private void SuggestionsList_PreviewMouseDown(object sender,
-            System.Windows.Input.MouseButtonEventArgs e)
+            MouseButtonEventArgs e)
         {
             e.Handled = false;
         }
-
-        #endregion Private Methods — Autocomplete
-
-        #region Private Methods — Keyboard
 
         private void TextBox_PreviewKeyDown(object sender,
             System.Windows.Input.KeyEventArgs e)
@@ -101,11 +97,13 @@ namespace SnapSearch.Presentation.Views
             if (e.Key == Key.Enter)
             {
                 vm.ShowSuggestions = false;
+
                 if (vm.SearchCommand.CanExecute(null))
                 {
                     vm.SearchCommand.Execute(null);
                     e.Handled = true;
                 }
+
                 return;
             }
 
@@ -124,6 +122,6 @@ namespace SnapSearch.Presentation.Views
             }
         }
 
-        #endregion Private Methods — Keyboard
+        #endregion Private Methods
     }
 }
