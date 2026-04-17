@@ -438,7 +438,8 @@ namespace SnapSearch.Presentation.ViewModels
                              ".gif" or ".webp" or ".tiff" or ".tif" or ".ico";
 
         private static bool IsVideo(string ext) =>
-            ext.ToLower() is ".mp4" or ".avi" or ".wmv" or ".mkv" or ".mov" or ".flv" or ".webm";
+            ext.ToLower() is ".mp4" or ".avi" or ".wmv" or ".mkv" or ".mov"
+                          or ".flv" or ".webm" or ".mpg" or ".mpeg";
 
         private static bool IsAudio(string ext) =>
             ext.ToLower() is ".mp3" or ".wav" or ".wma" or ".aac" or ".flac" or ".ogg" or ".m4a";
@@ -773,7 +774,7 @@ namespace SnapSearch.Presentation.ViewModels
                 // IList<HSLFSlide> GetSlides()
                 var getSlides = showType.GetMethod("GetSlides")
                                 ?? throw new InvalidOperationException("GetSlides not found.");
-                var slides = (System.Collections.IEnumerable)getSlides.Invoke(show, null)!;
+                var slides = (System.Collections.IEnumerable) getSlides.Invoke(show, null)!;
 
                 int i = 1;
                 foreach (var slide in slides)
