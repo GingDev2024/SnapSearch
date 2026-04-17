@@ -1,5 +1,4 @@
 ﻿using PdfiumViewer;
-using SnapSearch.Application.DTOs;
 
 namespace SnapSearch.Presentation.Views
 {

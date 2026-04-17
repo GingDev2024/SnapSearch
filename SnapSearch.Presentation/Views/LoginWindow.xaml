@@ -42,22 +42,29 @@
                     <RowDefinition Height="204*" />
                 </Grid.RowDefinitions>
                 <StackPanel VerticalAlignment="Top" HorizontalAlignment="Center"
-                            Margin="0,153,0,0" Grid.RowSpan="2">
+                            Margin="0,140,0,0" Grid.RowSpan="2">
 
                     <Border Width="120" Height="120">
                         <Image Source="pack://application:,,,/Resources/snapsearch.png"
                                Stretch="Fill" Margin="-23,-55,-23,10" />
                     </Border>
 
-                    <TextBlock Text="SNAPSEARCH"
+                    <TextBlock Text="S.N.A.P. SEARCH"
                                FontSize="28" FontWeight="Bold"
                                Foreground="#020445"
+                               Margin="0,0,0,10"
                                HorizontalAlignment="Center"
-                               Height="49" />
-                    <TextBlock Text="Find anything. Track everything. Miss nothing."
-                               FontSize="23" FontWeight="Bold"
-                               FontFamily="Gabriola"
-                               Foreground="#020445" />
+                               Height="43" />
+
+                    <TextBlock Text="Secure Navigation and Access Platform for Search"
+                               FontSize="11"  FontFamily="Cascadia Code"
+                               Margin="0,0,0,0" Padding="0,0,0,0"
+                               Foreground="#020445" Height="15" />
+
+                    <TextBlock Text="and Retrieval of Confidential Records "
+                               FontSize="11"  FontFamily="Cascadia Code"
+                               Margin="0,0,0,0"
+                               Foreground="#020445" HorizontalAlignment="Center" Height="18" />
                 </StackPanel>
             </Grid>
 
