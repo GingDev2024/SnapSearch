@@ -2,8 +2,8 @@
 
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
-		<AssemblyName>SnapSearch</AssemblyName>
-		<Product>Snap Search</Product>
+		<AssemblyName>S.N.A.P Search</AssemblyName>
+		<Product>S.N.A.P Search</Product>
 		<Company>BABSLAI</Company>
 		<Version>1.0.0</Version>
 		<TargetFramework>net8.0-windows</TargetFramework>
