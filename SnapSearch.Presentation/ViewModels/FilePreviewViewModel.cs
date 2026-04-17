@@ -58,6 +58,7 @@ namespace SnapSearch.Presentation.ViewModels
         private string? _selectedSheetName;
         private string _pptxSlideInfo = string.Empty;
         private string _zipEntryCount = string.Empty;
+        public bool IsDocmFile => Ext(".docm");
 
         #endregion Fields
 
@@ -297,7 +298,7 @@ namespace SnapSearch.Presentation.ViewModels
         public bool IsHtmlFile => CurrentFile != null && IsHtml(CurrentFile.Extension);
 
         // Logical groups — used by XAML Visibility bindings
-        public bool IsAnyWordDoc => IsDocxFile || IsOdtFile;
+        public bool IsAnyWordDoc => IsDocxFile || IsDocFile || IsOdtFile || IsDocmFile;
 
         public bool IsAnySpreadsheet => IsXlsxFile || IsXlsFile || IsXlsbFile || IsOdsFile;
 
@@ -426,7 +427,7 @@ namespace SnapSearch.Presentation.ViewModels
         private static bool IsPlainText(string ext) =>
             ext.ToLower() is
                 ".txt" or ".log" or ".csv" or ".xml" or ".bat" or ".sh"
-            or ".ps1" or ".dot" or ".doc" or ".docm" or ".odt" or ".ods" or ".wpd";
+            or ".ps1" or ".dot" or ".doc" or ".docm";
 
         private static bool IsImage(string ext) =>
             ext.ToLower() is ".png" or ".jpg" or ".jpeg" or ".bmp" or
@@ -450,7 +451,7 @@ namespace SnapSearch.Presentation.ViewModels
         private static string ExtractWordText(string filePath) =>
             Path.GetExtension(filePath).ToLower() switch
             {
-                ".docx" => ExtractDocxText(filePath),
+                ".docx" or ".docm" => ExtractDocxText(filePath),
                 ".doc" => ExtractDocText(filePath),
                 ".odt" => ExtractOdtText(filePath),
                 _ => string.Empty
@@ -769,7 +770,7 @@ namespace SnapSearch.Presentation.ViewModels
                 // IList<HSLFSlide> GetSlides()
                 var getSlides = showType.GetMethod("GetSlides")
                                 ?? throw new InvalidOperationException("GetSlides not found.");
-                var slides = (System.Collections.IEnumerable)getSlides.Invoke(show, null)!;
+                var slides = (System.Collections.IEnumerable) getSlides.Invoke(show, null)!;
 
                 int i = 1;
                 foreach (var slide in slides)
@@ -933,6 +934,7 @@ namespace SnapSearch.Presentation.ViewModels
                 ".docx" => "Word Documents (*.docx)|*.docx",
                 ".doc" => "Word 97-2003 (*.doc)|*.doc",
                 ".odt" => "OpenDocument Text (*.odt)|*.odt",
+                ".docm" => "Word Macro-Enabled (*.docm)|*.docm",
                 ".xlsx" => "Excel Workbook (*.xlsx)|*.xlsx",
                 ".xlsm" => "Excel Macro-Enabled (*.xlsm)|*.xlsm",
                 ".xls" => "Excel 97-2003 (*.xls)|*.xls",
