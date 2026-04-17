@@ -8,6 +8,7 @@ using SnapSearch.Infrastructure;
 using SnapSearch.Presentation.Common;
 using SnapSearch.Presentation.ViewModels;
 using SnapSearch.Presentation.Views;
+using System.IO;
 using System.Windows;
 using System.Windows.Media.Imaging;
 
@@ -86,20 +87,42 @@ namespace SnapSearch.Presentation
 
         private static void ConfigureServices(IServiceCollection services)
         {
-            var environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production";
-            var basePath = AppContext.BaseDirectory;
+            var appDataPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "SNAPSearch"
+            );
+
+            Directory.CreateDirectory(appDataPath);
+
+            var exeBasePath = AppContext.BaseDirectory;
+
+            var appSettingsPath = Path.Combine(appDataPath, "appsettings.json");
+            var iniPath = Path.Combine(appDataPath, "snapsearch.ini");
+
+            if (!File.Exists(appSettingsPath))
+            {
+                var defaultFile = Path.Combine(exeBasePath, "appsettings.json");
+                if (File.Exists(defaultFile))
+                    File.Copy(defaultFile, appSettingsPath);
+            }
+
+            if (!File.Exists(iniPath))
+            {
+                var defaultIni = Path.Combine(exeBasePath, "snapsearch.ini");
+                if (File.Exists(defaultIni))
+                    File.Copy(defaultIni, iniPath);
+            }
 
             var configuration = new ConfigurationBuilder()
-                .SetBasePath(basePath)
+                .SetBasePath(appDataPath)
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true)
                 .Build();
 
             services.AddSingleton<IConfiguration>(configuration);
+
             services.AddApplication();
             services.AddInfrastructure();
 
-            // --- ViewModels ---
             services.AddSingleton<LoginViewModel>();
             services.AddSingleton<MainShellViewModel>(sp => new MainShellViewModel(
                 sp.GetRequiredService<IAuthService>(),
@@ -120,12 +143,10 @@ namespace SnapSearch.Presentation
             services.AddTransient<IniEncryptorViewModel>(sp =>
                 new IniEncryptorViewModel(sp.GetRequiredService<IConfiguration>()));
 
-            // --- Windows ---
             services.AddTransient<LoginWindow>();
             services.AddTransient<MainShellWindow>();
             services.AddTransient<FilePreviewWindow>();
 
-            // --- Logging ---
             services.AddLogging(builder =>
             {
                 builder.AddDebug();
