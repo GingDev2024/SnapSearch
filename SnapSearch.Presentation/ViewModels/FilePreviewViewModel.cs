@@ -520,7 +520,9 @@ namespace SnapSearch.Presentation.ViewModels
             {
                 ".xlsx" or ".xlsm" => LoadViaClosedXml(filePath),
                 ".xls" => LoadViaHssf(filePath),
-                _ => LoadViaExcelDataReader(filePath)  // .xlsb, .ods
+                ".xlsb" => LoadViaExcelDataReader(filePath),
+                ".ods" => LoadViaOds(filePath),
+                _ => (new List<string>(), new DataTable())
             };
 
         private static (List<string>, DataTable) LoadViaClosedXml(string filePath)
@@ -531,6 +533,112 @@ namespace SnapSearch.Presentation.ViewModels
                 ? BuildTableClosedXml(wb.Worksheet(names[0]))
                 : new DataTable();
             return (names, table);
+        }
+
+        private static (List<string>, DataTable) LoadViaOds(string filePath)
+        {
+            var result = new List<string>();
+            var table = new DataTable();
+
+            try
+            {
+                using var zip = ZipFile.OpenRead(filePath);
+                var entry = zip.GetEntry("content.xml");
+                if (entry == null)
+                    return (result, table);
+
+                using var stream = entry.Open();
+                var xdoc = System.Xml.Linq.XDocument.Load(stream);
+
+                const string officeNs = "urn:oasis:names:tc:opendocument:xmlns:office:1.0";
+                const string tableNs = "urn:oasis:names:tc:opendocument:xmlns:table:1.0";
+                const string textNs = "urn:oasis:names:tc:opendocument:xmlns:text:1.0";
+
+                var sheets = xdoc
+                    .Descendants(System.Xml.Linq.XName.Get("table", tableNs))
+                    .ToList();
+
+                if (sheets.Count == 0)
+                    return (result, table);
+
+                foreach (var sheet in sheets)
+                    result.Add(sheet.Attribute(
+                        System.Xml.Linq.XName.Get("name", tableNs))?.Value
+                        ?? $"Sheet{result.Count + 1}");
+
+                table = BuildTableFromOdsSheet(sheets[0], tableNs, textNs);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ODS] Load error: {ex.Message}");
+            }
+
+            return (result, table);
+        }
+
+        private static DataTable BuildTableFromOdsSheet(
+            System.Xml.Linq.XElement sheet,
+            string tableNs,
+            string textNs)
+        {
+            var dt = new DataTable();
+            var rows = sheet
+                .Elements(System.Xml.Linq.XName.Get("table-row", tableNs))
+                .ToList();
+
+            if (rows.Count == 0)
+                return dt;
+
+            // Helper: expand repeated cells
+            static List<string> ExpandRow(
+                System.Xml.Linq.XElement row,
+                string tNs, string txNs)
+            {
+                var cells = new List<string>();
+                foreach (var cell in row.Elements(
+                    System.Xml.Linq.XName.Get("table-cell", tNs)))
+                {
+                    int repeat = int.TryParse(
+                        cell.Attribute(System.Xml.Linq.XName.Get(
+                            "number-columns-repeated", tNs))?.Value, out int r) ? r : 1;
+
+                    var text = cell
+                        .Descendants(System.Xml.Linq.XName.Get("p", txNs))
+                        .FirstOrDefault()?.Value ?? string.Empty;
+
+                    for (int i = 0; i < repeat; i++)
+                        cells.Add(text);
+                }
+                while (cells.Count > 0 && string.IsNullOrEmpty(cells[^1]))
+                    cells.RemoveAt(cells.Count - 1);
+                return cells;
+            }
+
+            var headers = ExpandRow(rows[0], tableNs, textNs);
+            var used = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (var h in headers)
+            {
+                var col = string.IsNullOrWhiteSpace(h)
+                    ? $"Column {dt.Columns.Count + 1}" : h;
+                if (used.TryGetValue(col, out int cnt))
+                { used[col] = cnt + 1; col = $"{col} ({cnt + 1})"; }
+                else
+                    used[col] = 1;
+                dt.Columns.Add(col);
+            }
+
+            foreach (var row in rows.Skip(1))
+            {
+                var cells = ExpandRow(row, tableNs, textNs);
+                if (cells.All(string.IsNullOrEmpty))
+                    continue;
+                var dr = dt.NewRow();
+                for (int i = 0; i < Math.Min(cells.Count, dt.Columns.Count); i++)
+                    dr[i] = cells[i];
+                dt.Rows.Add(dr);
+            }
+
+            return dt;
         }
 
         private static (List<string>, DataTable) LoadViaHssf(string filePath)
@@ -675,6 +783,22 @@ namespace SnapSearch.Presentation.ViewModels
                         using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
                         IWorkbook wb = new HSSFWorkbook(fs);
                         return BuildTableNpoi(wb.GetSheet(sheetName));
+                    }),
+                    ".ods" => await Task.Run(() =>
+                    {
+                        using var zip = ZipFile.OpenRead(filePath);
+                        var entry = zip.GetEntry("content.xml")!;
+                        using var stream = entry.Open();
+                        var xdoc = System.Xml.Linq.XDocument.Load(stream);
+                        const string tableNs = "urn:oasis:names:tc:opendocument:xmlns:table:1.0";
+                        const string textNs = "urn:oasis:names:tc:opendocument:xmlns:text:1.0";
+                        var sheet = xdoc
+                            .Descendants(System.Xml.Linq.XName.Get("table", tableNs))
+                            .FirstOrDefault(s => s.Attribute(
+                                System.Xml.Linq.XName.Get("name", tableNs))?.Value == sheetName);
+                        return sheet != null
+                            ? BuildTableFromOdsSheet(sheet, tableNs, textNs)
+                            : new DataTable();
                     }),
                     _ => await Task.Run(() =>
                     {
