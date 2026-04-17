@@ -477,7 +477,10 @@ namespace SnapSearch.Presentation.ViewModels
                         sb.AppendLine(string.Join("\t", cells));
                     }
             }
-            return sb.ToString();
+            var text = sb.ToString().Trim();
+            return string.IsNullOrWhiteSpace(text)
+                ? "[No readable text found in .docm file. Convert to .docx for full support.]"
+                : $"[Preview limited — .docm format has partial support.]\n\n{text}";
         }
 
         /// <summary>
