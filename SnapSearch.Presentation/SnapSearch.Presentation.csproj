@@ -13,7 +13,7 @@
 		<UseWPF>true</UseWPF>
 		<RootNamespace>SnapSearch.Presentation</RootNamespace>
 		<StartupObject>SnapSearch.Presentation.App</StartupObject>
-		<!-- Publish settings -->
+		<!-- Publish -->
 		<RuntimeIdentifier>win-x86</RuntimeIdentifier>
 		<PublishSingleFile>true</PublishSingleFile>
 		<SelfContained>true</SelfContained>
@@ -62,12 +62,14 @@
 	<ItemGroup>
 		<Content Include="snapsearch.ini">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<CopyToPublishDirectory>Always</CopyToPublishDirectory>
+			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
 		</Content>
-	</ItemGroup>
 
-	<ItemGroup>
-		<None Update="appsettings.json">
+		<Content Include="appsettings.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</None>
+			<CopyToPublishDirectory>Always</CopyToPublishDirectory>
+			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+		</Content>
 	</ItemGroup>
 </Project>
