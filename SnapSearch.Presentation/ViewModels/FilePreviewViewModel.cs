@@ -58,7 +58,6 @@ namespace SnapSearch.Presentation.ViewModels
         private string? _selectedSheetName;
         private string _pptxSlideInfo = string.Empty;
         private string _zipEntryCount = string.Empty;
-        public bool IsDocmFile => Ext(".docm");
 
         #endregion Fields
 
@@ -109,6 +108,7 @@ namespace SnapSearch.Presentation.ViewModels
                 OnPropertyChanged(nameof(IsImageFile));
                 OnPropertyChanged(nameof(IsDocxFile));
                 OnPropertyChanged(nameof(IsDocFile));
+                OnPropertyChanged(nameof(IsDocmFile));
                 OnPropertyChanged(nameof(IsOdtFile));
                 OnPropertyChanged(nameof(IsXlsxFile));
                 OnPropertyChanged(nameof(IsXlsFile));
@@ -269,6 +269,7 @@ namespace SnapSearch.Presentation.ViewModels
         public bool IsDocxFile => Ext(".docx");
 
         public bool IsDocFile => Ext(".doc");
+        public bool IsDocmFile => Ext(".docm");
 
         public bool IsOdtFile => Ext(".odt");
 
@@ -427,7 +428,7 @@ namespace SnapSearch.Presentation.ViewModels
         private static bool IsPlainText(string ext) =>
             ext.ToLower() is
                 ".txt" or ".log" or ".csv" or ".xml" or ".bat" or ".sh"
-            or ".ps1" or ".dot" or ".doc" or ".docm";
+            or ".ps1" or ".dot";
 
         private static bool IsImage(string ext) =>
             ext.ToLower() is ".png" or ".jpg" or ".jpeg" or ".bmp" or
@@ -480,12 +481,52 @@ namespace SnapSearch.Presentation.ViewModels
         }
 
         /// <summary>
-        /// DOC (Word 97-2003) via NPOI.HWPF.
-        /// NuGet: NPOI (>= 2.6 includes HWPF). No separate package needed.
+        /// DOC (Word 97-2003) — extracted via ZIP/XML fallback.
+        /// NPOI's .NET port does not include HWPF; convert to .docx for full fidelity.
         /// </summary>
         private static string ExtractDocText(string filePath)
         {
-            return "[.doc files are not supported. Please convert the file to .docx.]";
+            // .doc is a binary OLE2 compound file — there is no pure-.NET NPOI HWPF port.
+            // We attempt a best-effort raw text scrape from the binary stream,
+            // which captures plain ASCII runs but loses formatting and Unicode content.
+            try
+            {
+                var bytes = File.ReadAllBytes(filePath);
+                var sb = new StringBuilder();
+                // Walk bytes: collect printable ASCII runs of 4+ chars (heuristic word-doc scrape)
+                int run = 0;
+                for (int i = 0; i < bytes.Length; i++)
+                {
+                    byte b = bytes[i];
+                    if (b >= 0x20 && b < 0x7F)
+                    {
+                        sb.Append((char) b);
+                        run++;
+                    }
+                    else
+                    {
+                        if (run < 4)
+                        {
+                            // Discard short noise runs
+                            if (sb.Length >= run)
+                                sb.Remove(sb.Length - run, run);
+                        }
+                        else
+                        {
+                            sb.Append(' ');
+                        }
+                        run = 0;
+                    }
+                }
+                var text = sb.ToString().Trim();
+                return string.IsNullOrWhiteSpace(text)
+                    ? "[No readable text found in .doc file. Convert to .docx for full support.]"
+                    : $"[Preview limited — .doc format has partial support.]\n\n{text}";
+            }
+            catch (Exception ex)
+            {
+                return $"[Could not read .doc file: {ex.Message}\n\nTip: Convert to .docx for full support.]";
+            }
         }
 
         /// <summary>ODT — ZIP + content.xml (no extra library needed).</summary>
@@ -550,7 +591,6 @@ namespace SnapSearch.Presentation.ViewModels
                 using var stream = entry.Open();
                 var xdoc = System.Xml.Linq.XDocument.Load(stream);
 
-                const string officeNs = "urn:oasis:names:tc:opendocument:xmlns:office:1.0";
                 const string tableNs = "urn:oasis:names:tc:opendocument:xmlns:table:1.0";
                 const string textNs = "urn:oasis:names:tc:opendocument:xmlns:text:1.0";
 
@@ -841,90 +881,119 @@ namespace SnapSearch.Presentation.ViewModels
         private static List<PptxSlideData> ExtractPptxSlides(string filePath)
         {
             var result = new List<PptxSlideData>();
-            using var pres = PresentationDocument.Open(filePath, isEditable: false);
-            var presPart = pres.PresentationPart;
-            if (presPart == null)
-                return result;
 
-            int index = 1;
-            foreach (var slidePart in presPart.SlideParts)
+            if (!File.Exists(filePath))
             {
-                var sb = new StringBuilder();
-                foreach (var para in slidePart.Slide
-                    .Descendants<DocumentFormat.OpenXml.Drawing.Paragraph>())
+                return new List<PptxSlideData>
+        {
+            new()
+            {
+                Header = "Error",
+                Content = "File not found."
+            }
+        };
+            }
+
+            try
+            {
+                using var pres = PresentationDocument.Open(filePath, false);
+
+                var presPart = pres.PresentationPart;
+                if (presPart == null)
+                    return result;
+
+                int index = 1;
+
+                foreach (var slidePart in presPart.SlideParts)
                 {
-                    var line = para.InnerText.Trim();
-                    if (!string.IsNullOrWhiteSpace(line))
-                        sb.AppendLine(line);
+                    var sb = new StringBuilder();
+
+                    foreach (var para in slidePart.Slide
+                        .Descendants<DocumentFormat.OpenXml.Drawing.Paragraph>())
+                    {
+                        var line = para.InnerText.Trim();
+
+                        if (!string.IsNullOrWhiteSpace(line))
+                            sb.AppendLine(line);
+                    }
+
+                    result.Add(new PptxSlideData
+                    {
+                        Header = $"Slide {index}",
+                        Content = sb.Length > 0
+                            ? sb.ToString().Trim()
+                            : "(No text content)"
+                    });
+
+                    index++;
                 }
+            }
+            catch (OpenXmlPackageException)
+            {
                 result.Add(new PptxSlideData
                 {
-                    Header = $"Slide {index}",
-                    Content = sb.Length > 0 ? sb.ToString().Trim() : "(No text content)"
+                    Header = "Error",
+                    Content = "Invalid or corrupted PPTX file."
                 });
-                index++;
             }
+            catch (Exception ex)
+            {
+                result.Add(new PptxSlideData
+                {
+                    Header = "Error",
+                    Content = ex.Message
+                });
+            }
+
             return result;
         }
 
         /// <summary>
-        /// PPT (binary PowerPoint 97-2003).
-        /// NPOI >= 2.6 includes HSLF in the main NPOI assembly.
-        /// We use reflection so the code compiles even if the HSLF types are absent
-        /// (older NPOI versions); in that case a friendly message is shown instead.
+        /// PPT (binary PowerPoint 97-2003) — best-effort text scrape.
+        /// NPOI's .NET port does not include HSLF; convert to .pptx for full fidelity.
         /// </summary>
         private static List<PptxSlideData> ExtractPptSlides(string filePath)
         {
+            // .ppt is a binary OLE2 compound file. NPOI's C# port does not expose HSLF.
+            // We do a best-effort ASCII scrape to surface readable text runs.
             var result = new List<PptxSlideData>();
             try
             {
-                // Resolve HSLFSlideShow from the NPOI assembly at runtime
-                var showType = Type.GetType("NPOI.HSLF.UserModel.HSLFSlideShow, NPOI");
-                if (showType == null)
-                    throw new InvalidOperationException(
-                        "NPOI.HSLF not available. " +
-                        "Upgrade to NPOI >= 2.6, or convert the file to .pptx.");
+                var bytes = File.ReadAllBytes(filePath);
+                var sb = new StringBuilder();
+                int run = 0;
 
-                using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-
-                // new HSLFSlideShow(Stream)
-                var show = Activator.CreateInstance(showType, fs)
-                           ?? throw new InvalidOperationException("Could not create HSLFSlideShow.");
-
-                // IList<HSLFSlide> GetSlides()
-                var getSlides = showType.GetMethod("GetSlides")
-                                ?? throw new InvalidOperationException("GetSlides not found.");
-                var slides = (System.Collections.IEnumerable) getSlides.Invoke(show, null)!;
-
-                int i = 1;
-                foreach (var slide in slides)
+                for (int i = 0; i < bytes.Length; i++)
                 {
-                    var sb = new StringBuilder();
-                    var getShapes = slide.GetType().GetMethod("GetShapes");
-                    if (getShapes != null)
+                    byte b = bytes[i];
+                    if (b >= 0x20 && b < 0x7F)
                     {
-                        var shapes = (System.Collections.IEnumerable)
-                            getShapes.Invoke(slide, null)!;
-                        foreach (var shape in shapes)
-                        {
-                            var getText = shape.GetType().GetMethod("GetText");
-                            if (getText != null)
-                            {
-                                var text = getText.Invoke(shape, null) as string;
-                                if (!string.IsNullOrWhiteSpace(text))
-                                    sb.AppendLine(text.Trim());
-                            }
-                        }
+                        sb.Append((char) b);
+                        run++;
                     }
-                    result.Add(new PptxSlideData
+                    else
                     {
-                        Header = $"Slide {i}",
-                        Content = sb.Length > 0 ? sb.ToString().Trim() : "(No text content)"
-                    });
-                    i++;
+                        if (run < 4)
+                        {
+                            if (sb.Length >= run)
+                                sb.Remove(sb.Length - run, run);
+                        }
+                        else
+                        {
+                            sb.Append(' ');
+                        }
+                        run = 0;
+                    }
                 }
 
-                (show as IDisposable)?.Dispose();
+                var text = sb.ToString().Trim();
+                result.Add(new PptxSlideData
+                {
+                    Header = "Slide Content (limited preview)",
+                    Content = string.IsNullOrWhiteSpace(text)
+                        ? "[No readable text found. Convert to .pptx for full support.]"
+                        : $"[Preview limited — .ppt format has partial support.]\n\n{text}"
+                });
             }
             catch (Exception ex)
             {
