@@ -425,13 +425,8 @@ namespace SnapSearch.Presentation.ViewModels
 
         private static bool IsPlainText(string ext) =>
             ext.ToLower() is
-                ".txt" or ".log" or ".md" or ".csv" or
-                ".json" or ".xml" or ".yaml" or ".yml" or ".toml" or
-                ".ini" or ".cfg" or ".config" or ".env" or ".properties" or
-                ".cs" or ".vb" or ".fs" or ".py" or ".js" or ".ts" or ".java" or ".razor" or
-                ".sln" or ".csproj" or ".user" or ".targets" or ".props" or
-                ".cpp" or ".c" or ".h" or ".go" or ".rs" or ".php" or ".rb" or
-                ".css" or ".scss" or ".sql" or ".bat" or ".sh" or ".ps1";
+                ".txt" or ".log" or ".csv" or ".xml" or ".bat" or ".sh"
+            or ".ps1" or ".dot" or ".doc" or ".docm";
 
         private static bool IsImage(string ext) =>
             ext.ToLower() is ".png" or ".jpg" or ".jpeg" or ".bmp" or
